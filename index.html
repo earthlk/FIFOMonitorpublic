@@ -3072,7 +3072,8 @@ function getUrgentClass(zone, notfifo, repeatDays){
 }
 
 
-function pcOnDateOrZoneChange(){
+// 🟢 เปลี่ยนจาก function ธรรมดา เป็น async function
+async function pcOnDateOrZoneChange(){
 
   if(!currentPrefix) return;
 
@@ -3086,7 +3087,7 @@ function pcOnDateOrZoneChange(){
 
   // ===== กรณีไม่ต้องโหลดใหม่ =====
   if(!mustReload){
-    pcApplyFilter();   // render table + dashboard จาก fifoData เดิม
+    pcApplyFilter();
     return;
   }
 
@@ -3094,34 +3095,37 @@ function pcOnDateOrZoneChange(){
   pcShowLoading("เตรียม Cache Mainzone...");
   pcSetProgress(10);
 
-  google.script.run.withSuccessHandler(()=>{
+  try {
+    // 🔥 1. เรียก API ตัวที่ 1 (แทน google.script.run.preloadMainzone)
+    await callGAS("preloadMainzone", { dateStr: date, mainzone: currentPrefix });
 
-    google.script.run.withSuccessHandler(chunks=>{
+    // 🔥 2. เรียก API ตัวที่ 2 (แทน google.script.run.getSNCache)
+    const chunks = await callGAS("getSNCache", { date: date, mainzone: currentPrefix });
+    snIndexMap = mergeSNCache(chunks || []);
 
-      snIndexMap = mergeSNCache(chunks);
+    pcSetProgress(60);
+    const txt = document.getElementById("pcLoadingText");
+    if(txt) txt.innerText = "โหลด FIFO Data...";
 
-      pcSetProgress(60);
-      const txt = document.getElementById("pcLoadingText");
-      if(txt) txt.innerText = "โหลด FIFO Data...";
+    // 🔥 3. เรียก API ตัวที่ 3 (แทน google.script.run.getFIFOData)
+    const data = await callGAS("getFIFOData", { date: date, prefix: currentPrefix });
 
-      google.script.run.withSuccessHandler(data=>{
+    fifoRawCache = data || [];
+    fifoViewList = data || [];
 
-        fifoRawCache = data || [];
-        fifoViewList = data || [];
+    // update cache state
+    fifoCacheState.date = date;
+    fifoCacheState.zone = currentPrefix;
 
-        // 🔥 update cache state (สำคัญมาก)
-        fifoCacheState.date = date;
-        fifoCacheState.zone = currentPrefix;
+    pcApplyFilter();   // render table + dashboard
+    pcSetProgress(100);
 
-        pcApplyFilter();   // render table + dashboard
-        pcSetProgress(100);
-        pcHideLoading();
-
-      }).getFIFOData(date, currentPrefix);
-
-    }).getSNCache(date, currentPrefix);
-
-  }).preloadMainzone(date, currentPrefix);
+  } catch (error) {
+    console.error(error);
+    showToast("เกิดข้อผิดพลาดในการดึงข้อมูลจาก Server", "warn");
+  } finally {
+    pcHideLoading();
+  }
 }
 
 function pcApplyFilter(){
