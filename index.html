@@ -1341,7 +1341,14 @@ body{background:#eef2ff;font-family:system-ui}
           <div class="dashboard-card"><div>🔁 วันซ้ำสูงสุด</div><div id="dashRepeat" class="dashboard-value">0</div></div>
         </div>
         <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
-          <iframe src="https://lookerstudio.google.com/embed/reporting/ee908fe3-4f87-4a28-9485-f5da7400c447/page/igJoF" width="100%" height="2732" frameborder="0" style="border:0;" allowfullscreen></iframe>
+          <iframe id="lookerMobile"
+            data-src="https://lookerstudio.google.com/embed/reporting/ee908fe3-4f87-4a28-9485-f5da7400c447/page/igJoF" 
+            width="100%"
+            height="2732"
+            frameborder="0" 
+            style="border:0;" 
+            allowfullscreen>
+          </iframe>
         </div>
       </div>
     </div>
@@ -1394,7 +1401,14 @@ body{background:#eef2ff;font-family:system-ui}
       </div>
       <div id="dashboardPC" style="display:none">
         <div class="dashboard-section" style="text-align: center;">
-          <iframe width="100%" height="800" src="https://lookerstudio.google.com/embed/reporting/d40b60f8-54f8-46bc-8e01-04e3a343ff36/page/p_zub42c8t0d" frameborder="0" style="border:0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px;" allowfullscreen></iframe>
+          <iframe id="lookerPC"
+            width="100%" 
+            height="800" 
+            data-src="https://lookerstudio.google.com/embed/reporting/d40b60f8-54f8-46bc-8e01-04e3a343ff36/page/p_zub42c8t0d" 
+            frameborder="0" 
+            style="border:0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px;" 
+            allowfullscreen>
+          </iframe>
         </div>
       </div>
     </div>
@@ -2698,7 +2712,6 @@ let currentView = "fifo";
 let currentViewPC = "fifo";
 
 function toggleMainView(){
-
   const btn = document.getElementById("titleToggleBtn");
   const fifo = document.getElementById("fifoView");
   const dash = document.getElementById("dashboardView");
@@ -2706,19 +2719,22 @@ function toggleMainView(){
   if(!fifo || !dash) return;
 
   if(currentView === "fifo"){
-
     fifo.style.display = "none";
     dash.style.display = "block";
 
     btn.innerText = "📊 Dashboard";
     btn.classList.add("dashboard");
 
-    renderDashboard();   // 🔥 โหลด dashboard
+    renderDashboard();   // 🔥 โหลดตัวเลข kpi
+
+    // 🚀 Lazy Load: โหลดกราฟเฉพาะตอนกดเข้ามาดูครั้งแรก
+    const iframe = document.getElementById("lookerMobile");
+    if (iframe && !iframe.src) {
+      iframe.src = iframe.getAttribute("data-src");
+    }
 
     currentView = "dashboard";
-
   }else{
-
     dash.style.display = "none";
     fifo.style.display = "block";
 
@@ -2726,12 +2742,10 @@ function toggleMainView(){
     btn.classList.remove("dashboard");
 
     currentView = "fifo";
-
   }
 }
 
 function togglePCView(){
-
   const btn = document.getElementById("titleToggleBtnPC");
   const fifo = document.getElementById("pcCardList");
   const dash = document.getElementById("dashboardPC");
@@ -2739,17 +2753,20 @@ function togglePCView(){
   if(!fifo || !dash) return;
 
   if(currentViewPC === "fifo"){
-
     fifo.style.display = "none";
     dash.style.display = "block";
 
     btn.innerText = "📊 Dashboard";
     btn.classList.add("dashboard");
 
+    // 🚀 Lazy Load: โหลดกราฟเฉพาะตอนกดเข้ามาดูครั้งแรก
+    const iframe = document.getElementById("lookerPC");
+    if (iframe && !iframe.src) {
+      iframe.src = iframe.getAttribute("data-src");
+    }
+
     currentViewPC = "dashboard";
-
   }else{
-
     dash.style.display = "none";
     fifo.style.display = "block";
 
@@ -2757,7 +2774,6 @@ function togglePCView(){
     btn.classList.remove("dashboard");
 
     currentViewPC = "fifo";
-
   }
 }
 
