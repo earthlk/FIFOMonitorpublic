@@ -1614,16 +1614,54 @@ async function callGAS(actionName, payloadData = {}) {
 }
 
 // ==========================================================
-// 🚀 3. แปลงระบบโหลดข้อมูลให้เป็น Async/Await (ฝั่ง Mobile/รวม)
+// 🧠 ระบบจัดการ Zone (D Big & D NB)
+// ==========================================
+function getDZoneType(zoneStr) {
+  const z = String(zoneStr || '').trim().toUpperCase();
+  if (z.charAt(0) !== 'D') return null;
+
+  const suffix = z.slice(1).trim();
+  if (!suffix) return 'D Big'; // ถ้าเป็น D ตัวเดียว ให้ถือเป็น D Big
+
+  const firstChar = suffix.charAt(0);
+  // ถ้าตัวอักษรที่ตามมาเป็น A-Z ให้เป็น D NB นอกนั้นเป็น D Big
+  if (/[A-Z]/.test(firstChar)) {
+    return 'D NB';
+  } else {
+    return 'D Big';
+  }
+}
+
+function isMatchZone(zoneStr, targetPrefix) {
+  const z = String(zoneStr || '').trim().toUpperCase();
+  if (!z) return false;
+
+  // สำหรับ D Big หรือ D NB ให้ใช้ฟังก์ชันตรวจสอบเจาะจง
+  if (targetPrefix === 'D Big' || targetPrefix === 'D NB') {
+     return getDZoneType(z) === targetPrefix;
+  }
+
+  // สำหรับ Zone ปกติ A, B, C...
+  return z.charAt(0) === targetPrefix.charAt(0);
+}
+
+
 // ==========================================================
+// 🚀 3. ระบบโหลดข้อมูลให้เป็น Async/Await
+// ==========================================
 async function loadData() {
   const date = document.getElementById('dateInput').value;
   showSkeleton();
   showLoading('กำลังโหลด FIFO...');
   try {
-    const data = await callGAS("getFIFOData", { date: date, prefix: currentPrefix });
+    const apiPrefix = currentPrefix.charAt(0); // เอาเฉพาะอักษรตัวแรกส่งไปเซิร์ฟเวอร์
+    const data = await callGAS("getFIFOData", { date: date, prefix: apiPrefix });
     fifoRawCache = data || [];
     fifoViewList = data || [];
+    
+    fifoCacheState.date = date;
+    fifoCacheState.zone = apiPrefix;
+
     applyFilterSort();
   } catch (e) {
     showToast(e.message || 'เกิดข้อผิดพลาด', 'warn');
@@ -1642,7 +1680,6 @@ async function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays
   const date = getCurrentDate();
   if (!date) { showToast("ไม่พบวันที่", "warn"); window.snLoading = false; return; }
 
-  // (ตั้งค่า Header UI ย่อไว้...)
   showSNLoading();
   showSNSkeleton();
   new bootstrap.Modal(document.getElementById('snModal')).show();
@@ -1668,8 +1705,10 @@ async function onDateOrZoneChange() {
   const date = getCurrentDate();
   if (!date) { showToast("ไม่พบวันที่", "warn"); return; }
   
-  if (!needReloadFIFO(date, currentPrefix)) {
-    applyFilterSort(); return;
+  const apiPrefix = currentPrefix.charAt(0); // ถ้าเลือก D Big / D NB เซิร์ฟเวอร์จะโหลด D มาทั้งหมด
+  
+  if (!needReloadFIFO(date, apiPrefix)) {
+    applyFilterSort(); return; // ⚡ เปลี่ยนสลับ D Big / D NB ได้ทันทีแบบไม่ต้องรอโหลด!
   }
 
   showSkeleton();
@@ -1677,17 +1716,20 @@ async function onDateOrZoneChange() {
   setProgress(10);
   
   try {
-    await callGAS("preloadMainzone", { dateStr: date, mainzone: currentPrefix });
-    const chunks = await callGAS("getSNCache", { date: date, mainzone: currentPrefix });
+    await callGAS("preloadMainzone", { dateStr: date, mainzone: apiPrefix });
+    const chunks = await callGAS("getSNCache", { date: date, mainzone: apiPrefix });
     snIndexMap = mergeSNCache(chunks || []);
     setProgress(60);
     document.getElementById('loadingText').innerText = "โหลด FIFO Data...";
     
-    const data = await callGAS("getFIFOData", { date: date, prefix: currentPrefix });
+    const data = await callGAS("getFIFOData", { date: date, prefix: apiPrefix });
     fifoRawCache = data || [];
     fifoViewList = data || [];
+    
+    // อัปเดต State เป็น D ไม่ใช่ D Big เพื่อให้ Cache จำก้อนรวม
     fifoCacheState.date = date;
-    fifoCacheState.zone = currentPrefix;
+    fifoCacheState.zone = apiPrefix;
+    
     applyFilterSort();
     setProgress(100);
   } catch(e) {
@@ -1712,22 +1754,38 @@ async function searchSNInSheet(sn) {
 }
 
 async function moveToZoneAndSearchCode(zone, code) {
-  const mainzone = String(zone||'').trim().charAt(0).toUpperCase();
-  currentPrefix = mainzone;
+  let displayZone = String(zone||'').trim().charAt(0).toUpperCase();
+  const apiPrefix = displayZone;
+
+  if (apiPrefix === 'D') {
+    displayZone = getDZoneType(zone);
+  }
+
+  currentPrefix = displayZone;
+  unifiedZone = displayZone; // อัปเดต Modal state ด้วย
   const date = getCurrentDate();
   
+  // อัปเดตหน้าตาปุ่ม UI ทันที
+  const barZone = document.getElementById("barZone");
+  const pcbarZone = document.getElementById("pcBarZone");
+  if(barZone) barZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${displayZone} <span class="filter-icon">▾</span>`;
+  if(pcbarZone) pcbarZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${displayZone} <span class="filter-icon">▾</span>`;
+
   showSkeleton();
-  showLoading("โหลดข้อมูล Zone " + mainzone + " ...");
+  showLoading("โหลดข้อมูล Zone " + displayZone + " ...");
   try {
-    await callGAS("preloadMainzone", { dateStr: date, mainzone: mainzone });
-    const data = await callGAS("getFIFOData", { date: date, prefix: currentPrefix });
+    await callGAS("preloadMainzone", { dateStr: date, mainzone: apiPrefix });
+    const data = await callGAS("getFIFOData", { date: date, prefix: apiPrefix });
     fifoRawCache = data || [];
     fifoViewList = data || [];
+    
+    fifoCacheState.date = date;
+    fifoCacheState.zone = apiPrefix;
     
     const search = document.getElementById("searchInput");
     if(search) search.value = code;
     applyFilterSort();
-    showToast("ย้ายไป Zone " + mainzone + " แล้ว", "ok");
+    showToast("ย้ายไป Zone " + displayZone + " แล้ว", "ok");
   } catch(e) {
     showToast("เกิดข้อผิดพลาดในการโหลดโซน", "warn");
   } finally {
@@ -1736,7 +1794,7 @@ async function moveToZoneAndSearchCode(zone, code) {
 }
 
 // ==========================================================
-// 🚀 4. แปลงระบบ Upload File ให้ใช้ fetch (รองรับระบบเก่า)
+// 🚀 4. แปลงระบบ Upload File ให้ใช้ fetch 
 // ==========================================================
 async function runGoogleScript(funcName, ...args) {
   let payload = {};
@@ -1760,12 +1818,9 @@ function formatDateDMY(dateStr){
 }
 
 function setModalDateDefault(){
-
   const d = new Date();
   d.setDate(d.getDate()-1);
-
   const iso = d.toISOString().slice(0,10);
-
   const modal = document.getElementById("modalDate");
   if(modal){
     modal.value = iso;
@@ -1773,7 +1828,6 @@ function setModalDateDefault(){
 }
 
 /* ===== Auto Switch Mobile / PC ===== */
-
 window.addEventListener("load", detectDeviceLayout);
 window.addEventListener("resize", detectDeviceLayout);
 
@@ -1783,27 +1837,15 @@ function isMobileDevice(){
 }
 
 function detectDeviceLayout(){
-
   const isMobileUA = isMobileDevice();
-
   document.getElementById("searchInput").value = "";
   document.getElementById("pcSearch").value = "";
 
-  // Mobile device = mobile layout เสมอ
-  if(isMobileUA){
+  if(isMobileUA || window.innerWidth < 992){
     showMobile();
     applyFilterSort();
     return;
   }
-
-  // PC แต่จอเล็ก → mobile layout
-  if(window.innerWidth < 992){
-    showMobile();
-    applyFilterSort();
-    return;
-  }
-
-  // PC ปกติ
   showPC();
   pcApplyFilter();
 }
@@ -1811,7 +1853,6 @@ function detectDeviceLayout(){
 function showMobile(){
   const m = document.getElementById("mobileLayout");
   const p = document.getElementById("pcLayout");
-
   if(m) m.style.display="block";
   if(p) p.style.display="none";
 }
@@ -1819,17 +1860,12 @@ function showMobile(){
 function showPC(){
   const m = document.getElementById("mobileLayout");
   const p = document.getElementById("pcLayout");
-
   if(p) p.style.display="block";
   if(m) m.style.display="none";
 }
 
-// ข้อมูลดิบจาก server (ต่อ zone + date)
 let fifoRawCache = [];
-
-// ข้อมูลที่ผ่าน filter (ใช้ render card)
 let fifoViewList = [];
-
 let snCache=[];
 let snIndexMap = {};
 
@@ -1837,9 +1873,9 @@ let sortMode='notfifo';
 let currentPrefix='A';
 let snRenderIndex = 0;
 const SN_CHUNK = 200;
-let snViewMode = "normal"; // normal | rc
+let snViewMode = "normal"; 
 let snRCGroupCache = null;
-const SN_RENDER_CHUNK = 100;   // ปรับได้
+const SN_RENDER_CHUNK = 100;   
 
 let fifoCacheState = {
   date: null,
@@ -1854,121 +1890,95 @@ function mergeSNCache(chunks){
   return index;
 }
 
-function needReloadFIFO(date, zone){
-  if(!fifoCacheState.date) return true;
-  if(!fifoCacheState.zone) return true;
-
+function needReloadFIFO(date, apiPrefix){
+  if(!fifoCacheState.date || !fifoCacheState.zone) return true;
   return (
     fifoCacheState.date !== date ||
-    fifoCacheState.zone !== zone
+    fifoCacheState.zone !== apiPrefix
   );
 }
 
 let startY=0;
 const snModal=document.getElementById('snModal');
-
-snModal.addEventListener('touchstart',e=>{
-  startY=e.touches[0].clientY;
-});
-
-snModal.addEventListener('touchmove',e=>{
-  const diff=e.touches[0].clientY-startY;
-  if(diff>140){
-    closeSNModal();
-  }
-});
-
+if(snModal) {
+  snModal.addEventListener('touchstart',e=>{ startY=e.touches[0].clientY; });
+  snModal.addEventListener('touchmove',e=>{
+    if(e.touches[0].clientY-startY > 140) closeSNModal();
+  });
+}
 let startX=0;
-
-document.getElementById('snModal').addEventListener('touchstart',e=>{
-  startX=e.touches[0].clientX;
-});
-
-document.getElementById('snModal').addEventListener('touchend',e=>{
-  const endX=e.changedTouches[0].clientX;
-  if(endX-startX>120){
-    closeSNModal();
-  }
-});
-
+if(snModal) {
+  snModal.addEventListener('touchstart',e=>{ startX=e.touches[0].clientX; });
+  snModal.addEventListener('touchend',e=>{
+    if(e.changedTouches[0].clientX-startX > 120) closeSNModal();
+  });
+}
 
 document.addEventListener("DOMContentLoaded",()=>{
   initDate();
-  //autoScroll();
 });
 
 function autoScroll(){
-
   const modalBody = document.querySelector('#snModal .modal-body');
-
   if(!modalBody) return;
-
   modalBody.addEventListener('scroll',function(){
-
     if(snRenderIndex >= snCache.length) return;
-
     if(this.scrollTop + this.clientHeight >= this.scrollHeight - 80){
       renderSNTableAuto();
     }
-
   });
-
 }
 
 function initDate(){
-
   const d = new Date();
   d.setDate(d.getDate()-1);
+  const iso = d.toISOString().slice(0,10); 
 
-  const iso = d.toISOString().slice(0,10); // yyyy-mm-dd
-
-  // set barDate
   const bar = document.getElementById("barDate");
   const modalDate = document.getElementById("modalDate");
   const pcbar = document.getElementById("pcBarDate");
-  if(bar){
-    bar.innerText = "📅 " + formatDateDMY(iso);
-  }
-
-  if(pcbar){
-    pcbar.innerText = "📅 " + formatDateDMY(iso);
-  }
-
-  if(modalDate){
-    modalDate.value = iso;
-  }
-
+  if(bar) bar.innerText = "📅 " + formatDateDMY(iso);
+  if(pcbar) pcbar.innerText = "📅 " + formatDateDMY(iso);
+  if(modalDate) modalDate.value = iso;
 }
 
 function setProgress(p){
-  document.getElementById('loadingBar').style.width = p+"%";
+  const bar = document.getElementById('loadingBar');
+  if(bar) bar.style.width = p+"%";
 }
 
 function showLoading(t){
-  document.getElementById('loadingOverlay').style.display='flex';
+  const overlay = document.getElementById('loadingOverlay');
+  if(overlay) overlay.style.display='flex';
   if(t) document.getElementById('loadingText').innerText=t;
   setProgress(0);
 }
 
 function hideLoading(){
-  document.getElementById('loadingOverlay').style.display='none';
+  const overlay = document.getElementById('loadingOverlay');
+  if(overlay) overlay.style.display='none';
 }
 
 function showSNLoading(){
-  document.getElementById('snLoadingBox').style.display='block';
-  document.getElementById('snLoadingBar').style.width='0%';
+  const b = document.getElementById('snLoadingBox');
+  const bar = document.getElementById('snLoadingBar');
+  if(b) b.style.display='block';
+  if(bar) bar.style.width='0%';
 }
 
 function setSNProgress(p){
-  document.getElementById('snLoadingBar').style.width=p+"%";
+  const bar = document.getElementById('snLoadingBar');
+  if(bar) bar.style.width=p+"%";
 }
 
 function hideSNLoading(){
-  document.getElementById('snLoadingBox').style.display='none';
+  const b = document.getElementById('snLoadingBox');
+  if(b) b.style.display='none';
 }
 
 function showSNSkeleton(){
   const tb=document.getElementById('snTable');
+  if(!tb) return;
   tb.innerHTML='';
   for(let i=0;i<10;i++){
     tb.innerHTML+=`<tr><td colspan="3"><div class="skeleton-row"></div></td></tr>`;
@@ -1977,17 +1987,14 @@ function showSNSkeleton(){
 
 function showSkeleton(count=8){
   const box=document.getElementById('fifoList');
+  if(!box) return;
   box.innerHTML='';
   for(let i=0;i<count;i++){
     box.innerHTML+=`<div class='skeleton-card'>
       <div class='skel-line lg'></div>
       <div class='skel-line md'></div>
       <div class='skel-line sm'></div>
-      <div class='skel-row'>
-        <div class='skel-box'></div>
-        <div class='skel-box'></div>
-        <div class='skel-box'></div>
-      </div>
+      <div class='skel-row'><div class='skel-box'></div><div class='skel-box'></div><div class='skel-box'></div></div>
     </div>`;
   }
 }
@@ -1995,60 +2002,30 @@ function showSkeleton(count=8){
 function getCurrentDate(){
   const main = document.getElementById('dateInput');
   if(main && main.value) return main.value;
-
   const modal = document.getElementById('modalDate');
   if(modal && modal.value) return modal.value;
-
   return null;
 }
-
-/* ===== Prefix ===== */
-
-function setPrefix(p, btn){
-  currentPrefix = p;
-
-  document.querySelectorAll('.prefix-btn')
-    .forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-
-  if(isMobileDevice() || window.innerWidth < 992){
-    onDateOrZoneChange();   // mobile flow
-  }
-
-  if(!isMobileDevice() && window.innerWidth >= 992){
-    pcOnDateOrZoneChange(); // pc flow
-  }
-}
-
-/* ===== Sort ===== */
 
 function setSort(mode){
   sortMode=mode;
   applyFilterSort();
 }
 
-/* ===== Filter + Sort ===== */
-
 function getSearchKeyword(){
-  // mobile
   const m = document.getElementById("searchInput");
   if(m && m.value) return m.value.toLowerCase();
-
-  // pc
   const p = document.getElementById("pcSearch");
   if(p && p.value) return p.value.toLowerCase();
-
   return "";
 }
 
 function applyFilterSort(){
-
   const q = getSearchKeyword();
 
+  // ⚡ ใช้ฟังก์ชัน isMatchZone ดึงข้อมูลใหม่
   let list=fifoViewList.filter(r=>{
-    const z=String(r.zone||'').trim();
-    if(!z) return false;
-    return z.charAt(0)===currentPrefix;
+    return isMatchZone(r.zone, currentPrefix);
   });
 
   if(q){
@@ -2056,48 +2033,32 @@ function applyFilterSort(){
       const code=String(r.code||'').toLowerCase();
       const zone=String(r.zone||'').toLowerCase();
       const name=String(r.name||'').toLowerCase();
-
       if(code.startsWith(q) || zone.startsWith(q)) return true;
       if(name.includes(q)) return true;
       return false;
     });
   }
 
-  if(sortMode==='notfifo')
-    list.sort((a,b)=>(b.notfifo||0)-(a.notfifo||0));
-
-  if(sortMode==='notfifoMonth')
-    list.sort((a,b)=>(b.notfifoMonth||0)-(a.notfifoMonth||0));
-
-  if(sortMode==='repeatDays')
-    list.sort((a,b)=>(b.repeatDays||0)-(a.repeatDays||0));
-
-  if(sortMode==='zoneAsc')
-    list.sort((a,b)=>String(a.zone||'').localeCompare(String(b.zone||'')));
-
-  if(sortMode==='zoneDesc')
-    list.sort((a,b)=>String(b.zone||'').localeCompare(String(a.zone||'')));
+  if(sortMode==='notfifo') list.sort((a,b)=>(b.notfifo||0)-(a.notfifo||0));
+  if(sortMode==='notfifoMonth') list.sort((a,b)=>(b.notfifoMonth||0)-(a.notfifoMonth||0));
+  if(sortMode==='repeatDays') list.sort((a,b)=>(b.repeatDays||0)-(a.repeatDays||0));
+  if(sortMode==='zoneAsc') list.sort((a,b)=>String(a.zone||'').localeCompare(String(b.zone||'')));
+  if(sortMode==='zoneDesc') list.sort((a,b)=>String(b.zone||'').localeCompare(String(a.zone||'')));
 
   renderCards(list);
 }
 
-/* ===== Render ===== */
-
 function renderCards(data){
-
   const box=document.getElementById('fifoList');
+  if(!box) return;
   box.innerHTML='';
 
   if(!data || !data.length){
-    box.innerHTML=`
-      <div class="card-item text-center text-muted">
-        ไม่พบข้อมูล FIFO
-      </div>`;
+    box.innerHTML=`<div class="card-item text-center text-muted">ไม่พบข้อมูล FIFO</div>`;
     return;
   }
 
   data.forEach(r=>{
-
     const code = r.code || '';
     const name = r.name || '';
     const zone = r.zone || '';
@@ -2107,144 +2068,86 @@ function renderCards(data){
     const notfifo = r.notfifo ?? 0;
     const repeatDays = r.repeatDays ?? 0;
     const notfifoMonth = r.notfifoMonth ?? 0;
-
     const urgentClass = getUrgentClass(zone, notfifo, repeatDays);
 
-    box.innerHTML+=`<div class='card-item ${urgentClass}'
-      onclick="openSN('${esc(code)}','${esc(name)}','${esc(zone)}',${instock},${sale},${fifo},${notfifo},${repeatDays},${notfifoMonth})">
-
-
+    box.innerHTML+=`<div class='card-item ${urgentClass}' onclick="openSN('${esc(code)}','${esc(name)}','${esc(zone)}',${instock},${sale},${fifo},${notfifo},${repeatDays},${notfifoMonth})">
       <div class='code'>${code}</div>
       <div class='name'>${name}</div>
-
-      <div class='meta'>
-        Zone: <span class='badge badge-zone text-white'>${zone}</span>
-        | Instock: <span class='badge badge-instock text-white'> ${instock}
-      </div>
-
-      <div class='meta'>
-        จำนวนวันซ้ำ:
-        <span class='badge badge-month text-white'>${repeatDays}</span>
-        | NotFIFO รวมเดือน:
-        <span class='badge badge-notfifo text-white'>${notfifoMonth}</span>
-      </div>
-
+      <div class='meta'>Zone: <span class='badge badge-zone text-white'>${zone}</span> | Instock: <span class='badge badge-instock text-white'> ${instock}</div>
+      <div class='meta'>จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${repeatDays}</span> | NotFIFO รวมเดือน: <span class='badge badge-notfifo text-white'>${notfifoMonth}</span></div>
       <div class='stat-row'>
         <div>Sale: <span class='badge badge-sale text-white'>${sale}</div>
         <div>FIFO: <span class='badge badge-fifo text-white'>${fifo}</div>
-        <div>
-          <span class='badge badge-notfifo text-white'>
-            Not FIFO: ${notfifo}
-          </span>
-        </div>
+        <div><span class='badge badge-notfifo text-white'>Not FIFO: ${notfifo}</span></div>
       </div>
-
     </div>`;
   });
 }
 
-/* ===== SN ===== */
-
-function showNormalSN(){
-  snViewMode = "normal";
-}
+function showNormalSN(){ snViewMode = "normal"; }
 
 function renderSNTableAuto(){
-
   const tb=document.getElementById('snTable');
+  if(!tb) return;
   const end = Math.min(snRenderIndex + SN_CHUNK, snCache.length);
 
   for(let i=snRenderIndex;i<end;i++){
     const r=snCache[i];
-
-    const cls =
-      r.status==='SALE' ? 'tr-sale' :
-      r.status==='RESERVE' ? 'tr-reserve' :
-      'tr-stock';
-
-    tb.innerHTML+=`<tr class='${cls}'>
-      <td>${r.sn}</td>
-      <td>${r.day}</td>
-      <td>${r.status}</td>
-    </tr>`;
+    const cls = r.status==='SALE' ? 'tr-sale' : r.status==='RESERVE' ? 'tr-reserve' : 'tr-stock';
+    tb.innerHTML+=`<tr class='${cls}'><td>${r.sn}</td><td>${r.day}</td><td>${r.status}</td></tr>`;
   }
-
   snRenderIndex = end;
 }
 
 function closeSNModal(){
-  bootstrap.Modal.getInstance(document.getElementById('snModal')).hide();
+  const modal = bootstrap.Modal.getInstance(document.getElementById('snModal'));
+  if(modal) modal.hide();
 }
 
 function showToast(msg,type='warn'){
   const box=document.getElementById('toastBox');
+  if(!box) return;
   const d=document.createElement('div');
   d.className='toast '+type;
   d.innerText=msg;
   box.appendChild(d);
-
   setTimeout(()=>{d.remove()},4000);
 }
-
-/* =====================================================
-   Unified Date + Mainzone Selector (Production)
-===================================================== */
 
 let unifiedZone = currentPrefix || 'A';
 let filterModalInstance = null;
 
-/* ===== Open Modal ===== */
 function openFilterModal(){
-
   if(!filterModalInstance){
-    filterModalInstance = new bootstrap.Modal(
-      document.getElementById('filterModal')
-    );
+    filterModalInstance = new bootstrap.Modal(document.getElementById('filterModal'));
   }
-
-  setModalDateDefault();   // 👈 ตรงนี้
-
+  setModalDateDefault();
   filterModalInstance.show();
 }
 
-/* ===== Pick Zone ===== */
 function pickZone(z,el){
   unifiedZone = z;
-  document.querySelectorAll('.zone-btn')
-    .forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.zone-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
 }
 
-/* ===== Apply Filter ===== */
 function applyUnifiedFilter(){
-
   const modalDateEl = document.getElementById('modalDate');
   if(!modalDateEl || !modalDateEl.value){
-    showToast("กรุณาเลือกวันที่","warn");
-    return;
+    showToast("กรุณาเลือกวันที่","warn"); return;
   }
-
   const d = modalDateEl.value;
   currentPrefix = unifiedZone;
 
   const barDate=document.getElementById('barDate');
-  if(barDate) barDate.innerText="📅 "+formatDateDMY(d);
-
   const pcbarDate=document.getElementById('pcBarDate');
+  if(barDate) barDate.innerText="📅 "+formatDateDMY(d);
   if(pcbarDate) pcbarDate.innerText="📅 "+formatDateDMY(d);
 
   const barZone=document.getElementById('barZone');
   const pcbarZone=document.getElementById('pcBarZone');
-
-  if(barZone){
-    barZone.innerHTML =
-      `<i class="bi bi-geo-fill"></i> ${unifiedZone} <span class="filter-icon">▾</span>`;
-  }
-
-  if(pcbarZone){
-    pcbarZone.innerHTML =
-      `<i class="bi bi-geo-fill"></i> ${unifiedZone} <span class="filter-icon">▾</span>`;
-  }
+  if(barZone) barZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${unifiedZone} <span class="filter-icon">▾</span>`;
+  if(pcbarZone) pcbarZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${unifiedZone} <span class="filter-icon">▾</span>`;
 
   const mainDate=document.getElementById('dateInput');
   if(mainDate) mainDate.value=d;
@@ -2252,63 +2155,46 @@ function applyUnifiedFilter(){
   if(filterModalInstance) filterModalInstance.hide();
 
   if(isMobileDevice() || window.innerWidth < 992){
-    onDateOrZoneChange();   // mobile flow
-  }
-
-  if(!isMobileDevice() && window.innerWidth >= 992){
-    pcOnDateOrZoneChange(); // pc flow
+    onDateOrZoneChange(); 
+  }else{
+    pcOnDateOrZoneChange(); 
     renderZoneRule(currentPrefix);
   }
 }
 
-/* ===== Swipe Close Modal ===== */
 let unifiedStartY = 0;
 const filterModalEl = document.getElementById('filterModal');
+if(filterModalEl) {
+  filterModalEl.addEventListener('touchstart',e=>{ unifiedStartY = e.touches[0].clientY; });
+  filterModalEl.addEventListener('touchmove',e=>{
+    if(e.touches[0].clientY - unifiedStartY > 140){
+      bootstrap.Modal.getInstance(filterModalEl)?.hide();
+    }
+  });
+}
 
-filterModalEl.addEventListener('touchstart',e=>{
-  unifiedStartY = e.touches[0].clientY;
-});
-
-filterModalEl.addEventListener('touchmove',e=>{
-  const diff = e.touches[0].clientY - unifiedStartY;
-  if(diff > 140){
-    bootstrap.Modal.getInstance(filterModalEl)?.hide();
-  }
-});
-
-/* ===== Init Unified Bar ===== */
 document.addEventListener("DOMContentLoaded",()=>{
-
-  const d = document.getElementById("dateInput").value;
-
-  document.getElementById('barDate').innerText = "📅 "+formatDateDMY(d);
-  document.getElementById('barZone').innerHTML =
-    `<i class="bi bi-geo-fill"></i> ${currentPrefix} <span class="filter-icon">▾</span>`;
-
-  document.getElementById('pcbarDate').innerText = "📅 "+formatDateDMY(d);
-  document.getElementById('pcbarZone').innerHTML =
-    `<i class="bi bi-geo-fill"></i> ${currentPrefix} <span class="filter-icon">▾</span>`;
-
+  const mainDate = document.getElementById("dateInput");
+  const d = mainDate ? mainDate.value : '';
+  const barDate = document.getElementById('barDate');
+  const pcbarDate = document.getElementById('pcbarDate');
+  if(barDate && d) barDate.innerText = "📅 "+formatDateDMY(d);
+  if(pcbarDate && d) pcbarDate.innerText = "📅 "+formatDateDMY(d);
 });
 
 function toggleRCView(isRC){
-
   showToggleLoading();
-
   setTimeout(()=>{
-
     snViewMode = isRC ? "rc" : "normal";
     renderSNByMode();
-
     hideToggleLoading();
-
-  }, 120);   // delay สั้น ๆ ให้ user รู้สึกว่ากำลังโหลด
+  }, 120);
 }
 
 function renderSNByMode(){
   const tb=document.getElementById("snTable");
+  if(!tb) return;
   tb.innerHTML="";
-
   if(snViewMode==="normal"){
     snRenderIndex=0;
     renderSNTableAuto();
@@ -2318,116 +2204,72 @@ function renderSNByMode(){
 }
 
 function calcRCDate(barDateStr, age){
-
   if(!barDateStr || !age) return '';
-
-  // barDateStr = yyyy-mm-dd
   const p = barDateStr.split("-");
   const d = new Date(p[0], p[1]-1, p[2]);
-
   d.setDate(d.getDate() - age);
-
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth()+1).padStart(2,'0');
   const dd = String(d.getDate()).padStart(2,'0');
-
   return `${dd}/${mm}/${yyyy}`;
 }
 
 function renderSNGroupByRC(){
-
   const tb=document.getElementById("snTable");
+  if(!tb) return;
   tb.innerHTML="";
-
   const map = buildRCGroup();
   const barDateRaw = getCurrentDate();
-
   const frag = document.createDocumentFragment();
 
-  Object.entries(map)
-  .sort((a,b)=>{
+  Object.entries(map).sort((a,b)=>{
     const dayA = Number(a[1][0].day) || 0;
     const dayB = Number(b[1][0].day) || 0;
     return dayB - dayA; 
-  })
-  .forEach((entry) => {
-    // entry[0] คือ Key (ชื่อ RC)
-    // entry[1] คือ Value (Array ของข้อมูล SN)
+  }).forEach((entry) => {
     const rc = entry[0];
     const list = entry[1]; 
-
-    // ✅ คราวนี้ list จะถูก define แน่นอน
     const key = String(rc).replace(/\W/g,'');
-
     const rcDay = Number(list[0].day) || 0;
     const rcDate = calcRCDate(barDateRaw, rcDay);
 
     let saleCount = 0;
-    list.forEach(r => {
-      if(r.status === "SALE") saleCount++;
-    });
+    list.forEach(r => { if(r.status === "SALE") saleCount++; });
 
     const head = document.createElement("tr");
     head.className = "table-primary rc-header";
-    head.innerHTML = `
-      <td colspan="3" class="fw-bold">
-        📦 ${rc} (${list.length} SN)
-        <div class="small text-muted mt-1">
-          วันที่ RC: ${rcDate} |
-          อายุ: ${rcDay} วัน |
-          SALE: ${saleCount}
-        </div>
-        <span class="float-end">▾</span>
-      </td>
-    `;
+    head.innerHTML = `<td colspan="3" class="fw-bold">📦 ${rc} (${list.length} SN)<div class="small text-muted mt-1">วันที่ RC: ${rcDate} | อายุ: ${rcDay} วัน | SALE: ${saleCount}</div><span class="float-end">▾</span></td>`;
     head.onclick = () => toggleRC(key);
-
     frag.appendChild(head);
 
     list.forEach(r => {
-      const cls =
-        r.status === 'SALE' ? 'tr-sale' :
-        r.status === 'RESERVE' ? 'tr-reserve' : 'tr-stock';
-
+      const cls = r.status === 'SALE' ? 'tr-sale' : r.status === 'RESERVE' ? 'tr-reserve' : 'tr-stock';
       const row = document.createElement("tr");
       row.className = `rc-row rc-${key} ${cls}`;
       row.style.display = "none";
-      row.innerHTML = `
-        <td>${r.sn}</td>
-        <td>${r.day}</td>
-        <td>${r.status}</td>
-      `;
+      row.innerHTML = `<td>${r.sn}</td><td>${r.day}</td><td>${r.status}</td>`;
       frag.appendChild(row);
     });
   });
-
   tb.appendChild(frag);
 }
 
 function buildRCGroup(){
-
   if(snRCGroupCache) return snRCGroupCache;
-
   const map={};
-
   snCache.forEach(r=>{
     const rc = r.rc || "ไม่ระบุ RC";
     if(!map[rc]) map[rc]=[];
     map[rc].push(r);
   });
-
   snRCGroupCache = map;
   return map;
 }
 
-function toggleRC(rc){
-
-  const key = rc.replace(/\W/g,'');
-
-  document.querySelectorAll(".rc-"+key)
-    .forEach(r=>{
-      r.style.display = r.style.display==="none" ? "" : "none";
-    });
+function toggleRC(key){
+  document.querySelectorAll(".rc-"+key).forEach(r=>{
+    r.style.display = r.style.display==="none" ? "" : "none";
+  });
 }
 
 function showToggleLoading(){
@@ -2441,264 +2283,165 @@ function hideToggleLoading(){
 }
 
 function openSNInput(){
-  new bootstrap.Modal(
-    document.getElementById("snSearchModal")
-  ).show();
-
+  new bootstrap.Modal(document.getElementById("snSearchModal")).show();
   setTimeout(()=>{
-    document.getElementById("snInput").focus();
+    const el = document.getElementById("snInput");
+    if(el) el.focus();
   },300);
 }
 
 function confirmSearchSN(){
-
   const input = document.getElementById("snInput");
   const sn = input.value;
-
-  if(sn.length !== 10){
-    showToast("SN ต้องเป็นตัวเลข 10 หลักเท่านั้น","warn");
-    return;
-  }
-
-  bootstrap.Modal.getInstance(
-    document.getElementById("snSearchModal")
-  ).hide();
-
+  if(sn.length !== 10){ showToast("SN ต้องเป็นตัวเลข 10 หลักเท่านั้น","warn"); return; }
+  bootstrap.Modal.getInstance(document.getElementById("snSearchModal")).hide();
   searchSNController(sn);
-
-  // ===== RESET INPUT =====
-  input.value = "";
-  input.focus();
+  input.value = ""; input.focus();
 }
 
-function normalizeSN(sn){
-  return String(sn || '')
-    .replace(/\D/g,'')
-    .padStart(10,'0');
-}
+function normalizeSN(sn){ return String(sn || '').replace(/\D/g,'').padStart(10,'0'); }
 
 function searchSNController(sn){
-
   const key = normalizeSN(sn);
-
-  // 1) ค้นใน cache ก่อน
   const cacheResult = searchSNInCache(key);
-
-  if(cacheResult){
-    handleSNFound(cacheResult,false);
-    return;
-  }
-
-  // 2) ไม่เจอใน cache
-  showAppConfirm(
-    "ไม่พบ SN ใน Zone และวันที่เลือก",
-    "ต้องการค้นใน Zone อื่นหรือไม่?",
-    ()=> searchSNInSheet(key)
-  );
-
+  if(cacheResult){ handleSNFound(cacheResult,false); return; }
+  showAppConfirm("ไม่พบ SN ใน Zone และวันที่เลือก", "ต้องการค้นใน Zone อื่นหรือไม่?", ()=> searchSNInSheet(key));
 }
 
 function searchSNInCache(sn){
   const key = normalizeSN(sn);
-
   if(!key) return null;
-
   return snIndexMap[key] || null;
 }
 
 function handleSNFound(r){
-
   const zone = r.zone;
   const code = r.code;
 
-  document.getElementById("searchInput").value = code;
-  document.getElementById("pcSearch").value = code;
+  const inputMobile = document.getElementById("searchInput");
+  const inputPC = document.getElementById("pcSearch");
+  if(inputMobile) inputMobile.value = code;
+  if(inputPC) inputPC.value = code;
 
   applyFilterSort();
   pcApplyFilter();
 
-  if(zone.charAt(0) === currentPrefix){
+  if(isMatchZone(zone, currentPrefix)){
     showToast("SN อยู่ใน Zone ปัจจุบันแล้ว","ok");
     return;
   }
 
-  showAppConfirm(
-    `พบ SN อยู่ใน Zone ${zone}`,
-    "ต้องการย้ายไป Zone นี้หรือไม่?",
-    ()=> moveToZoneAndSearchCode(zone,code)
-  );
+  showAppConfirm(`พบ SN อยู่ใน Zone ${zone}`, "ต้องการย้ายไป Zone นี้หรือไม่?", ()=> moveToZoneAndSearchCode(zone,code));
 }
 
 let appConfirmCallback = null;
 
 function showAppConfirm(title,msg,onYes){
-
   const t = document.getElementById("appConfirmTitle");
   const m = document.getElementById("appConfirmMsg");
   const modal = document.getElementById("appConfirmModal");
 
   if(!t || !m || !modal){
-    alert(title+"\n\n"+msg);
-    if(confirm("ดำเนินการต่อหรือไม่?")){
-      onYes();
-    }
+    if(confirm(title+"\n\n"+msg)){ onYes(); }
     return;
   }
-
-  t.innerText = title;
-  m.innerText = msg;
-
+  t.innerText = title; m.innerText = msg;
   appConfirmCallback = onYes;
-
   new bootstrap.Modal(modal).show();
 }
 
 function appConfirmYes(){
-
-  bootstrap.Modal.getInstance(
-    document.getElementById("appConfirmModal")
-  ).hide();
-
-  if(appConfirmCallback){
-    appConfirmCallback();
-  }
-
+  bootstrap.Modal.getInstance(document.getElementById("appConfirmModal")).hide();
+  if(appConfirmCallback){ appConfirmCallback(); }
   appConfirmCallback = null;
 }
 
 function appConfirmNo(){
-
-  bootstrap.Modal.getInstance(
-    document.getElementById("appConfirmModal")
-  ).hide();
-
+  bootstrap.Modal.getInstance(document.getElementById("appConfirmModal")).hide();
   appConfirmCallback = null;
 }
 
 function onSNInputChange(el){
-
-  // เอาเฉพาะตัวเลข
   let v = el.value.replace(/\D/g,'');
-
-  // จำกัด 10 หลัก
   if(v.length > 10) v = v.slice(0,10);
-
   el.value = v;
-
   const btn = document.getElementById("snSearchBtn");
-
-  if(btn){
-    btn.disabled = v.length !== 10;
-  }
+  if(btn){ btn.disabled = v.length !== 10; }
 }
 
-let barcodeStream = null;
-let barcodeDetector = null;
-let zxingReader = null;
-let scanInterval = null;
+let barcodeStream = null; let barcodeDetector = null; let zxingReader = null; let scanInterval = null;
 
 async function startBarcodeScan() {
   const video = document.getElementById("barcodeVideo");
   const barcodeBox = document.getElementById("barcodeBox");
-
+  if(!barcodeBox) return;
   barcodeBox.classList.remove("d-none");
-
-  // 🍎 ตั้งค่าบังคับสำหรับ iOS ให้ยอมเล่นวิดีโอแบบไม่เด้งเต็มจอ
   video.setAttribute("playsinline", "true");
-  video.playsInline = true;
-  video.autoplay = true;
-  video.muted = true;
+  video.playsInline = true; video.autoplay = true; video.muted = true;
 
   try {
-    // ลองเรียกกล้องสด (Live Camera)
-    barcodeStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" },
-      audio: false
-    });
-
+    barcodeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
     video.srcObject = barcodeStream;
     await video.play();
-
     barcodeBox.classList.add("fullscreen");
 
-    // เตรียม ZXing ไว้เผื่อใช้
     if (!zxingReader) zxingReader = new ZXing.BrowserMultiFormatReader();
 
-    // 🤖 แยกวิธีการสแกนเพื่อให้ลื่นไหลที่สุดในแต่ละเครื่อง
     if (!isIOS() && 'BarcodeDetector' in window) {
-      // Android ใหม่ๆ ใช้ Native Detector (เร็วและกินแบตน้อย)
       barcodeDetector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "code_128", "code_39", "qr_code"] });
       scanWithNativeDetector(video);
     } else {
-      // iOS และ Android รุ่นเก่า ใช้ ZXing + Canvas (เสถียรสุด ไม่ค้าง)
       scanWithZXingCanvas(video);
     }
-
   } catch (e) {
     console.error("Camera Error:", e);
     stopBarcodeScan();
-    
-    // แจ้งเตือนสาเหตุที่แท้จริง
     alert("ไม่สามารถเปิดกล้องสดได้ (Permission Denied)\n\nหากรันบน Google Apps Script กรุณาเข้าผ่าน 'ลิงก์ตรง' (script.googleusercontent.com) เพื่อให้ระบบอนุญาตให้ใช้กล้องครับ");
   }
 }
 
-// 🟢 โหมดสแกนสำหรับ Android (Native)
 function scanWithNativeDetector(video) {
   scanInterval = setInterval(() => {
     if (!barcodeStream) return clearInterval(scanInterval);
-    
     barcodeDetector.detect(video).then(codes => {
       if (codes.length > 0) processResult(codes[0].rawValue);
     }).catch(err => {
       clearInterval(scanInterval);
-      scanWithZXingCanvas(video); // ถ้า Native พัง สลับไป ZXing
+      scanWithZXingCanvas(video); 
     });
   }, 300);
 }
 
-// 🍎 โหมดสแกนสำหรับ iOS และ Android ทั่วไป (ZXing)
 function scanWithZXingCanvas(video) {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
-
   scanInterval = setInterval(() => {
     if (!barcodeStream) return clearInterval(scanInterval);
-    
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      // ย่อขนาดลงครึ่งนึงเพื่อให้ iOS ประมวลผลทัน ไม่หน่วง
-      canvas.width = video.videoWidth / 2;
-      canvas.height = video.videoHeight / 2;
+      canvas.width = video.videoWidth / 2; canvas.height = video.videoHeight / 2;
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
       try {
         const result = zxingReader.decodeFromCanvas(canvas);
         if (result && result.text) processResult(result.text);
-      } catch (e) { 
-        // ยังสแกนไม่เจอ ปล่อยผ่าน
-      }
+      } catch (e) { }
     }
   }, 300);
 }
 
-// 🎯 จัดการผลลัพธ์
 function processResult(rawText) {
   const sn = rawText.replace(/\D/g, '');
   stopBarcodeScan();
-
   const snInput = document.getElementById("snInput");
   if (snInput) {
     snInput.value = sn;
     if (typeof onSNInputChange === "function") onSNInputChange(snInput);
   }
-
   if (sn.length !== 10) {
     if (typeof showToast === "function") showToast("Barcode ไม่ใช่ SN 10 หลัก", "warn");
     else alert("Barcode ไม่ใช่ SN 10 หลัก");
   }
 }
 
-// 🛑 ปิดกล้อง
 function stopBarcodeScan() {
   if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
   if (barcodeStream) { barcodeStream.getTracks().forEach(t => t.stop()); barcodeStream = null; }
@@ -2708,9 +2451,7 @@ function stopBarcodeScan() {
   if (barcodeBox) barcodeBox.classList.add("d-none");
 }
 
-function isIOS() {
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
+function isIOS() { return /iPhone|iPad|iPod/i.test(navigator.userAgent); }
 
 let currentView = "fifo";
 let currentViewPC = "fifo";
@@ -2719,32 +2460,21 @@ function toggleMainView(){
   const btn = document.getElementById("titleToggleBtn");
   const fifo = document.getElementById("fifoView");
   const dash = document.getElementById("dashboardView");
-
   if(!fifo || !dash) return;
 
   if(currentView === "fifo"){
-    fifo.style.display = "none";
-    dash.style.display = "block";
-
-    btn.innerText = "📊 Dashboard";
-    btn.classList.add("dashboard");
-
-    renderDashboard();   // 🔥 โหลดตัวเลข kpi
-
-    // 🚀 Lazy Load: โหลดกราฟเฉพาะตอนกดเข้ามาดูครั้งแรก
+    fifo.style.display = "none"; dash.style.display = "block";
+    btn.innerText = "📊 Dashboard"; btn.classList.add("dashboard");
+    renderDashboard();   
+    
+    // Lazy Load
     const iframe = document.getElementById("lookerMobile");
-    if (iframe && !iframe.src) {
-      iframe.src = iframe.getAttribute("data-src");
-    }
+    if (iframe && !iframe.src) iframe.src = iframe.getAttribute("data-src");
 
     currentView = "dashboard";
   }else{
-    dash.style.display = "none";
-    fifo.style.display = "block";
-
-    btn.innerText = "📦 FIFO Monitoring";
-    btn.classList.remove("dashboard");
-
+    dash.style.display = "none"; fifo.style.display = "block";
+    btn.innerText = "📦 FIFO Monitoring"; btn.classList.remove("dashboard");
     currentView = "fifo";
   }
 }
@@ -2753,36 +2483,25 @@ function togglePCView(){
   const btn = document.getElementById("titleToggleBtnPC");
   const fifo = document.getElementById("pcCardList");
   const dash = document.getElementById("dashboardPC");
-
   if(!fifo || !dash) return;
 
   if(currentViewPC === "fifo"){
-    fifo.style.display = "none";
-    dash.style.display = "block";
+    fifo.style.display = "none"; dash.style.display = "block";
+    btn.innerText = "📊 Dashboard"; btn.classList.add("dashboard");
 
-    btn.innerText = "📊 Dashboard";
-    btn.classList.add("dashboard");
-
-    // 🚀 Lazy Load: โหลดกราฟเฉพาะตอนกดเข้ามาดูครั้งแรก
+    // Lazy Load
     const iframe = document.getElementById("lookerPC");
-    if (iframe && !iframe.src) {
-      iframe.src = iframe.getAttribute("data-src");
-    }
+    if (iframe && !iframe.src) iframe.src = iframe.getAttribute("data-src");
 
     currentViewPC = "dashboard";
   }else{
-    dash.style.display = "none";
-    fifo.style.display = "block";
-
-    btn.innerText = "📦 FIFO Monitoring";
-    btn.classList.remove("dashboard");
-
+    dash.style.display = "none"; fifo.style.display = "block";
+    btn.innerText = "📦 FIFO Monitoring"; btn.classList.remove("dashboard");
     currentViewPC = "fifo";
   }
 }
 
 function renderDashboard(){
-
   if(!fifoViewList || !fifoViewList.length){
     document.getElementById("dashTotalCode").innerText = "0";
     document.getElementById("dashNotFifo").innerText = "0";
@@ -2790,40 +2509,22 @@ function renderDashboard(){
     document.getElementById("dashRepeat").innerText = "0";
     return;
   }
-
-  let total = fifoViewList.length;
-  let sumNotFifo = 0;
-  let maxNot = 0;
-  let maxCode = "-";
-  let maxRepeat = 0;
-
+  let total = fifoViewList.length; let sumNotFifo = 0; let maxNot = 0; let maxCode = "-"; let maxRepeat = 0;
   fifoViewList.forEach(r=>{
-    const nf = r.notfifo || 0;
-    const rp = r.repeatDays || 0;
-
+    const nf = r.notfifo || 0; const rp = r.repeatDays || 0;
     sumNotFifo += nf;
-
-    if(nf > maxNot){
-      maxNot = nf;
-      maxCode = r.code;
-    }
-
-    if(rp > maxRepeat){
-      maxRepeat = rp;
-    }
+    if(nf > maxNot){ maxNot = nf; maxCode = r.code; }
+    if(rp > maxRepeat){ maxRepeat = rp; }
   });
-
   document.getElementById("dashTotalCode").innerText = total;
   document.getElementById("dashNotFifo").innerText = sumNotFifo;
   document.getElementById("dashTopCode").innerText = maxCode;
   document.getElementById("dashRepeat").innerText = maxRepeat;
-
 }
 
 function getUrgentClass(zone, notfifo, repeatDays){
   notfifo = Number(notfifo) || 0;
   repeatDays = Number(repeatDays) || 0;
-
   const z = String(zone||'').charAt(0).toUpperCase();
 
   const group1 = ["A","B","C","E","J"];
@@ -2832,40 +2533,28 @@ function getUrgentClass(zone, notfifo, repeatDays){
   if(group1.includes(z)){
     if(notfifo > 10 || repeatDays > 1) return "card-warning";
   }
-
   if(group2.includes(z)){
     if(notfifo > 3 || repeatDays > 1) return "card-warning";
   }
-
   return "card-normal";
 }
 
-
 async function pcOnDateOrZoneChange(){
-
   if(!currentPrefix) return;
-
   const date = getCurrentDate();
-  if(!date){
-    showToast("ไม่พบวันที่สำหรับโหลดข้อมูล","warn");
-    return;
+  if(!date){ showToast("ไม่พบวันที่","warn"); return; }
+
+  const apiPrefix = currentPrefix.charAt(0);
+  if(!needReloadFIFO(date, apiPrefix)){
+    pcApplyFilter(); return;
   }
 
-  const mustReload = needReloadFIFO(date, currentPrefix);
-
-  // ===== กรณีไม่ต้องโหลดใหม่ =====
-  if(!mustReload){
-    pcApplyFilter();   // render table + dashboard จาก fifoData เดิม
-    return;
-  }
-
-  // ===== ต้องโหลดใหม่ =====
   pcShowLoading("เตรียม Cache Mainzone...");
   pcSetProgress(10);
 
   try {
-    await callGAS("preloadMainzone", { dateStr: date, mainzone: currentPrefix });
-    const chunks = await callGAS("getSNCache", { date: date, mainzone: currentPrefix });
+    await callGAS("preloadMainzone", { dateStr: date, mainzone: apiPrefix });
+    const chunks = await callGAS("getSNCache", { date: date, mainzone: apiPrefix });
     
     snIndexMap = mergeSNCache(chunks || []);
 
@@ -2873,19 +2562,16 @@ async function pcOnDateOrZoneChange(){
     const txt = document.getElementById("pcLoadingText");
     if(txt) txt.innerText = "โหลด FIFO Data...";
 
-    const data = await callGAS("getFIFOData", { date: date, prefix: currentPrefix });
-    
+    const data = await callGAS("getFIFOData", { date: date, prefix: apiPrefix });
     fifoRawCache = data || [];
     fifoViewList = data || [];
 
-    // 🔥 update cache state (สำคัญมาก)
     fifoCacheState.date = date;
-    fifoCacheState.zone = currentPrefix;
+    fifoCacheState.zone = apiPrefix;
 
-    pcApplyFilter();   // render table + dashboard
+    pcApplyFilter();
     pcSetProgress(100);
     pcHideLoading();
-
   } catch (error) {
     console.error(error);
     showToast("เกิดข้อผิดพลาดในการดึงข้อมูล", "warn");
@@ -2894,15 +2580,12 @@ async function pcOnDateOrZoneChange(){
 }
 
 function pcApplyFilter(){
-
   const q = document.getElementById("pcSearch")?.value.toLowerCase() || "";
   const sort = document.getElementById("pcSort")?.value || "notfifo";
 
+  // ⚡ ใช้ฟังก์ชัน isMatchZone ดึงข้อมูลใหม่
   let list = fifoViewList
-    .filter(r=>{
-      if(!r.zone) return false;
-      return r.zone.charAt(0) === currentPrefix;
-    })
+    .filter(r=>{ return isMatchZone(r.zone, currentPrefix); })
     .map(r => ({
       ...r,
       notfifo: Number(r.notfifo) || 0,
@@ -2914,494 +2597,264 @@ function pcApplyFilter(){
 
   if(q){
     list = list.filter(r=>{
-      return (
-        String(r.code||"").toLowerCase().includes(q) ||
-        String(r.name||"").toLowerCase().includes(q)
-      );
+      return (String(r.code||"").toLowerCase().includes(q) || String(r.name||"").toLowerCase().includes(q));
     });
   }
 
-  if(sort === "notfifo"){
-    list.sort((a,b)=>b.notfifo - a.notfifo);
-  }
-  if(sort === "repeat"){
-    list.sort((a,b)=>b.repeatDays - a.repeatDays);
-  }
-  if(sort === "zoneAsc"){
-    list.sort((a,b)=>String(a.zone).localeCompare(String(b.zone)));
-  }
-  if(sort === "zoneDesc"){
-    list.sort((a,b)=>String(b.zone).localeCompare(String(a.zone)));
-  }
+  if(sort === "notfifo") list.sort((a,b)=>b.notfifo - a.notfifo);
+  if(sort === "repeat") list.sort((a,b)=>b.repeatDays - a.repeatDays);
+  if(sort === "zoneAsc") list.sort((a,b)=>String(a.zone).localeCompare(String(b.zone)));
+  if(sort === "zoneDesc") list.sort((a,b)=>String(b.zone).localeCompare(String(a.zone)));
 
   renderCardsPC(list);
-  renderDashboardPC(fifoRawCache);
-  renderProblemCode(fifoRawCache);
+  renderDashboardPC(list); // เปลี่ยนให้ Summary ส่งผลจาก List ที่ Filter แล้ว
+  renderProblemCode(list);
 }
 
 function renderCardsPC(list){
-
   const box = document.getElementById("pcCardList");
+  if(!box) return;
   box.innerHTML = "";
 
   if(!list || !list.length){
-    box.innerHTML = `<div class="text-muted text-center py-4">ไม่พบข้อมูล</div>`;
-    return;
+    box.innerHTML = `<div class="text-muted text-center py-4">ไม่พบข้อมูล</div>`; return;
   }
 
   list.forEach(r=>{
-
     const urgentClass = getUrgentClass(r.zone,r.notfifo,r.repeatDays);
-
     box.innerHTML += `
-      <div class="pc-card ${urgentClass}"
-        onclick="openSN(
-          '${esc(r.code)}',
-          '${esc(r.name)}',
-          '${esc(r.zone)}',
-          ${r.instock||0},
-          ${r.sale||0},
-          ${r.fifo||0},
-          ${r.notfifo||0},
-          ${r.repeatDays||0},
-          ${r.notfifoMonth||0}
-        )">
-
-        <div class="pc-card-left">
-          <div class="pc-code">${r.code}</div>
-          <div class="pc-name">${r.name}</div>
-        </div>
-
-        <div class="pc-card-right">
-          <div class="pc-zone-label">Zone</div>
-          <div class='badge badge-zone text-white'>${r.zone}</div>
-        </div>
-
+      <div class="pc-card ${urgentClass}" onclick="openSN('${esc(r.code)}','${esc(r.name)}','${esc(r.zone)}',${r.instock||0},${r.sale||0},${r.fifo||0},${r.notfifo||0},${r.repeatDays||0},${r.notfifoMonth||0})">
+        <div class="pc-card-left"><div class="pc-code">${r.code}</div><div class="pc-name">${r.name}</div></div>
+        <div class="pc-card-right"><div class="pc-zone-label">Zone</div><div class='badge badge-zone text-white'>${r.zone}</div></div>
         <div class="pc-card-mid">
-          <div class="pc-stats">
-            Instock: <span class='badge badge-instock text-white'>${r.instock}</span>
-          </div>
-          <div class="pc-stats">
-            จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${r.repeatDays}</b></span>
-          </div>
-          <div class="pc-stats">
-            Not FIFFO รวมเดือน: <span class='badge badge-notfifo text-white'>${r.notfifoMonth}</b></span>
-          </div>
+          <div class="pc-stats">Instock: <span class='badge badge-instock text-white'>${r.instock}</span></div>
+          <div class="pc-stats">จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${r.repeatDays}</b></span></div>
+          <div class="pc-stats">Not FIFFO รวมเดือน: <span class='badge badge-notfifo text-white'>${r.notfifoMonth}</b></span></div>
         </div>
-
-        <div class="pc-card-right">
-          <div class="pc-sale-label">Sale</div>
-          <div class='badge badge-sale text-white'>${r.sale}</div>
-        </div>
-        <div class="pc-card-right">
-          <div class="pc-fifo-label">FIFO</div>
-          <div class='badge badge-fifo text-white'>${r.fifo}</div>
-        </div>
-        <div class="pc-card-right">
-          <div class="pc-notfifo-label">Not FIFO</div>
-          <div class='badge badge-notfifo text-white'>${r.notfifo}</div>
-        </div>
-
+        <div class="pc-card-right"><div class="pc-sale-label">Sale</div><div class='badge badge-sale text-white'>${r.sale}</div></div>
+        <div class="pc-card-right"><div class="pc-fifo-label">FIFO</div><div class='badge badge-fifo text-white'>${r.fifo}</div></div>
+        <div class="pc-card-right"><div class="pc-notfifo-label">Not FIFO</div><div class='badge badge-notfifo text-white'>${r.notfifo}</div></div>
       </div>
     `;
   });
 }
 
 function renderDashboardPC(list){
-
-  let total = list.length;
-  let sumNot = 0;
-  let maxRepeat = 0;
-  let worstCode = "-";
-  let worstVal = 0;
-
+  let total = list.length; let sumNot = 0; let maxRepeat = 0; let worstCode = "-"; let worstVal = 0;
   list.forEach(r=>{
-    const nf = r.notfifo||0;
-    const rp = r.repeatDays||0;
-
+    const nf = r.notfifo||0; const rp = r.repeatDays||0;
     sumNot += nf;
-
-    if(nf > worstVal){
-      worstVal = nf;
-      worstCode = r.code;
-    }
-
-    if(rp > maxRepeat){
-      maxRepeat = rp;
-    }
+    if(nf > worstVal){ worstVal = nf; worstCode = r.code; }
+    if(rp > maxRepeat){ maxRepeat = rp; }
   });
-
-  document.getElementById("pcKpiTotal").innerText = total;
-  document.getElementById("pcKpiNotfifo").innerText = sumNot;
-  document.getElementById("pcKpiRepeat").innerText = maxRepeat;
-  document.getElementById("pcKpiWorst").innerText = worstCode;
+  const t = document.getElementById("pcKpiTotal");
+  const nf = document.getElementById("pcKpiNotfifo");
+  const rp = document.getElementById("pcKpiRepeat");
+  const wc = document.getElementById("pcKpiWorst");
+  if(t) t.innerText = total;
+  if(nf) nf.innerText = sumNot;
+  if(rp) rp.innerText = maxRepeat;
+  if(wc) wc.innerText = worstCode;
 }
 
 function pcShowLoading(text){
   const box = document.getElementById("pcLoading");
   const txt = document.getElementById("pcLoadingText");
   const bar = document.getElementById("pcLoadingBar");
-
   if(box) box.style.display = "flex";
   if(txt && text) txt.innerText = text;
   if(bar) bar.style.width = "0%";
 }
-
-function pcSetProgress(p){
-  const bar = document.getElementById("pcLoadingBar");
-  if(bar) bar.style.width = p + "%";
-}
-
-function pcHideLoading(){
-  const box = document.getElementById("pcLoading");
-  if(box) box.style.display = "none";
-}
+function pcSetProgress(p){ const bar = document.getElementById("pcLoadingBar"); if(bar) bar.style.width = p + "%"; }
+function pcHideLoading(){ const box = document.getElementById("pcLoading"); if(box) box.style.display = "none"; }
 
 function renderZoneRule(zone){
   const z = String(zone).charAt(0);
   let html = "";
-
   if(["A","B","C","E","J"].includes(z)){
-    html = `
-      <div>• NotFIFO &gt; 10</div>
-      <div>• Repeat &gt; 1 วัน</div>
-    `;
+    html = `<div>• NotFIFO &gt; 10</div><div>• Repeat &gt; 1 วัน</div>`;
   }else{
-    html = `
-      <div>• NotFIFO &gt; 3</div>
-      <div>• Repeat &gt; 1 วัน</div>
-    `;
+    html = `<div>• NotFIFO &gt; 3</div><div>• Repeat &gt; 1 วัน</div>`;
   }
-
   const el = document.getElementById("pcZoneRule");
   if(el) el.innerHTML = html;
 }
 
 function renderProblemCode(list){
-
   const box = document.getElementById("pcProblemList");
   if(!box) return;
   box.innerHTML = "";
-
-  const top = [...list]
-    .sort((a,b)=>(b.notfifo||0)-(a.notfifo||0))
-    .slice(0,5);
-
-  if(!top.length){
-    box.innerHTML = `<div class="muted">ไม่พบ</div>`;
-    return;
-  }
-
+  const top = [...list].sort((a,b)=>(b.notfifo||0)-(a.notfifo||0)).slice(0,5);
+  if(!top.length){ box.innerHTML = `<div class="muted">ไม่พบ</div>`; return; }
   top.forEach(r=>{
-    box.innerHTML += `
-      <div class="pc-problem-item"
-        onclick="pcSearchByCode('${r.code}')">
-        <span>${r.code}</span>
-        <b class="danger">${r.notfifo}</b>
-      </div>
-    `;
+    box.innerHTML += `<div class="pc-problem-item" onclick="pcSearchByCode('${r.code}')"><span>${r.code}</span><b class="danger">${r.notfifo}</b></div>`;
   });
 }
 
 function pcSearchByCode(code){
-
   const input = document.getElementById("pcSearch");
   if(!input) return;
-
   input.value = code;
-
   pcApplyFilter();
-
 }
 
-// --- Config ---
-const FILE_REQ = {
- fifoByDay: "fifo_by_day.xlsx",
- snReturn: "fifo_sn_return.xlsx",
- snFile: "fifo_sn.csv"
-};
-
+// --- Upload Code ---
+const FILE_REQ = { fifoByDay: "fifo_by_day.xlsx", snReturn: "fifo_sn_return.xlsx", snFile: "fifo_sn.csv" };
 let uploadFiles = { fifoByDay: null, snReturn: null, snFile: null };
 let modalInstance = null;
 
-// --- Modal Controls ---
 function openUploadModal() {
- const el = document.getElementById("uploadModal");
- modalInstance = new bootstrap.Modal(el);
- modalInstance.show();
- resetUI();
+  const el = document.getElementById("uploadModal");
+  if(el){
+    modalInstance = new bootstrap.Modal(el);
+    modalInstance.show();
+    resetUI();
+  }
 }
 
-function closeModal() {
- if(modalInstance) modalInstance.hide();
-    }
+function closeModal() { if(modalInstance) modalInstance.hide(); }
 
 function resetUI() {
- uploadFiles = { fifoByDay: null, snReturn: null, snFile: null };
- document.querySelectorAll("input[type=file]").forEach(i => i.value = "");
- document.querySelectorAll(".upload-filename").forEach(label => {
-  label.innerText = "ยังไม่ได้เลือกไฟล์";
-  label.className = "upload-filename";
- });
- toggleLoading(false);
- updateProgress(0, "รอเริ่ม...");
+  uploadFiles = { fifoByDay: null, snReturn: null, snFile: null };
+  document.querySelectorAll("input[type=file]").forEach(i => i.value = "");
+  document.querySelectorAll(".upload-filename").forEach(label => {
+    label.innerText = "ยังไม่ได้เลือกไฟล์"; label.className = "upload-filename";
+  });
+  toggleLoading(false); updateProgress(0, "รอเริ่ม...");
 }
 
-// --- File Picking ---
 function pickFile(key) {
- document.getElementById("file_" + key).click();
+  const fileEl = document.getElementById("file_" + key);
+  if(fileEl) fileEl.click();
 }
 
 function onFilePicked(key, input) {
- const file = input.files[0];
- const nameLabel = document.getElementById("name_" + key);
-
- if (!file) {
-  uploadFiles[key] = null;
-  nameLabel.innerText = "ยังไม่ได้เลือกไฟล์";
-  nameLabel.className = "upload-filename";
-  return;
- }
-
- // ตรวจสอบชื่อไฟล์
- if (file.name.toLowerCase() !== FILE_REQ[key].toLowerCase()) {
-  alert(`❌ ชื่อไฟล์ไม่ถูกต้อง!\n\nไฟล์ที่เลือก: ${file.name}\nต้องใช้ชื่อ: ${FILE_REQ[key]}`);
-  input.value = ""; 
-  uploadFiles[key] = null;
-  nameLabel.innerText = "ชื่อไฟล์ไม่ถูกต้อง ❌";
-  nameLabel.className = "upload-filename text-danger fw-bold";
-  return;
- }
-
- uploadFiles[key] = file;
- nameLabel.innerText = file.name + " ✅";
- nameLabel.className = "upload-filename text-success fw-bold";
+  const file = input.files[0];
+  const nameLabel = document.getElementById("name_" + key);
+  if (!file) {
+    uploadFiles[key] = null; nameLabel.innerText = "ยังไม่ได้เลือกไฟล์"; nameLabel.className = "upload-filename"; return;
+  }
+  if (file.name.toLowerCase() !== FILE_REQ[key].toLowerCase()) {
+    alert(`❌ ชื่อไฟล์ไม่ถูกต้อง!\n\nไฟล์ที่เลือก: ${file.name}\nต้องใช้ชื่อ: ${FILE_REQ[key]}`);
+    input.value = ""; uploadFiles[key] = null;
+    nameLabel.innerText = "ชื่อไฟล์ไม่ถูกต้อง ❌"; nameLabel.className = "upload-filename text-danger fw-bold"; return;
+  }
+  uploadFiles[key] = file;
+  nameLabel.innerText = file.name + " ✅"; nameLabel.className = "upload-filename text-success fw-bold";
 }
 
-// --- Helpers: Read Files ---
 const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
- const reader = new FileReader();
- reader.onload = () => resolve({ name: file.name, base64: reader.result });
- reader.onerror = reject;
- reader.readAsDataURL(file);
+  const reader = new FileReader();
+  reader.onload = () => resolve({ name: file.name, base64: reader.result });
+  reader.onerror = reject; reader.readAsDataURL(file);
 });
 
 const readFileAsText = (file) => new Promise((resolve, reject) => {
- const reader = new FileReader();
- reader.onload = () => resolve(reader.result);
- reader.onerror = reject;
- reader.readAsText(file);
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = reject; reader.readAsText(file);
 });
 
-// --- Main Logic: Turbo Upload ---
 async function startBulkUpload() {
- if (!uploadFiles.fifoByDay || !uploadFiles.snReturn || !uploadFiles.snFile) {
-  alert("กรุณาเลือกไฟล์ให้ครบทั้ง 3 ไฟล์ครับ");
-  return;
- }
+  if (!uploadFiles.fifoByDay || !uploadFiles.snReturn || !uploadFiles.snFile) { alert("กรุณาเลือกไฟล์ให้ครบทั้ง 3 ไฟล์ครับ"); return; }
+  toggleLoading(true); updateProgress(5, "กำลังเตรียมข้อมูล...");
+  try {
+    const f1 = await readFileAsBase64(uploadFiles.fifoByDay);
+    const f2 = await readFileAsBase64(uploadFiles.snReturn);
+    updateProgress(10, "กำลังอ่านไฟล์ CSV...");
+    const csvText = await readFileAsText(uploadFiles.snFile);
 
- toggleLoading(true);
- updateProgress(5, "กำลังเตรียมข้อมูล...");
+    updateProgress(15, "1/3 กำลังอัปโหลด FIFO By Day...");
+    const res1 = await runGoogleScript("step1_UploadFifo", f1);
+    const targetSS = res1.targetSS; const reportDate = res1.reportDate;
 
- try {
-  const f1 = await readFileAsBase64(uploadFiles.fifoByDay);
-  const f2 = await readFileAsBase64(uploadFiles.snReturn);
-        
-  updateProgress(10, "กำลังอ่านไฟล์ CSV...");
-  const csvText = await readFileAsText(uploadFiles.snFile);
+    updateProgress(30, "2/3 กำลังบันทึก SN Return...");
+    await runGoogleScript("step2_UploadSnReturn", f2, targetSS);
 
-  // Step 1: FIFO
-  updateProgress(15, "1/3 กำลังอัปโหลด FIFO By Day...");
-  const res1 = await runGoogleScript("step1_UploadFifo", f1);
-  const targetSS = res1.targetSS;
-  const reportDate = res1.reportDate;
+    updateProgress(45, "3/3 กำลังประมวลผล CSV...");
+    await runGoogleScript("step3_PrepareSheet", targetSS);
+    const allRows = parseCSVAndMapColumnsFast(csvText);
+    const CHUNK_SIZE = 100000; 
+    const totalChunks = Math.ceil(allRows.length / CHUNK_SIZE);
 
-  // Step 2: SN Return
-  updateProgress(30, "2/3 กำลังบันทึก SN Return...");
-  await runGoogleScript("step2_UploadSnReturn", f2, targetSS);
-
-  // Step 3: CSV
-  updateProgress(45, "3/3 กำลังประมวลผล CSV...");
-        
-  // 3.1 ล้าง Sheet (รวม Header เก่าทิ้ง)
-  await runGoogleScript("step3_PrepareSheet", targetSS);
-
-  // 3.2 แปลง CSV (รวม Header + สลับคอลัมน์)
-  const allRows = parseCSVAndMapColumnsFast(csvText);
-        
-  // 3.3 ปรับขนาด Chunk เป็น 15000(จุดสมดุลระหว่างความเร็วและความเสถียร)
-  const CHUNK_SIZE = 100000; 
-  const totalChunks = Math.ceil(allRows.length / CHUNK_SIZE);
-
-  for (let i = 0; i < totalChunks; i++) {
-   const start = i * CHUNK_SIZE;
-   const end = start + CHUNK_SIZE;
-   const chunk = allRows.slice(start, end);
-
-   const jsonString = JSON.stringify(chunk);
-
-   // คำนวณ Progress ให้ดูละเอียดขึ้น
-   const basePercent = 45;
-   const remainingPercent = 55;
-   const currentProgress = basePercent + Math.round(((i + 1) / totalChunks) * remainingPercent);
-          
-   updateProgress(currentProgress, `3/3 กำลังบันทึก CSV (${i+1}/${totalChunks})...`);
-
-   await runGoogleScript("step3_AppendChunk", jsonString, targetSS);
-
-   await runGoogleScript("step4_SummarizeFinal", targetSS, reportDate);
-
-  }
-
-  updateProgress(100, "เสร็จสิ้น!");
-  setTimeout(showSuccessView, 600);
-
- } catch (err) {
-  alert("เกิดข้อผิดพลาด: " + err);
-  toggleLoading(false);
- }
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE; const end = start + CHUNK_SIZE;
+      const chunk = allRows.slice(start, end);
+      const jsonString = JSON.stringify(chunk);
+      const currentProgress = 45 + Math.round(((i + 1) / totalChunks) * 55);
+      updateProgress(currentProgress, `3/3 กำลังบันทึก CSV (${i+1}/${totalChunks})...`);
+      await runGoogleScript("step3_AppendChunk", jsonString, targetSS);
+    }
+    await runGoogleScript("step4_SummarizeFinal", targetSS, reportDate);
+    updateProgress(100, "เสร็จสิ้น!");
+    setTimeout(showSuccessView, 600);
+  } catch (err) { alert("เกิดข้อผิดพลาด: " + err); toggleLoading(false); }
 }
 
-// --- Fast CSV Parser (A,B,D,E,C) ---
 function parseCSVAndMapColumnsFast(csvText) {
- const lines = csvText.split(/\r\n|\n|\r/);
- const result = [];
- const len = lines.length;
-      
- // เริ่ม loop ที่ 0 (เอาบรรทัดแรก/Header มาด้วย)
- for (let i = 0; i < len; i++) { 
-  const line = lines[i];
-  if (line.length === 0) continue; 
-
-  const cols = line.split(",");
-        
-  if (cols.length >= 5) {
-   // Mapping: A, B, D, E, C
-   // การสลับนี้จะมีผลกับ Header ด้วย เช่น Header A, Header B, Header D...
-   result.push([
-    cols[0].replace(/^"|"$/g, '').trim(), // A
-    cols[1].replace(/^"|"$/g, '').trim(), // B
-    cols[3].replace(/^"|"$/g, '').trim(), // D
-    cols[4].replace(/^"|"$/g, '').trim(), // E
-    cols[2].replace(/^"|"$/g, '').trim()  // C
-   ]);
+  const lines = csvText.split(/\r\n|\n|\r/);
+  const result = [];
+  for (let i = 0; i < lines.length; i++) { 
+    const line = lines[i]; if (line.length === 0) continue; 
+    const cols = line.split(",");
+    if (cols.length >= 5) {
+      result.push([
+        cols[0].replace(/^"|"$/g, '').trim(), cols[1].replace(/^"|"$/g, '').trim(),
+        cols[3].replace(/^"|"$/g, '').trim(), cols[4].replace(/^"|"$/g, '').trim(),
+        cols[2].replace(/^"|"$/g, '').trim() 
+      ]);
+    }
   }
- }
- return result;
+  return result;
 }
 
-// --- UI State Management ---
 function updateProgress(percent, msg) {
- document.getElementById("uploadProgress").style.width = percent + "%";
- document.getElementById("uploadStatus").innerText = msg;
- // อัปเดตตัวเลข % เล็กๆ มุมขวา (ถ้ามี Element นั้น)
- const perEl = document.getElementById("progressPercent");
- if(perEl) perEl.innerText = percent + "%";
+  const bar = document.getElementById("uploadProgress");
+  const stat = document.getElementById("uploadStatus");
+  const perEl = document.getElementById("progressPercent");
+  if(bar) bar.style.width = percent + "%";
+  if(stat) stat.innerText = msg;
+  if(perEl) perEl.innerText = percent + "%";
 }
 
 function toggleLoading(isLoading) {
- const form = document.getElementById("uploadFormZone");
- const load = document.getElementById("uploadLoading");
- const succ = document.getElementById("uploadSuccess");
- const btnCancel = document.getElementById("btnCancel");
- const btnUpload = document.getElementById("btnUpload");
- const btnDone = document.getElementById("btnDone");
- const btnClose = document.getElementById("btnCloseHeader");
+  const form = document.getElementById("uploadFormZone");
+  const load = document.getElementById("uploadLoading");
+  const succ = document.getElementById("uploadSuccess");
+  const btnCancel = document.getElementById("btnCancel");
+  const btnUpload = document.getElementById("btnUpload");
+  const btnDone = document.getElementById("btnDone");
+  const btnClose = document.getElementById("btnCloseHeader");
 
- if (isLoading) {
-  form.classList.add("d-none");
-  load.classList.remove("d-none");
-  succ.classList.add("d-none");
-  btnCancel.classList.add("d-none");
-  btnUpload.classList.add("d-none");
-  btnDone.classList.add("d-none");
-  btnClose.disabled = true;
- } else {
-  form.classList.remove("d-none");
-  load.classList.add("d-none");
-  succ.classList.add("d-none");
-  btnCancel.classList.remove("d-none");
-  btnUpload.classList.remove("d-none");
-  btnDone.classList.add("d-none");
-  btnClose.disabled = false;
- }
+  if (isLoading) {
+    if(form) form.classList.add("d-none");
+    if(load) load.classList.remove("d-none");
+    if(succ) succ.classList.add("d-none");
+    if(btnCancel) btnCancel.classList.add("d-none");
+    if(btnUpload) btnUpload.classList.add("d-none");
+    if(btnDone) btnDone.classList.add("d-none");
+    if(btnClose) btnClose.disabled = true;
+  } else {
+    if(form) form.classList.remove("d-none");
+    if(load) load.classList.add("d-none");
+    if(succ) succ.classList.add("d-none");
+    if(btnCancel) btnCancel.classList.remove("d-none");
+    if(btnUpload) btnUpload.classList.remove("d-none");
+    if(btnDone) btnDone.classList.add("d-none");
+    if(btnClose) btnClose.disabled = false;
+  }
 }
 
 function showSuccessView() {
- document.getElementById("uploadLoading").classList.add("d-none");
- document.getElementById("uploadSuccess").classList.remove("d-none");
- document.getElementById("btnDone").classList.remove("d-none");
- document.getElementById("btnCloseHeader").disabled = false;
+  const load = document.getElementById("uploadLoading");
+  const succ = document.getElementById("uploadSuccess");
+  const btnDone = document.getElementById("btnDone");
+  const btnClose = document.getElementById("btnCloseHeader");
+  if(load) load.classList.add("d-none");
+  if(succ) succ.classList.remove("d-none");
+  if(btnDone) btnDone.classList.remove("d-none");
+  if(btnClose) btnClose.disabled = false;
 }
-
-async function pcLoadData(){
-  const d = document.getElementById('pcDate') ? document.getElementById('pcDate').value : getCurrentDate();
-  if(!d) return alert("เลือกวันที่");
-
-  pcShowLoading("โหลด FIFO...",10);
-
-  try {
-    const data = await callGAS("getFIFOData", { date: d });
-    fifoRawCache = data || [];
-    fifoViewList = data || [];
-    pcShowLoading("ประมวลผล...",70);
-    pcApplyFilter();
-  } catch(e) {
-    console.error(e);
-  } finally {
-    pcHideLoading();
-  }
-}
-
-async function pcOpenSN(code,name,zone){
-
-  const d = document.getElementById('pcDate') ? document.getElementById('pcDate').value : getCurrentDate();
-  const key = d+"|"+zone+"|"+code;
-
-  document.getElementById('pcSNTitle').innerText = `${code} - ${name}`;
-
-  const tb=document.getElementById('pcSNTable');
-
-  if(pcSNCache[key]){
-    renderPcSN(pcSNCache[key]);
-    new bootstrap.Modal(document.getElementById('pcSNModal')).show();
-    return;
-  }
-
-  tb.innerHTML='<tr><td colspan=3>Loading...</td></tr>';
-  new bootstrap.Modal(document.getElementById('pcSNModal')).show();
-
-  try {
-    const sn = await callGAS("getSNByCode", { date: d, code: code, zone: zone });
-    pcSNCache[key] = sn || [];
-    renderPcSN(pcSNCache[key]);
-  } catch(e) {
-    tb.innerHTML='<tr><td colspan=3 class="text-danger">เกิดข้อผิดพลาดในการโหลด</td></tr>';
-  }
-}
-
-function renderPcSN(list){
-  const tb=document.getElementById('pcSNTable');
-  tb.innerHTML='';
-  list.forEach(r=>{
-    tb.innerHTML+=`
-      <tr>
-        <td>${r.sn}</td>
-        <td>${r.day}</td>
-        <td>${r.status}</td>
-      </tr>
-    `;
-  });
-}
-
-function pcSetZone(z,btn){
-  pcZone=z;
-  document.querySelectorAll('.zone-btn')
-    .forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  pcApplyFilter();
-}
-
 </script>
 <div id="toastBox" class="toast-box"></div>
 </body>
