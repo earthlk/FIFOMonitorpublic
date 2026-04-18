@@ -1272,6 +1272,43 @@ body{background:#eef2ff;font-family:system-ui}
   border-color:#2563eb;
 }
 
+/* ==========================================================
+   🌟 CSS สำหรับ Risk Card (โหมดเฝ้าระวัง)
+========================================================== */
+.risk-card-container {
+  border: 3px solid #ffb703;
+  border-radius: 16px;
+  padding: 16px;
+  background: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: .2s;
+}
+.risk-card-container:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+
+.risk-left { flex: 1; min-width: 250px; }
+.risk-code { font-size: 24px; font-weight: 900; color: #111; display:flex; align-items:center; gap:8px;}
+.risk-badge { background: #ffb703; color: #111; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold;}
+.risk-name { font-size: 18px; font-weight: bold; color: #444; margin-top: 4px; }
+
+.risk-mid { display: flex; flex-direction: column; gap: 4px; align-items: center; min-width: 100px; }
+.rm-zone-label { color: #1e3a8a; font-weight: 900; font-size: 16px; }
+.rm-zone-badge { background: #1e3a8a; color: #fff; padding: 6px 16px; border-radius: 12px; font-weight: bold; font-size: 18px; }
+
+.risk-matrix { flex: 2; overflow-x: auto; min-width: 300px; padding-bottom: 4px;}
+.rm-table { width: 100%; border-collapse: separate; border-spacing: 4px; text-align: center; }
+.rm-table th { color: #111; font-weight: 900; font-size: 16px; padding-bottom: 6px; }
+.rm-cell { padding: 4px 6px; border-radius: 10px; color: #fff; font-weight: bold; font-size: 16px; min-width: 28px; }
+.rm-blue { background: #0ea5e9; } /* สีฟ้า Instock */
+.rm-orange { background: #f97316; } /* สีส้ม Sale */
+.rm-label { display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color:#555; font-size: 16px; gap: 8px;}
+.rm-label .rm-badge { border-radius: 12px; padding: 4px 10px; color: white; font-weight:bold; }
+
 </style>
 </head>
 
@@ -1302,6 +1339,9 @@ body{background:#eef2ff;font-family:system-ui}
         <input type="text" id="searchInput" class="search-input big-input" placeholder="ค้นหา Code / Zone / ชื่อสินค้า" oninput="applyFilterSort()">
         <button class="sn-side-btn big-btn" onclick="openSNInput()">🔍 SN</button>
       </div>
+      <button id="btnToggleRiskMobile" class="btn btn-outline-warning w-100 mb-3 fw-bold" onclick="toggleRiskMode()" style="border-radius: 12px;">
+        ⏳ Code Risk
+      </button>
       <div class="toolbar d-flex align-items-center gap-2 flex-wrap">
         <div class="fw-bold text-secondary me-2" style="font-size:22px;">🔽 เรียงลำดับ:</div>
         <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('notfifo')">
@@ -1381,6 +1421,9 @@ body{background:#eef2ff;font-family:system-ui}
 
       <button class="btn btn-primary w-100 mt-3" onclick="openSNInput()" style="border-radius: 12px; font-weight: bold; background: linear-gradient(135deg,#2563eb,#4f46e5); border: none; box-shadow: 0 4px 10px rgba(37,99,235,.3);">
         🔍 ค้นหา SN
+      </button>
+      <button id="btnToggleRiskPC" class="btn btn-outline-warning w-100 mt-2 fw-bold" onclick="toggleRiskMode()" style="border-radius: 12px;">
+        ⏳ Code Risk
       </button>
       <div class="pc-side-box">
         <div class="pc-side-title">⚠️ เร่งด่วน กรอบสีส้ม</div>
@@ -1672,34 +1715,56 @@ async function loadData() {
   }
 }
 
-async function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notfifoMonth) {
-  hideToggleLoading();
-  snRCGroupCache = null;
+function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notfifoMonth) {
+  hideToggleLoading(); snRCGroupCache = null;
   if (window.snLoading) return;
-  window.snLoading = true;
-  showNormalSN();
-  
+  window.snLoading = true; showNormalSN();
+
   const date = getCurrentDate();
   if (!date) { showToast("ไม่พบวันที่", "warn"); window.snLoading = false; return; }
 
-  showSNLoading();
-  showSNSkeleton();
+  showSNLoading(); showSNSkeleton();
   new bootstrap.Modal(document.getElementById('snModal')).show();
 
-  try {
-    const sn = await callGAS("getSNByCode", { date: date, code: code, zone: zone });
-    snCache = sn || [];
+  const cleanStr = (s) => String(s).replace(/\s+/g, '').toUpperCase();
+  const targetCode = cleanStr(code);
+
+  setTimeout(() => { 
+    snCache = Object.values(snIndexMap).filter(r => cleanStr(r.code) === targetCode);
+    snCache.sort((a,b) => (Number(b.day)||0) - (Number(a.day)||0));
+
+    // 🌟 เลื่อนการวาด Header มาไว้ใน setTimeout เพื่อให้มันใช้นับยอด SN จาก snCache ได้
+    const headerBox = document.getElementById('snCardHeader');
+    if (headerBox) {
+      if (isRiskMode) {
+         // ถ้าอยู่โหมดความเสี่ยง ก็วาดตารางเหมือนหน้าแรกเลย! (ส่ง isHeader = true ไปเพื่อปิดขอบเงาและคลิกไม่ได้)
+         headerBox.innerHTML = buildRiskCardHTML({ code, name, zone }, true);
+      } else {
+         // โหมดปกติแบบหน้าขาวๆ
+         headerBox.innerHTML = `
+          <div class="sn-card-header" style="background: #ffffff; color: #333; border: 1px solid #e5e7eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <div class="code fw-bold" style="color: #111;">${code}</div>
+            <div class="name mb-2" style="font-size: 18px; color: #555;">${name}</div>
+            <div class="badges d-flex flex-wrap gap-2 mt-3">
+              <span class="badge badge-zone text-white">Zone: ${zone}</span>
+              <span class="badge badge-instock text-white">Instock: ${instock}</span>
+              <span class="badge badge-sale text-white">Sale: ${sale}</span>
+              <span class="badge badge-fifo text-white">FIFO: ${fifo}</span>
+              <span class="badge badge-notfifo text-white">Not FIFO: ${notfifo}</span>
+            </div>
+          </div>`;
+      }
+    }
+
     snRenderIndex = 0;
     const tb = document.getElementById('snTable');
     if(tb) tb.innerHTML = '';
-    if (!snCache.length) { showToast("ไม่พบ SN", "info"); return; }
-    renderSNTableAuto();
-  } catch (e) {
-    showToast("โหลด SN ไม่สำเร็จ", "warn");
-  } finally {
-    hideSNLoading();
-    window.snLoading = false;
-  }
+    
+    if (!snCache.length) { showToast("ไม่พบข้อมูล SN สำหรับสินค้านี้", "warn"); } 
+    else { renderSNTableAuto(); }
+    
+    hideSNLoading(); window.snLoading = false;
+  }, 200);
 }
 
 async function onDateOrZoneChange() {
@@ -1707,38 +1772,23 @@ async function onDateOrZoneChange() {
   const date = getCurrentDate();
   if (!date) { showToast("ไม่พบวันที่", "warn"); return; }
   
-  const apiPrefix = currentPrefix.charAt(0); // ถ้าเลือก D Big / D NB เซิร์ฟเวอร์จะโหลด D มาทั้งหมด
-  
-  if (!needReloadFIFO(date, apiPrefix)) {
-    applyFilterSort(); return; // ⚡ เปลี่ยนสลับ D Big / D NB ได้ทันทีแบบไม่ต้องรอโหลด!
-  }
+  const apiPrefix = currentPrefix.charAt(0);
+  if (!needReloadFIFO(date, apiPrefix)) { applyFilterSort(); return; }
 
   showSkeleton();
-  showLoading("เตรียม Cache Mainzone...");
-  setProgress(10);
+  showLoading("กำลังโหลดข้อมูลโซน " + apiPrefix + " ...");
+  setProgress(50);
   
   try {
-    await callGAS("preloadMainzone", { dateStr: date, mainzone: apiPrefix });
-    const chunks = await callGAS("getSNCache", { date: date, mainzone: apiPrefix });
-    snIndexMap = mergeSNCache(chunks || []);
-    setProgress(60);
-    document.getElementById('loadingText').innerText = "โหลด FIFO Data...";
-    
-    const data = await callGAS("getFIFOData", { date: date, prefix: apiPrefix });
-    fifoRawCache = data || [];
-    fifoViewList = data || [];
-    
-    // อัปเดต State เป็น D ไม่ใช่ D Big เพื่อให้ Cache จำก้อนรวม
+    const result = await callGAS("getZoneDataMerged", { date: date, mainzone: apiPrefix });
+    fifoRawCache = result.fifo || [];
+    fifoViewList = result.fifo || [];
+    snIndexMap = result.sn || {};
     fifoCacheState.date = date;
     fifoCacheState.zone = apiPrefix;
-    
     applyFilterSort();
     setProgress(100);
-  } catch(e) {
-    showToast("โหลดข้อมูลไม่สำเร็จ", "warn");
-  } finally {
-    hideLoading();
-  }
+  } catch(e) { showToast(e.message || "โหลดข้อมูลไม่สำเร็จ", "warn"); } finally { hideLoading(); }
 }
 
 async function searchSNInSheet(sn) {
@@ -1758,41 +1808,27 @@ async function searchSNInSheet(sn) {
 async function moveToZoneAndSearchCode(zone, code) {
   let displayZone = String(zone||'').trim().charAt(0).toUpperCase();
   const apiPrefix = displayZone;
+  if (apiPrefix === 'D') displayZone = getDZoneType(zone);
 
-  if (apiPrefix === 'D') {
-    displayZone = getDZoneType(zone);
-  }
-
-  currentPrefix = displayZone;
-  unifiedZone = displayZone; // อัปเดต Modal state ด้วย
+  currentPrefix = displayZone; unifiedZone = displayZone; 
   const date = getCurrentDate();
-  
-  // อัปเดตหน้าตาปุ่ม UI ทันที
   const barZone = document.getElementById("barZone");
   const pcbarZone = document.getElementById("pcBarZone");
   if(barZone) barZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${displayZone} <span class="filter-icon">▾</span>`;
   if(pcbarZone) pcbarZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${displayZone} <span class="filter-icon">▾</span>`;
 
-  showSkeleton();
-  showLoading("โหลดข้อมูล Zone " + displayZone + " ...");
+  showSkeleton(); showLoading("ย้ายไปโซน " + displayZone + " ...");
   try {
-    await callGAS("preloadMainzone", { dateStr: date, mainzone: apiPrefix });
-    const data = await callGAS("getFIFOData", { date: date, prefix: apiPrefix });
-    fifoRawCache = data || [];
-    fifoViewList = data || [];
-    
-    fifoCacheState.date = date;
-    fifoCacheState.zone = apiPrefix;
-    
+    const result = await callGAS("getZoneDataMerged", { date: date, mainzone: apiPrefix });
+    fifoRawCache = result.fifo || [];
+    fifoViewList = result.fifo || [];
+    snIndexMap = result.sn || {};
+    fifoCacheState.date = date; fifoCacheState.zone = apiPrefix;
     const search = document.getElementById("searchInput");
     if(search) search.value = code;
     applyFilterSort();
     showToast("ย้ายไป Zone " + displayZone + " แล้ว", "ok");
-  } catch(e) {
-    showToast("เกิดข้อผิดพลาดในการโหลดโซน", "warn");
-  } finally {
-    hideLoading();
-  }
+  } catch(e) { showToast("เกิดข้อผิดพลาด", "warn"); } finally { hideLoading(); }
 }
 
 // ==========================================================
@@ -2024,66 +2060,65 @@ function getSearchKeyword(){
 
 function applyFilterSort(){
   const q = getSearchKeyword();
+  let list = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
 
-  // ⚡ ใช้ฟังก์ชัน isMatchZone ดึงข้อมูลใหม่
-  let list=fifoViewList.filter(r=>{
-    return isMatchZone(r.zone, currentPrefix);
-  });
+  // 🚨 คัดกรองตามโหมด
+  if (isRiskMode) {
+    list = list.filter(r => r.isRisk); // โหมดเฝ้าระวัง
+  } else {
+    list = list.filter(r => r.notfifo > 0); // โหมดปกติ: บังคับ NotFIFO > 0 อย่างเดียว
+  }
 
   if(q){
-    list=list.filter(r=>{
-      const code=String(r.code||'').toLowerCase();
-      const zone=String(r.zone||'').toLowerCase();
-      const name=String(r.name||'').toLowerCase();
-      if(code.startsWith(q) || zone.startsWith(q)) return true;
-      if(name.includes(q)) return true;
-      return false;
+    list = list.filter(r=>{
+      const code=String(r.code||'').toLowerCase(); const zone=String(r.zone||'').toLowerCase(); const name=String(r.name||'').toLowerCase();
+      return code.startsWith(q) || zone.startsWith(q) || name.includes(q);
     });
   }
 
-  if(sortMode==='notfifo') list.sort((a,b)=>(b.notfifo||0)-(a.notfifo||0));
-  if(sortMode==='notfifoMonth') list.sort((a,b)=>(b.notfifoMonth||0)-(a.notfifoMonth||0));
-  if(sortMode==='repeatDays') list.sort((a,b)=>(b.repeatDays||0)-(a.repeatDays||0));
-  if(sortMode==='zoneAsc') list.sort((a,b)=>String(a.zone||'').localeCompare(String(b.zone||'')));
-  if(sortMode==='zoneDesc') list.sort((a,b)=>String(b.zone||'').localeCompare(String(a.zone||'')));
-
+  // จัดเรียง
+  if (isRiskMode) { list.sort((a,b) => b.riskCount - a.riskCount); } 
+  else {
+     if(sortMode==='notfifo') list.sort((a,b)=>(b.notfifo||0)-(a.notfifo||0));
+     if(sortMode==='notfifoMonth') list.sort((a,b)=>(b.notfifoMonth||0)-(a.notfifoMonth||0));
+     if(sortMode==='repeatDays') list.sort((a,b)=>(b.repeatDays||0)-(a.repeatDays||0));
+     if(sortMode==='zoneAsc') list.sort((a,b)=>String(a.zone||'').localeCompare(String(b.zone||'')));
+     if(sortMode==='zoneDesc') list.sort((a,b)=>String(b.zone||'').localeCompare(String(a.zone||'')));
+  }
   renderCards(list);
 }
 
 function renderCards(data){
   const box=document.getElementById('fifoList');
   if(!box) return;
-  box.innerHTML='';
-
   if(!data || !data.length){
-    box.innerHTML=`<div class="card-item text-center text-muted">ไม่พบข้อมูล FIFO</div>`;
+    box.innerHTML=`<div class="card-item text-center text-muted">${isRiskMode ? '✅ ปลอดภัย ไม่มีสินค้าเสี่ยงในโซนนี้' : 'ไม่พบข้อมูล FIFO'}</div>`;
     return;
   }
-
-  data.forEach(r=>{
-    const code = r.code || '';
-    const name = r.name || '';
-    const zone = r.zone || '';
-    const instock = r.instock ?? 0;
-    const sale = r.sale ?? 0;
-    const fifo = r.fifo ?? 0;
-    const notfifo = r.notfifo ?? 0;
-    const repeatDays = r.repeatDays ?? 0;
-    const notfifoMonth = r.notfifoMonth ?? 0;
-    const urgentClass = getUrgentClass(zone, notfifo, repeatDays);
-
-    box.innerHTML+=`<div class='card-item ${urgentClass}' onclick="openSN('${esc(code)}','${esc(name)}','${esc(zone)}',${instock},${sale},${fifo},${notfifo},${repeatDays},${notfifoMonth})">
-      <div class='code'>${code}</div>
-      <div class='name'>${name}</div>
-      <div class='meta'>Zone: <span class='badge badge-zone text-white'>${zone}</span> | Instock: <span class='badge badge-instock text-white'> ${instock}</div>
-      <div class='meta'>จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${repeatDays}</span> | NotFIFO รวมเดือน: <span class='badge badge-notfifo text-white'>${notfifoMonth}</span></div>
-      <div class='stat-row'>
-        <div>Sale: <span class='badge badge-sale text-white'>${sale}</div>
-        <div>FIFO: <span class='badge badge-fifo text-white'>${fifo}</div>
-        <div><span class='badge badge-notfifo text-white'>Not FIFO: ${notfifo}</span></div>
-      </div>
-    </div>`;
+  
+  // ⚡ สั่งสร้างดัชนีแค่ 1 ครั้ง ก่อนเริ่มวาดการ์ดทั้งหมด
+  if (isRiskMode) prepareSNGroupCache();
+  
+  let htmlStr = '';
+  data.forEach(r => {
+    if (isRiskMode) {
+      htmlStr += buildRiskCardHTML(r, false);
+    } else {
+      const urgentClass = getUrgentClass(r.zone, r.notfifo, r.repeatDays);
+      htmlStr += `<div class='card-item ${urgentClass}' onclick="openSN('${esc(r.code)}','${esc(r.name)}','${esc(r.zone)}',${r.instock},${r.sale},${r.fifo},${r.notfifo},${r.repeatDays},${r.notfifoMonth})">
+        <div class='code'>${r.code}</div>
+        <div class='name'>${r.name}</div>
+        <div class='meta'>Zone: <span class='badge badge-zone text-white'>${r.zone}</span> | Instock: <span class='badge badge-instock text-white'> ${r.instock}</div>
+        <div class='meta'>จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${r.repeatDays}</span> | NotFIFO รวมเดือน: <span class='badge badge-notfifo text-white'>${r.notfifoMonth}</span></div>
+        <div class='stat-row'>
+          <div>Sale: <span class='badge badge-sale text-white'>${r.sale}</div>
+          <div>FIFO: <span class='badge badge-fifo text-white'>${r.fifo}</div>
+          <div><span class='badge badge-notfifo text-white'>Not FIFO: ${r.notfifo}</span></div>
+        </div>
+      </div>`;
+    }
   });
+  box.innerHTML = htmlStr;
 }
 
 function showNormalSN(){ snViewMode = "normal"; }
@@ -2504,24 +2539,40 @@ function togglePCView(){
 }
 
 function renderDashboard(){
-  if(!fifoViewList || !fifoViewList.length){
-    document.getElementById("dashTotalCode").innerText = "0";
-    document.getElementById("dashNotFifo").innerText = "0";
-    document.getElementById("dashTopCode").innerText = "-";
-    document.getElementById("dashRepeat").innerText = "0";
-    return;
+  const t = document.getElementById("dashTotalCode");
+  const nf = document.getElementById("dashNotFifo");
+  const tc = document.getElementById("dashTopCode");
+  const rp = document.getElementById("dashRepeat");
+  if(!t || !nf || !tc || !rp) return;
+
+  let list = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
+  
+  if (isRiskMode) {
+     list = list.filter(r => r.isRisk);
+     let sumRisk = 0; let maxRisk = 0; let worstCode = "-";
+     list.forEach(r => {
+        const risk = r.riskCount || 0;
+        sumRisk += risk;
+        if (risk > maxRisk) { maxRisk = risk; worstCode = r.code; }
+     });
+     t.innerText = list.length; t.previousElementSibling.innerText = "📦 Code เฝ้าระวัง";
+     nf.innerText = sumRisk; nf.previousElementSibling.innerText = "⚠️ SN เสี่ยงรวม";
+     tc.innerText = worstCode; tc.previousElementSibling.innerText = "🔥 Code เสี่ยงสูงสุด";
+     rp.innerText = maxRisk; rp.previousElementSibling.innerText = "📈 จำนวนชิ้นสูงสุด";
+  } else {
+     list = list.filter(r => r.notfifo > 0 || r.repeatDays > 0);
+     let sumNot = 0; let maxRepeat = 0; let worstCode = "-"; let maxNot = 0;
+     list.forEach(r => {
+        const nfVal = r.notfifo || 0; const rpVal = r.repeatDays || 0;
+        sumNot += nfVal;
+        if (nfVal > maxNot) { maxNot = nfVal; worstCode = r.code; }
+        if (rpVal > maxRepeat) { maxRepeat = rpVal; }
+     });
+     t.innerText = list.length; t.previousElementSibling.innerText = "📦 จำนวน Code ทั้งหมด";
+     nf.innerText = sumNot; nf.previousElementSibling.innerText = "⚠️ Not FIFO รวม";
+     tc.innerText = worstCode; tc.previousElementSibling.innerText = "🔥 Code Not FIFO สูงสุด";
+     rp.innerText = maxRepeat; rp.previousElementSibling.innerText = "🔁 วันซ้ำสูงสุด";
   }
-  let total = fifoViewList.length; let sumNotFifo = 0; let maxNot = 0; let maxCode = "-"; let maxRepeat = 0;
-  fifoViewList.forEach(r=>{
-    const nf = r.notfifo || 0; const rp = r.repeatDays || 0;
-    sumNotFifo += nf;
-    if(nf > maxNot){ maxNot = nf; maxCode = r.code; }
-    if(rp > maxRepeat){ maxRepeat = rp; }
-  });
-  document.getElementById("dashTotalCode").innerText = total;
-  document.getElementById("dashNotFifo").innerText = sumNotFifo;
-  document.getElementById("dashTopCode").innerText = maxCode;
-  document.getElementById("dashRepeat").innerText = maxRepeat;
 }
 
 function getUrgentClass(zone, notfifo, repeatDays){
@@ -2547,116 +2598,138 @@ async function pcOnDateOrZoneChange(){
   if(!date){ showToast("ไม่พบวันที่","warn"); return; }
 
   const apiPrefix = currentPrefix.charAt(0);
-  if(!needReloadFIFO(date, apiPrefix)){
-    pcApplyFilter(); return;
-  }
+  if(!needReloadFIFO(date, apiPrefix)){ pcApplyFilter(); return; }
 
-  pcShowLoading("เตรียม Cache Mainzone...");
-  pcSetProgress(10);
+  pcShowLoading("กำลังโหลดข้อมูลโซน " + apiPrefix + " ...");
+  pcSetProgress(50);
 
   try {
-    await callGAS("preloadMainzone", { dateStr: date, mainzone: apiPrefix });
-    const chunks = await callGAS("getSNCache", { date: date, mainzone: apiPrefix });
-    
-    snIndexMap = mergeSNCache(chunks || []);
-
-    pcSetProgress(60);
-    const txt = document.getElementById("pcLoadingText");
-    if(txt) txt.innerText = "โหลด FIFO Data...";
-
-    const data = await callGAS("getFIFOData", { date: date, prefix: apiPrefix });
-    fifoRawCache = data || [];
-    fifoViewList = data || [];
-
+    const result = await callGAS("getZoneDataMerged", { date: date, mainzone: apiPrefix });
+    fifoRawCache = result.fifo || [];
+    fifoViewList = result.fifo || [];
+    snIndexMap = result.sn || {};
     fifoCacheState.date = date;
     fifoCacheState.zone = apiPrefix;
-
     pcApplyFilter();
     pcSetProgress(100);
-    pcHideLoading();
-  } catch (error) {
-    console.error(error);
-    showToast("เกิดข้อผิดพลาดในการดึงข้อมูล", "warn");
-    pcHideLoading();
-  }
+  } catch (e) { showToast(e.message || "โหลดข้อมูลไม่สำเร็จ", "warn"); } finally { pcHideLoading(); }
 }
 
 function pcApplyFilter(){
   const q = document.getElementById("pcSearch")?.value.toLowerCase() || "";
   const sort = document.getElementById("pcSort")?.value || "notfifo";
+  
+  // --------------------------------------------------------
+  // 1. ก้อนภาพรวม (Base List): กรองแค่โซน และ โหมด (ไม่โดนช่องค้นหากระทบ)
+  // --------------------------------------------------------
+  let baseList = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
 
-  // ⚡ ใช้ฟังก์ชัน isMatchZone ดึงข้อมูลใหม่
-  let list = fifoViewList
-    .filter(r=>{ return isMatchZone(r.zone, currentPrefix); })
-    .map(r => ({
-      ...r,
-      notfifo: Number(r.notfifo) || 0,
-      repeatDays: Number(r.repeatDays) || 0,
-      fifo: Number(r.fifo) || 0,
-      sale: Number(r.sale) || 0,
-      instock: Number(r.instock) || 0
-    }));
-
-  if(q){
-    list = list.filter(r=>{
-      return (String(r.code||"").toLowerCase().includes(q) || String(r.name||"").toLowerCase().includes(q));
-    });
+  if (isRiskMode) {
+    baseList = baseList.filter(r => r.isRisk);
+  } else {
+    baseList = baseList.filter(r => r.notfifo > 0);
   }
 
-  if(sort === "notfifo") list.sort((a,b)=>b.notfifo - a.notfifo);
-  if(sort === "repeat") list.sort((a,b)=>b.repeatDays - a.repeatDays);
-  if(sort === "zoneAsc") list.sort((a,b)=>String(a.zone).localeCompare(String(b.zone)));
-  if(sort === "zoneDesc") list.sort((a,b)=>String(b.zone).localeCompare(String(a.zone)));
+  // 👉 วาด Problem Code และ Dashboard ด้วยก้อนภาพรวม (มันจะได้โชว์ 5 อันดับตลอดเวลา)
+  renderProblemCode(baseList);
+  renderDashboardPC(baseList);
 
-  renderCardsPC(list);
-  renderDashboardPC(list); // เปลี่ยนให้ Summary ส่งผลจาก List ที่ Filter แล้ว
-  renderProblemCode(list);
+  // --------------------------------------------------------
+  // 2. ก้อนแสดงผล (Display List): เอาไปกรองต่อด้วยช่องค้นหา
+  // --------------------------------------------------------
+  let list = [...baseList];
+
+  if(q){ 
+    list = list.filter(r=>{ 
+      return (String(r.code||"").toLowerCase().includes(q) || String(r.name||"").toLowerCase().includes(q)); 
+    }); 
+  }
+
+  // จัดเรียง Card ตรงกลาง
+  if (isRiskMode) { 
+    list.sort((a,b) => b.riskCount - a.riskCount); 
+  } else {
+     if(sort === "notfifo") list.sort((a,b)=>b.notfifo - a.notfifo);
+     if(sort === "repeat") list.sort((a,b)=>b.repeatDays - a.repeatDays);
+     if(sort === "zoneAsc") list.sort((a,b)=>String(a.zone).localeCompare(String(b.zone)));
+     if(sort === "zoneDesc") list.sort((a,b)=>String(b.zone).localeCompare(String(a.zone)));
+  }
+  
+  // 👉 วาดตารางตรงกลางด้วยก้อนแสดงผล
+  renderCardsPC(list); 
 }
 
 function renderCardsPC(list){
   const box = document.getElementById("pcCardList");
   if(!box) return;
-  box.innerHTML = "";
-
   if(!list || !list.length){
-    box.innerHTML = `<div class="text-muted text-center py-4">ไม่พบข้อมูล</div>`; return;
+    box.innerHTML = `<div class="text-muted text-center py-4">${isRiskMode ? '✅ ปลอดภัย ไม่มีสินค้าเสี่ยงในโซนนี้' : 'ไม่พบข้อมูล'}</div>`; return;
   }
-
-  list.forEach(r=>{
-    const urgentClass = getUrgentClass(r.zone,r.notfifo,r.repeatDays);
-    box.innerHTML += `
-      <div class="pc-card ${urgentClass}" onclick="openSN('${esc(r.code)}','${esc(r.name)}','${esc(r.zone)}',${r.instock||0},${r.sale||0},${r.fifo||0},${r.notfifo||0},${r.repeatDays||0},${r.notfifoMonth||0})">
-        <div class="pc-card-left"><div class="pc-code">${r.code}</div><div class="pc-name">${r.name}</div></div>
-        <div class="pc-card-right"><div class="pc-zone-label">Zone</div><div class='badge badge-zone text-white'>${r.zone}</div></div>
-        <div class="pc-card-mid">
-          <div class="pc-stats">Instock: <span class='badge badge-instock text-white'>${r.instock}</span></div>
-          <div class="pc-stats">จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${r.repeatDays}</b></span></div>
-          <div class="pc-stats">Not FIFFO รวมเดือน: <span class='badge badge-notfifo text-white'>${r.notfifoMonth}</b></span></div>
-        </div>
-        <div class="pc-card-right"><div class="pc-sale-label">Sale</div><div class='badge badge-sale text-white'>${r.sale}</div></div>
-        <div class="pc-card-right"><div class="pc-fifo-label">FIFO</div><div class='badge badge-fifo text-white'>${r.fifo}</div></div>
-        <div class="pc-card-right"><div class="pc-notfifo-label">Not FIFO</div><div class='badge badge-notfifo text-white'>${r.notfifo}</div></div>
-      </div>
-    `;
+  
+  // ⚡ สั่งสร้างดัชนีแค่ 1 ครั้ง ก่อนเริ่มวาดการ์ดทั้งหมด
+  if (isRiskMode) prepareSNGroupCache();
+  
+  let htmlStr = '';
+  list.forEach(r => {
+    if (isRiskMode) {
+      htmlStr += buildRiskCardHTML(r, false);
+    } else {
+      const urgentClass = getUrgentClass(r.zone,r.notfifo,r.repeatDays);
+      htmlStr += `
+        <div class="pc-card ${urgentClass}" onclick="openSN('${esc(r.code)}','${esc(r.name)}','${esc(r.zone)}',${r.instock||0},${r.sale||0},${r.fifo||0},${r.notfifo||0},${r.repeatDays||0},${r.notfifoMonth||0})">
+          <div class="pc-card-left"><div class="pc-code">${r.code}</div><div class="pc-name">${r.name}</div></div>
+          <div class="pc-card-right"><div class="pc-zone-label">Zone</div><div class='badge badge-zone text-white'>${r.zone}</div></div>
+          <div class="pc-card-mid">
+            <div class="pc-stats">Instock: <span class='badge badge-instock text-white'>${r.instock}</span></div>
+            <div class="pc-stats">จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${r.repeatDays}</b></span></div>
+            <div class="pc-stats">Not FIFO รวมเดือน: <span class='badge badge-notfifo text-white'>${r.notfifoMonth}</b></span></div>
+          </div>
+          <div class="pc-card-right"><div class="pc-sale-label">Sale</div><div class='badge badge-sale text-white'>${r.sale}</div></div>
+          <div class="pc-card-right"><div class="pc-fifo-label">FIFO</div><div class='badge badge-fifo text-white'>${r.fifo}</div></div>
+          <div class="pc-card-right"><div class="pc-notfifo-label">Not FIFO</div><div class='badge badge-notfifo text-white'>${r.notfifo}</div></div>
+        </div>`;
+    }
   });
+  box.innerHTML = htmlStr;
 }
 
 function renderDashboardPC(list){
-  let total = list.length; let sumNot = 0; let maxRepeat = 0; let worstCode = "-"; let worstVal = 0;
-  list.forEach(r=>{
-    const nf = r.notfifo||0; const rp = r.repeatDays||0;
-    sumNot += nf;
-    if(nf > worstVal){ worstVal = nf; worstCode = r.code; }
-    if(rp > maxRepeat){ maxRepeat = rp; }
-  });
   const t = document.getElementById("pcKpiTotal");
   const nf = document.getElementById("pcKpiNotfifo");
   const rp = document.getElementById("pcKpiRepeat");
   const wc = document.getElementById("pcKpiWorst");
-  if(t) t.innerText = total;
-  if(nf) nf.innerText = sumNot;
-  if(rp) rp.innerText = maxRepeat;
-  if(wc) wc.innerText = worstCode;
+  if(!t || !nf || !rp || !wc) return;
+
+  let total = list.length;
+
+  // 🚨 ถ้าอยู่ในโหมดเฝ้าระวัง ให้คำนวณจากยอดความเสี่ยง (riskCount)
+  if (isRiskMode) {
+     let sumRisk = 0; let maxRisk = 0; let worstCode = "-";
+     list.forEach(r => {
+        const risk = r.riskCount || 0;
+        sumRisk += risk;
+        if (risk > maxRisk) { maxRisk = risk; worstCode = r.code; }
+     });
+     // เปลี่ยนทั้งตัวเลข และข้อความหัวข้อ KPI ให้สอดคล้องกัน
+     t.innerText = total; t.previousElementSibling.innerText = "Code ที่เสี่ยง";
+     nf.innerText = sumRisk; nf.previousElementSibling.innerText = "SN เสี่ยงรวม";
+     rp.innerText = maxRisk; rp.previousElementSibling.innerText = "เสี่ยงสูงสุด (ชิ้น)";
+     wc.innerText = worstCode; wc.previousElementSibling.innerText = "Code เสี่ยงสุด";
+     
+  } else {
+     // ✅ ถ้าอยู่ในโหมดปกติ ให้คำนวณจาก NotFIFO ตามเดิม
+     let sumNot = 0; let maxRepeat = 0; let worstCode = "-"; let maxNot = 0;
+     list.forEach(r => {
+        const nfVal = r.notfifo || 0; const rpVal = r.repeatDays || 0;
+        sumNot += nfVal;
+        if (nfVal > maxNot) { maxNot = nfVal; worstCode = r.code; }
+        if (rpVal > maxRepeat) { maxRepeat = rpVal; }
+     });
+     t.innerText = total; t.previousElementSibling.innerText = "Total Code";
+     nf.innerText = sumNot; nf.previousElementSibling.innerText = "Not FIFO รวม";
+     rp.innerText = maxRepeat; rp.previousElementSibling.innerText = "Repeat สูงสุด";
+     wc.innerText = worstCode; wc.previousElementSibling.innerText = "Code แย่สุด";
+  }
 }
 
 function pcShowLoading(text){
@@ -2667,7 +2740,9 @@ function pcShowLoading(text){
   if(txt && text) txt.innerText = text;
   if(bar) bar.style.width = "0%";
 }
+
 function pcSetProgress(p){ const bar = document.getElementById("pcLoadingBar"); if(bar) bar.style.width = p + "%"; }
+
 function pcHideLoading(){ const box = document.getElementById("pcLoading"); if(box) box.style.display = "none"; }
 
 function renderZoneRule(zone){
@@ -2686,10 +2761,28 @@ function renderProblemCode(list){
   const box = document.getElementById("pcProblemList");
   if(!box) return;
   box.innerHTML = "";
-  const top = [...list].sort((a,b)=>(b.notfifo||0)-(a.notfifo||0)).slice(0,5);
-  if(!top.length){ box.innerHTML = `<div class="muted">ไม่พบ</div>`; return; }
+
+  // เปลี่ยนชื่อหัวข้อเหนือกล่อง Problem Code ตามโหมด
+  const titleEl = box.previousElementSibling; 
+  if (titleEl) {
+     titleEl.innerText = isRiskMode ? "⚠️ Top Risk Codes" : "🔥 Problem Code";
+  }
+
+  let top = [];
+  if (isRiskMode) {
+    // โหมดเฝ้าระวัง: จัดอันดับตามจำนวนชิ้นที่เสี่ยง (มากไปน้อย)
+    top = [...list].sort((a,b) => (b.riskCount||0) - (a.riskCount||0)).slice(0,5);
+  } else {
+    // โหมดปกติ: จัดอันดับตาม NotFIFO (มากไปน้อย)
+    top = [...list].sort((a,b) => (b.notfifo||0) - (a.notfifo||0)).slice(0,5);
+  }
+  
+  if(!top.length){ box.innerHTML = `<div class="text-muted ps-2">ไม่พบ</div>`; return; }
+  
   top.forEach(r=>{
-    box.innerHTML += `<div class="pc-problem-item" onclick="pcSearchByCode('${r.code}')"><span>${r.code}</span><b class="danger">${r.notfifo}</b></div>`;
+    // โชว์ตัวเลขตามโหมดนั้นๆ
+    const val = isRiskMode ? r.riskCount : r.notfifo;
+    box.innerHTML += `<div class="pc-problem-item" onclick="pcSearchByCode('${r.code}')"><span>${r.code}</span><b class="text-danger">${val}</b></div>`;
   });
 }
 
@@ -2857,6 +2950,139 @@ function showSuccessView() {
   if(btnDone) btnDone.classList.remove("d-none");
   if(btnClose) btnClose.disabled = false;
 }
+
+let isRiskMode = false; // ตัวแปรคุมโหมด
+
+function toggleRiskMode() {
+  isRiskMode = !isRiskMode;
+  const btnM = document.getElementById("btnToggleRiskMobile");
+  const btnP = document.getElementById("btnToggleRiskPC");
+  
+  if (isRiskMode) {
+    if(btnM) { btnM.className = "btn btn-warning w-100 mb-3 fw-bold text-dark"; btnM.innerHTML = "📦 กลับไป Not FIFO"; }
+    if(btnP) { btnP.className = "btn btn-warning w-100 mt-2 fw-bold text-dark"; btnP.innerHTML = "📦 กลับไป Not FIFO"; }
+  } else {
+    if(btnM) { btnM.className = "btn btn-outline-warning w-100 mb-3 fw-bold"; btnM.innerHTML = "⏳ Code Risk"; }
+    if(btnP) { btnP.className = "btn btn-outline-warning w-100 mt-2 fw-bold"; btnP.innerHTML = "⏳ Code Risk"; }
+  }
+  
+  // ใช้ setTimeout 10ms เพื่อให้ปุ่มเปลี่ยนสีก่อน แล้วค่อยโหลดข้อมูล (ลดอาการปุ่มค้าง)
+  setTimeout(() => {
+    // เช็กว่าหน้าจอปัจจุบันเป็น Mobile หรือ PC แล้วเรียกฟังก์ชันกรองให้ถูกตัว
+    if (document.getElementById("mobileLayout").style.display !== "none") {
+      applyFilterSort();
+    } else {
+      pcApplyFilter();
+    }
+  }, 10);
+}
+
+// ==========================================================
+// 🛠️ ฟังก์ชันคำนวณยอด SN แยกตามอายุ (สำหรับ Card โหมดเสี่ยง)
+// ==========================================================
+function getRiskMatrixData(code) {
+  // กันเหนียว เผื่อดัชนียังไม่ถูกสร้าง
+  if (!snGroupedByCode) prepareSNGroupCache();
+
+  const counts = {
+    instockTotal: 0, saleTotal: 0,
+    instock: { '0-22':0, '23':0, '24':0, '25':0, '26':0, '27':0, '28':0, '29':0 },
+    sale:    { '0-22':0, '23':0, '24':0, '25':0, '26':0, '27':0, '28':0, '29':0 }
+  };
+  
+  const cleanTarget = String(code).replace(/\s+/g, '').toUpperCase();
+  
+  // ⚡ ดึงจากดัชนีที่จัดกลุ่มไว้แล้วตรงๆ (ใช้เวลาหา 0.001 วิ)
+  const sns = snGroupedByCode[cleanTarget] || [];
+
+  sns.forEach(s => {
+    const age = Number(s.day) || 0;
+    const type = (String(s.status).toUpperCase() === 'SALE') ? 'sale' : 'instock';
+
+    if (type === 'sale') counts.saleTotal++; else counts.instockTotal++;
+
+    if (age >= 23 && age <= 29) {
+      counts[type][age]++;
+    } else {
+      counts[type]['0-22']++;
+    }
+  });
+  return counts;
+}
+
+// ==========================================================
+// 🛠️ ฟังก์ชันสร้าง HTML สำหรับ Risk Card (ใช้ร่วมกันได้ทั้ง Mobile, PC, Modal)
+// ==========================================================
+function buildRiskCardHTML(r, isHeader = false) {
+  const code = r.code || ''; const name = r.name || ''; const zone = r.zone || '';
+  const mx = getRiskMatrixData(code);
+  
+  // คำนวณชิ้นที่เสี่ยงจริงๆ (Instock 23-29 วัน)
+  const riskCount = mx.instock['23'] + mx.instock['24'] + mx.instock['25'] + mx.instock['26'] + mx.instock['27'] + mx.instock['28'] + mx.instock['29'];
+  
+  // ถ้าเป็น Header ใน Modal จะไม่ใส่ onclick
+  const onclickAttr = isHeader ? '' : `onclick="openSN('${esc(code)}','${esc(name)}','${esc(zone)}',${r.instock||0},${r.sale||0},${r.fifo||0},${r.notfifo||0},${r.repeatDays||0},${r.notfifoMonth||0})"`;
+  const extraStyle = isHeader ? 'cursor: default; margin-bottom: 0; box-shadow: none;' : '';
+
+  return `
+  <div class="risk-card-container" ${onclickAttr} style="${extraStyle}">
+    <div class="risk-left">
+      <div class="risk-code">${code} <span class="risk-badge">เสี่ยง ${riskCount} ชิ้น</span></div>
+      <div class="risk-name">${name}</div>
+    </div>
+    <div class="risk-mid">
+      <div class="rm-zone-label">Zone</div>
+      <div class="rm-zone-badge">${zone}</div>
+    </div>
+    <div class="risk-matrix">
+      <table class="rm-table">
+        <tr>
+          <td style="text-align:right; padding-right:8px; color:#555;">Age</td>
+          <th>0-22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th>
+        </tr>
+        <tr>
+          <td class="rm-label">Instock <span class="rm-badge rm-blue">${mx.instockTotal}</span></td>
+          <td><div class="rm-cell rm-blue">${mx.instock['0-22']}</div></td>
+          <td><div class="rm-cell rm-blue">${mx.instock['23']}</div></td>
+          <td><div class="rm-cell rm-blue">${mx.instock['24']}</div></td>
+          <td><div class="rm-cell rm-blue">${mx.instock['25']}</div></td>
+          <td><div class="rm-cell rm-blue">${mx.instock['26']}</div></td>
+          <td><div class="rm-cell rm-blue">${mx.instock['27']}</div></td>
+          <td><div class="rm-cell rm-blue">${mx.instock['28']}</div></td>
+          <td><div class="rm-cell rm-blue">${mx.instock['29']}</div></td>
+        </tr>
+        <tr>
+          <td class="rm-label">Sale <span class="rm-badge rm-orange">${mx.saleTotal}</span></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['0-22']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['23']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['24']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['25']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['26']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['27']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['28']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['29']}</div></td>
+        </tr>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ==========================================================
+// ⚡ 1. ตัวช่วยสร้างดัชนีข้อมูล (Lookup Table) ความเร็วสูง
+// ==========================================================
+let snGroupedByCode = null;
+
+function prepareSNGroupCache() {
+  snGroupedByCode = {};
+  const allSNs = Object.values(snIndexMap);
+  for (let i = 0; i < allSNs.length; i++) {
+    const s = allSNs[i];
+    const c = String(s.code).replace(/\s+/g, '').toUpperCase();
+    if (!snGroupedByCode[c]) snGroupedByCode[c] = [];
+    snGroupedByCode[c].push(s);
+  }
+}
+
 </script>
 <div id="toastBox" class="toast-box"></div>
 </body>
