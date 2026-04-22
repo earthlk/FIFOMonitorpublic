@@ -2615,12 +2615,12 @@ async function pcOnDateOrZoneChange(){
   } catch (e) { showToast(e.message || "โหลดข้อมูลไม่สำเร็จ", "warn"); } finally { pcHideLoading(); }
 }
 
-function pcApplyFilter(){
+function pcApplyFilter() {
   const q = document.getElementById("pcSearch")?.value.toLowerCase() || "";
   const sort = document.getElementById("pcSort")?.value || "notfifo";
   
   // --------------------------------------------------------
-  // 1. ก้อนภาพรวม (Base List): กรองแค่โซน และ โหมด (ไม่โดนช่องค้นหากระทบ)
+  // 1. ก้อนภาพรวม (Base List): กรองแค่โซน และ โหมด
   // --------------------------------------------------------
   let baseList = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
 
@@ -2630,7 +2630,7 @@ function pcApplyFilter(){
     baseList = baseList.filter(r => r.notfifo > 0);
   }
 
-  // 👉 วาด Problem Code และ Dashboard ด้วยก้อนภาพรวม (มันจะได้โชว์ 5 อันดับตลอดเวลา)
+  // วาด Problem Code และ Dashboard (ไม่โดนช่องค้นหากระทบ)
   renderProblemCode(baseList);
   renderDashboardPC(baseList);
 
@@ -2639,13 +2639,19 @@ function pcApplyFilter(){
   // --------------------------------------------------------
   let list = [...baseList];
 
-  if(q){ 
-    list = list.filter(r=>{ 
-      return (String(r.code||"").toLowerCase().includes(q) || String(r.name||"").toLowerCase().includes(q)); 
+  if (q) { 
+    list = list.filter(r => { 
+      return (
+        String(r.code || "").toLowerCase().includes(q) || 
+        String(r.name || "").toLowerCase().includes(q) ||
+        String(r.zone || "").toLowerCase().includes(q) // ✨ จุดที่เพิ่มการค้นหาโซน
+      ); 
     }); 
   }
 
-  // จัดเรียง Card ตรงกลาง
+  // --------------------------------------------------------
+  // 3. จัดเรียง Card ตรงกลาง
+  // --------------------------------------------------------
   if (isRiskMode) { 
     list.sort((a,b) => b.riskCount - a.riskCount); 
   } else {
@@ -2655,7 +2661,7 @@ function pcApplyFilter(){
      if(sort === "zoneDesc") list.sort((a,b)=>String(b.zone).localeCompare(String(a.zone)));
   }
   
-  // 👉 วาดตารางตรงกลางด้วยก้อนแสดงผล
+  // 👉 วาดตารางฝั่ง PC ด้วยก้อนแสดงผล
   renderCardsPC(list); 
 }
 
