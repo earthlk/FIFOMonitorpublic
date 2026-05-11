@@ -2984,28 +2984,35 @@ function toggleRiskMode() {
 }
 
 // ==========================================================
-// 🛠️ ฟังก์ชันคำนวณยอด SN แยกตามอายุ (สำหรับ Card โหมดเสี่ยง)
+// 🛠️ ฟังก์ชันคำนวณยอด SN แยกตามอายุ และตรวจจับ FIFO Violation
 // ==========================================================
 function getRiskMatrixData(code) {
-  // กันเหนียว เผื่อดัชนียังไม่ถูกสร้าง
   if (!snGroupedByCode) prepareSNGroupCache();
 
   const counts = {
     instockTotal: 0, saleTotal: 0,
     instock: { '0-22':0, '23':0, '24':0, '25':0, '26':0, '27':0, '28':0, '29':0 },
-    sale:    { '0-22':0, '23':0, '24':0, '25':0, '26':0, '27':0, '28':0, '29':0 }
+    sale:    { '0-22':0, '23':0, '24':0, '25':0, '26':0, '27':0, '28':0, '29':0 },
+    maxAgeInStock: -1, 
+    minAgeSold: 999,   // ✨ เปลี่ยนมาจดจำ "อายุน้อยที่สุดที่ขายออกไป"
+    riskQty: 0
   };
   
   const cleanTarget = String(code).replace(/\s+/g, '').toUpperCase();
-  
-  // ⚡ ดึงจากดัชนีที่จัดกลุ่มไว้แล้วตรงๆ (ใช้เวลาหา 0.001 วิ)
   const sns = snGroupedByCode[cleanTarget] || [];
 
   sns.forEach(s => {
     const age = Number(s.day) || 0;
     const type = (String(s.status).toUpperCase() === 'SALE') ? 'sale' : 'instock';
 
-    if (type === 'sale') counts.saleTotal++; else counts.instockTotal++;
+    if (type === 'sale') {
+      counts.saleTotal++;
+      // ✨ ถ้าขายของอายุน้อยออกไป ให้จำค่านั้นไว้เพื่อไปจับผิด
+      if (age < counts.minAgeSold) counts.minAgeSold = age; 
+    } else {
+      counts.instockTotal++;
+      if (age > counts.maxAgeInStock) counts.maxAgeInStock = age;
+    }
 
     if (age >= 23 && age <= 29) {
       counts[type][age]++;
@@ -3013,27 +3020,57 @@ function getRiskMatrixData(code) {
       counts[type]['0-22']++;
     }
   });
+
+  sns.forEach(s => {
+    const age = Number(s.day) || 0;
+    const type = (String(s.status).toUpperCase() === 'SALE') ? 'sale' : 'instock';
+    if (type === 'instock' && age === counts.maxAgeInStock) {
+      counts.riskQty++;
+    }
+  });
+
   return counts;
 }
 
 // ==========================================================
-// 🛠️ ฟังก์ชันสร้าง HTML สำหรับ Risk Card (ใช้ร่วมกันได้ทั้ง Mobile, PC, Modal)
+// 🛠️ ฟังก์ชันสร้าง HTML สำหรับ Risk Card
 // ==========================================================
 function buildRiskCardHTML(r, isHeader = false) {
   const code = r.code || ''; const name = r.name || ''; const zone = r.zone || '';
   const mx = getRiskMatrixData(code);
   
-  // คำนวณชิ้นที่เสี่ยงจริงๆ (Instock 23-29 วัน)
-  const riskCount = mx.instock['23'] + mx.instock['24'] + mx.instock['25'] + mx.instock['26'] + mx.instock['27'] + mx.instock['28'] + mx.instock['29'];
+  // 🚨 กฎเหล็ก: ถ้ามีตัวที่ขายไป "อายุน้อยกว่า" ตัวที่เก่าที่สุดที่เหลืออยู่ = ถือว่าหยิบผิด!
+  const isFifoViolation = (mx.minAgeSold !== 999) && (mx.minAgeSold < mx.maxAgeInStock);
   
-  // ถ้าเป็น Header ใน Modal จะไม่ใส่ onclick
+  let riskBadgeHTML = '';
+  if (isFifoViolation) {
+     riskBadgeHTML = `<span class="risk-badge" style="background:#dc2626; color:#fff; font-size: 15px;">🚨 หยิบผิดล็อต! ค้าง ${mx.riskQty} ชิ้น (อายุ ${mx.maxAgeInStock} วัน)</span>`;
+  } else if (mx.maxAgeInStock >= 23) {
+     riskBadgeHTML = `<span class="risk-badge" style="background:#ffb703; color:#111;">⚠️ เสี่ยง ${mx.riskQty} ชิ้น (อายุ ${mx.maxAgeInStock} วัน)</span>`;
+  } else {
+     riskBadgeHTML = `<span class="risk-badge" style="background:#10b981; color:#fff;">✅ ปลอดภัย</span>`;
+  }
+  
   const onclickAttr = isHeader ? '' : `onclick="openSN('${esc(code)}','${esc(name)}','${esc(zone)}',${r.instock||0},${r.sale||0},${r.fifo||0},${r.notfifo||0},${r.repeatDays||0},${r.notfifoMonth||0})"`;
   const extraStyle = isHeader ? 'cursor: default; margin-bottom: 0; box-shadow: none;' : '';
+
+  const getInstockHTML = (ageKey, count) => {
+    let isHighlight = false;
+    if (isFifoViolation) {
+      if (ageKey === '0-22' && mx.maxAgeInStock <= 22) isHighlight = true;
+      if (ageKey === String(mx.maxAgeInStock)) isHighlight = true;
+    }
+    
+    if (isHighlight) {
+      return `<div class="rm-cell" style="background-color: #dc2626; box-shadow: 0 0 0 2px #fca5a5; transform: scale(1.2); position: relative; z-index: 2;" title="ตัวปัญหานี้แหละ!">${count}</div>`;
+    }
+    return `<div class="rm-cell rm-blue">${count}</div>`;
+  };
 
   return `
   <div class="risk-card-container" ${onclickAttr} style="${extraStyle}">
     <div class="risk-left">
-      <div class="risk-code">${code} <span class="risk-badge">เสี่ยง ${riskCount} ชิ้น</span></div>
+      <div class="risk-code">${code} ${riskBadgeHTML}</div>
       <div class="risk-name">${name}</div>
     </div>
     <div class="risk-mid">
@@ -3048,14 +3085,14 @@ function buildRiskCardHTML(r, isHeader = false) {
         </tr>
         <tr>
           <td class="rm-label">Instock <span class="rm-badge rm-blue">${mx.instockTotal}</span></td>
-          <td><div class="rm-cell rm-blue">${mx.instock['0-22']}</div></td>
-          <td><div class="rm-cell rm-blue">${mx.instock['23']}</div></td>
-          <td><div class="rm-cell rm-blue">${mx.instock['24']}</div></td>
-          <td><div class="rm-cell rm-blue">${mx.instock['25']}</div></td>
-          <td><div class="rm-cell rm-blue">${mx.instock['26']}</div></td>
-          <td><div class="rm-cell rm-blue">${mx.instock['27']}</div></td>
-          <td><div class="rm-cell rm-blue">${mx.instock['28']}</div></td>
-          <td><div class="rm-cell rm-blue">${mx.instock['29']}</div></td>
+          <td>${getInstockHTML('0-22', mx.instock['0-22'])}</td>
+          <td>${getInstockHTML('23', mx.instock['23'])}</td>
+          <td>${getInstockHTML('24', mx.instock['24'])}</td>
+          <td>${getInstockHTML('25', mx.instock['25'])}</td>
+          <td>${getInstockHTML('26', mx.instock['26'])}</td>
+          <td>${getInstockHTML('27', mx.instock['27'])}</td>
+          <td>${getInstockHTML('28', mx.instock['28'])}</td>
+          <td>${getInstockHTML('29', mx.instock['29'])}</td>
         </tr>
         <tr>
           <td class="rm-label">Sale <span class="rm-badge rm-orange">${mx.saleTotal}</span></td>
