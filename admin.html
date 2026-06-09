@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — SN Report</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body { background: #f1f5f9; font-size: 16px; }
+.report-card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+.badge-pending { background: #f59e0b; color: #fff; }
+.badge-approved { background: #16a34a; color: #fff; }
+.badge-rejected { background: #dc2626; color: #fff; }
+.group-header { background: linear-gradient(135deg,#2563eb,#4f46e5); color: #fff; border-radius: 12px; padding: 12px 18px; margin: 20px 0 10px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="loginScreen" class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
+  <div class="card p-4" style="width:320px; border-radius:20px;">
+    <h5 class="text-center fw-bold mb-3">🔐 Admin Login</h5>
+    <input type="password" id="pwInput" class="form-control mb-3" placeholder="Password">
+    <button class="btn btn-primary w-100 fw-bold" onclick="checkPassword()">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- Admin Screen -->
+<div id="adminScreen" style="display:none; padding:20px; max-width:900px; margin:0 auto;">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">📋 SN Report Dashboard</h4>
+    <div>
+      <select id="filterStatus" class="form-select" onchange="renderReports()" style="width:150px;">
+        <option value="ALL">ทั้งหมด</option>
+        <option value="PENDING">รอตรวจสอบ</option>
+        <option value="APPROVED">Approved</option>
+        <option value="REJECTED">Rejected</option>
+      </select>
+    </div>
+  </div>
+  <div id="reportList"></div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal fade" id="commentModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content p-3">
+      <h5 class="fw-bold mb-3" id="commentTitle">เพิ่ม Comment</h5>
+      <textarea id="commentInput" class="form-control mb-3" rows="3" placeholder="Comment..."></textarea>
+      <div class="d-flex gap-2">
+        <button class="btn btn-success flex-grow-1 fw-bold" onclick="confirmAction('APPROVED')">✅ Approve</button>
+        <button class="btn btn-danger flex-grow-1 fw-bold" onclick="confirmAction('REJECTED')">❌ Reject</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const GAS_URL = "YOUR_GAS_URL_HERE"; // ← เปลี่ยนตรงนี้
+const ADMIN_PASSWORD = "Report7780#";
+
+let allReports = [];
+let pendingRowIndex = null;
+let commentModalInstance = null;
+
+function checkPassword() {
+  const pw = document.getElementById("pwInput").value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("adminScreen").style.display = "block";
+    loadReports();
+  } else {
+    alert("Password ไม่ถูกต้องครับ");
+  }
+}
+
+async function loadReports() {
+  document.getElementById("reportList").innerHTML = "<p class='text-muted'>กำลังโหลด...</p>";
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "getSNReports", data: {} })
+  });
+  const json = await res.json();
+  allReports = json.data || [];
+  renderReports();
+}
+
+function renderReports() {
+  const filter = document.getElementById("filterStatus").value;
+  const filtered = filter === "ALL" ? allReports : allReports.filter(r => r.status === filter);
+
+  if (!filtered.length) {
+    document.getElementById("reportList").innerHTML = "<p class='text-muted text-center mt-4'>ไม่มีรายการครับ</p>";
+    return;
+  }
+
+  // Group by reportDate → Code
+  const grouped = {};
+  filtered.forEach(r => {
+    const dateKey = r.reportDate || "ไม่ระบุวันที่";
+    if (!grouped[dateKey]) grouped[dateKey] = {};
+    if (!grouped[dateKey][r.code]) grouped[dateKey][r.code] = [];
+    grouped[dateKey][r.code].push(r);
+  });
+
+  let html = "";
+  Object.keys(grouped).sort().reverse().forEach(date => {
+    html += `<div class="group-header">📅 วันที่ไฟล์: ${date}</div>`;
+    Object.keys(grouped[date]).forEach(code => {
+      const items = grouped[date][code];
+      html += `<div class="report-card">
+        <div class="fw-bold mb-2" style="font-size:18px;">📦 ${code} — ${items[0].zone}</div>`;
+      items.forEach(r => {
+        const badgeClass = r.status === "PENDING" ? "badge-pending" : r.status === "APPROVED" ? "badge-approved" : "badge-rejected";
+        const statusText = r.status === "PENDING" ? "รอตรวจสอบ" : r.status === "APPROVED" ? "Approved" : "Rejected";
+        html += `
+        <div class="border rounded-3 p-3 mb-2">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="fw-bold">SN: ${r.sn}</div>
+              <div class="text-muted" style="font-size:14px;">📝 ${r.reason} ${r.note ? `— ${r.note}` : ""}</div>
+              <div class="text-muted" style="font-size:13px;">🕐 ${r.timestamp}</div>
+              ${r.adminComment ? `<div class="text-primary mt-1" style="font-size:14px;">💬 ${r.adminComment}</div>` : ""}
+            </div>
+            <div class="d-flex flex-column align-items-end gap-2">
+              <span class="badge ${badgeClass} px-3 py-2">${statusText}</span>
+              ${r.status === "PENDING" ? `<button class="btn btn-sm btn-outline-primary fw-bold" onclick="openComment(${r.rowIndex})">ตรวจสอบ</button>` : ""}
+            </div>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+  });
+
+  document.getElementById("reportList").innerHTML = html;
+}
+
+function openComment(rowIndex) {
+  pendingRowIndex = rowIndex;
+  document.getElementById("commentInput").value = "";
+  if (!commentModalInstance) {
+    commentModalInstance = new bootstrap.Modal(document.getElementById("commentModal"));
+  }
+  commentModalInstance.show();
+}
+
+async function confirmAction(status) {
+  const comment = document.getElementById("commentInput").value;
+  commentModalInstance.hide();
+
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "updateSNReport",
+      data: { rowIndex: pendingRowIndex, status: status, adminComment: comment }
+    })
+  });
+  const json = await res.json();
+  if (json.data?.success) {
+    showToast(status === "APPROVED" ? "Approved แล้วครับ ✅" : "Rejected แล้วครับ ❌");
+    loadReports();
+  }
+}
+
+function showToast(msg) {
+  const d = document.createElement("div");
+  d.style.cssText = "position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 24px;border-radius:12px;font-weight:700;z-index:9999;";
+  d.innerText = msg;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 3000);
+}
+
+// Enter key login
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("pwInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") checkPassword();
+  });
+});
+</script>
+</body>
+</html>
