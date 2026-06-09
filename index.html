@@ -1309,6 +1309,48 @@ body{background:#eef2ff;font-family:system-ui}
 .rm-label { display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color:#555; font-size: 16px; gap: 8px;}
 .rm-label .rm-badge { border-radius: 12px; padding: 4px 10px; color: white; font-weight:bold; }
 
+/* ===== Swipe to Report ===== */
+.swipe-report-wrap {
+  position: relative;
+  background: #fee2e2;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 60px;
+  margin-top: 12px;
+  user-select: none;
+  touch-action: none;
+}
+
+.swipe-report-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.swipe-report-thumb {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 52px;
+  height: 52px;
+  background: #dc2626;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22px;
+  cursor: grab;
+  touch-action: none;
+  z-index: 2;
+}
+
 </style>
 </head>
 
@@ -1563,7 +1605,7 @@ body{background:#eef2ff;font-family:system-ui}
 
 	  <!-- Swipe Button -->
   	  <div class="swipe-report-wrap" id="swipeWrap">
-    	    <div class="swipe-report-track"> ← เลื่อนเพื่อ Report
+    	    <div class="swipe-report-track">เลื่อนเพื่อ Report →</div>
 	  </div>
     	  <div class="swipe-report-thumb" id="swipeThumb">🚨</div>
   	  </div>
@@ -1787,10 +1829,11 @@ function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notf
     else { renderSNTableAuto(); }
     
     hideSNLoading(); window.snLoading = false;
+
+    // เรียก init swipe report ด้วย SN ที่เปิดอยู่
+    const currentDate = getCurrentDate();
+    initSwipeReport(null, code, zone, currentDate);
   }, 200);
-  // เรียก init swipe report ด้วย SN ที่เปิดอยู่
-  const currentDate = getCurrentDate();
-  initSwipeReport(null, code, zone, currentDate);
 }
 
 async function onDateOrZoneChange() {
@@ -3175,53 +3218,54 @@ function initSwipeReport(sn, code, zone, date) {
   thumb.style.left = "4px";
   thumb.style.background = "#dc2626";
 
+  // ลบ event listener เก่าออกโดย clone node
+  const newThumb = thumb.cloneNode(true);
+  thumb.parentNode.replaceChild(newThumb, thumb);
+  const t = document.getElementById("swipeThumb");
+
   const maxX = wrap.clientWidth - 60;
   let startX = 0;
   let isDragging = false;
 
   const onStart = (clientX) => {
-    startX = clientX - thumb.offsetLeft;
+    startX = clientX - t.offsetLeft;
     isDragging = true;
-    thumb.style.transition = "none";
+    t.style.transition = "none";
   };
 
   const onMove = (clientX) => {
     if (!isDragging) return;
     let x = clientX - startX;
     x = Math.max(4, Math.min(x, maxX));
-    thumb.style.left = x + "px";
-
-    // เปลี่ยนสีตาม progress
+    t.style.left = x + "px";
     const pct = (x - 4) / (maxX - 4);
-    if (pct > 0.7) thumb.style.background = "#16a34a";
-    else thumb.style.background = "#dc2626";
+    if (pct > 0.7) t.style.background = "#16a34a";
+    else t.style.background = "#dc2626";
   };
 
   const onEnd = (clientX) => {
     if (!isDragging) return;
     isDragging = false;
-    thumb.style.transition = "left .3s";
-
+    t.style.transition = "left .3s";
     const x = clientX - startX;
     const pct = (x - 4) / (maxX - 4);
-
     if (pct > 0.7) {
-      thumb.style.left = maxX + "px";
-      thumb.style.background = "#16a34a";
+      t.style.left = maxX + "px";
+      t.style.background = "#16a34a";
       showReportConfirm();
     } else {
-      thumb.style.left = "4px";
-      thumb.style.background = "#dc2626";
+      t.style.left = "4px";
+      t.style.background = "#dc2626";
     }
   };
 
   // Touch
-  thumb.addEventListener("touchstart", e => onStart(e.touches[0].clientX), { passive: true });
-  thumb.addEventListener("touchmove", e => onMove(e.touches[0].clientX), { passive: true });
-  thumb.addEventListener("touchend", e => onEnd(e.changedTouches[0].clientX));
+  t.addEventListener("touchstart", e => onStart(e.touches[0].clientX), { passive: true });
+  t.addEventListener("touchmove", e => onMove(e.touches[0].clientX), { passive: true });
+  t.addEventListener("touchend", e => onEnd(e.changedTouches[0].clientX));
 
-  // Mouse (PC)
-  thumb.addEventListener("mousedown", e => {
+  // Mouse
+  t.addEventListener("mousedown", e => {
     onStart(e.clientX);
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
