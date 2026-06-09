@@ -67,7 +67,7 @@ let commentModalInstance = null;
 function checkPassword() {
   const pw = document.getElementById("pwInput").value;
   if (pw === ADMIN_PASSWORD) {
-    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("loginScreen").style.cssText = "display:none !important";
     document.getElementById("adminScreen").style.display = "block";
     loadReports();
   } else {
