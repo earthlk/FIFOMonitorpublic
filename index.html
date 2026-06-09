@@ -1545,6 +1545,29 @@ body{background:#eef2ff;font-family:system-ui}
           <thead class="table-light"><tr><th>SN</th><th>Age</th><th>Status</th></tr></thead>
           <tbody id="snTable"></tbody>
         </table>
+	<!-- Swipe to Report -->
+	<div class="mt-3 px-2" id="reportSection">
+	  <div class="fw-bold mb-2" style="font-size:18px;">📢 แจ้งปัญหา SN นี้</div>
+	  
+	  <!-- เหตุผล -->
+	  <select id="reportReason" class="form-select mb-2" style="font-size:18px;">
+	    <option value="">-- เลือกเหตุผล --</option>
+    	    <option value="วนบิล">วนบิล</option>
+    	    <option value="โยกสาขา">โยกสาขา</option>
+    	    <option value="Program Auto">Program Auto</option>
+    	    <option value="อื่นๆ">อื่นๆ</option>
+  	  </select>
+
+	  <!-- หมายเหตุ -->
+  	  <input type="text" id="reportNote" class="form-control mb-2" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)" style="font-size:18px;">
+
+	  <!-- Swipe Button -->
+  	  <div class="swipe-report-wrap" id="swipeWrap">
+    	    <div class="swipe-report-track"> ← เลื่อนเพื่อ Report
+	  </div>
+    	  <div class="swipe-report-thumb" id="swipeThumb">🚨</div>
+  	  </div>
+	</div>
       </div>
     </div>
   </div>
@@ -1765,6 +1788,9 @@ function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notf
     
     hideSNLoading(); window.snLoading = false;
   }, 200);
+  // เรียก init swipe report ด้วย SN ที่เปิดอยู่
+  const currentDate = getCurrentDate();
+  initSwipeReport(null, code, zone, currentDate);
 }
 
 async function onDateOrZoneChange() {
@@ -3123,6 +3149,126 @@ function prepareSNGroupCache() {
     const c = String(s.code).replace(/\s+/g, '').toUpperCase();
     if (!snGroupedByCode[c]) snGroupedByCode[c] = [];
     snGroupedByCode[c].push(s);
+  }
+}
+
+// ===========================
+// Swipe to Report Logic
+// ===========================
+
+let swipeCurrentSN = null;
+let swipeCurrentCode = null;
+let swipeCurrentZone = null;
+let swipeCurrentDate = null;
+
+function initSwipeReport(sn, code, zone, date) {
+  swipeCurrentSN = sn;
+  swipeCurrentCode = code;
+  swipeCurrentZone = zone;
+  swipeCurrentDate = date;
+
+  const wrap = document.getElementById("swipeWrap");
+  const thumb = document.getElementById("swipeThumb");
+  if (!wrap || !thumb) return;
+
+  // Reset
+  thumb.style.left = "4px";
+  thumb.style.background = "#dc2626";
+
+  const maxX = wrap.clientWidth - 60;
+  let startX = 0;
+  let isDragging = false;
+
+  const onStart = (clientX) => {
+    startX = clientX - thumb.offsetLeft;
+    isDragging = true;
+    thumb.style.transition = "none";
+  };
+
+  const onMove = (clientX) => {
+    if (!isDragging) return;
+    let x = clientX - startX;
+    x = Math.max(4, Math.min(x, maxX));
+    thumb.style.left = x + "px";
+
+    // เปลี่ยนสีตาม progress
+    const pct = (x - 4) / (maxX - 4);
+    if (pct > 0.7) thumb.style.background = "#16a34a";
+    else thumb.style.background = "#dc2626";
+  };
+
+  const onEnd = (clientX) => {
+    if (!isDragging) return;
+    isDragging = false;
+    thumb.style.transition = "left .3s";
+
+    const x = clientX - startX;
+    const pct = (x - 4) / (maxX - 4);
+
+    if (pct > 0.7) {
+      thumb.style.left = maxX + "px";
+      thumb.style.background = "#16a34a";
+      showReportConfirm();
+    } else {
+      thumb.style.left = "4px";
+      thumb.style.background = "#dc2626";
+    }
+  };
+
+  // Touch
+  thumb.addEventListener("touchstart", e => onStart(e.touches[0].clientX), { passive: true });
+  thumb.addEventListener("touchmove", e => onMove(e.touches[0].clientX), { passive: true });
+  thumb.addEventListener("touchend", e => onEnd(e.changedTouches[0].clientX));
+
+  // Mouse (PC)
+  thumb.addEventListener("mousedown", e => {
+    onStart(e.clientX);
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
+
+  function onMouseMove(e) { onMove(e.clientX); }
+  function onMouseUp(e) {
+    onEnd(e.clientX);
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  }
+}
+
+function showReportConfirm() {
+  const reason = document.getElementById("reportReason").value;
+  if (!reason) {
+    showToast("กรุณาเลือกเหตุผลก่อนครับ", "warn");
+    // Reset thumb
+    const thumb = document.getElementById("swipeThumb");
+    if (thumb) { thumb.style.left = "4px"; thumb.style.background = "#dc2626"; }
+    return;
+  }
+
+  const note = document.getElementById("reportNote").value;
+  const msg = `ยืนยัน Report SN นี้?\n\nCode: ${swipeCurrentCode}\nSN: ${swipeCurrentSN}\nเหตุผล: ${reason}`;
+
+  showAppConfirm("ยืนยัน Report", msg, () => submitReport(reason, note));
+}
+
+async function submitReport(reason, note) {
+  try {
+    await callGAS("submitSNReport", {
+      reportDate: swipeCurrentDate,
+      code: swipeCurrentCode,
+      sn: swipeCurrentSN,
+      zone: swipeCurrentZone,
+      reason: reason,
+      note: note
+    });
+    showToast("Report สำเร็จแล้วครับ ✅", "ok");
+    // Reset
+    const thumb = document.getElementById("swipeThumb");
+    if (thumb) { thumb.style.left = "4px"; thumb.style.background = "#dc2626"; }
+    document.getElementById("reportReason").value = "";
+    document.getElementById("reportNote").value = "";
+  } catch (err) {
+    showToast("Report ไม่สำเร็จ: " + err.message, "warn");
   }
 }
 
