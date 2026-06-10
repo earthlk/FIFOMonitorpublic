@@ -116,20 +116,25 @@ function renderReports() {
         const badgeClass = r.status === "PENDING" ? "badge-pending" : r.status === "APPROVED" ? "badge-approved" : "badge-rejected";
         const statusText = r.status === "PENDING" ? "รอตรวจสอบ" : r.status === "APPROVED" ? "Approved" : "Rejected";
         html += `
-        <div class="border rounded-3 p-3 mb-2">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <div class="fw-bold">SN: ${r.sn}</div>
-              <div class="text-muted" style="font-size:14px;">📝 ${r.reason} ${r.note ? `— ${r.note}` : ""}</div>
-              <div class="text-muted" style="font-size:13px;">🕐 ${r.timestamp}</div>
-              ${r.adminComment ? `<div class="text-primary mt-1" style="font-size:14px;">💬 ${r.adminComment}</div>` : ""}
+          <div class="border rounded-3 p-3 mb-2">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-bold">SN: ${r.sn}</div>
+                <div class="text-muted" style="font-size:14px;">
+                  RC: ${r.rc || '-'} | Age: ${r.age || '-'} วัน
+                </div>
+                <div class="text-muted" style="font-size:14px;">
+                  📝 ${r.reason} ${r.note ? `— ${r.note}` : ""}
+                </div>
+                <div class="text-muted" style="font-size:13px;">🕐 ${r.timestamp}</div>
+                  ${r.adminComment ? `<div class="text-primary mt-1" style="font-size:14px;">💬 ${r.adminComment}</div>` : ""}
+              </div>
+              <div class="d-flex flex-column align-items-end gap-2">
+                <span class="badge ${badgeClass} px-3 py-2">${statusText}</span>
+                ${r.status === "PENDING" ? `<button class="btn btn-sm btn-outline-primary fw-bold" onclick="openComment(${r.rowIndex})">ตรวจสอบ</button>` : ""}
+              </div>
             </div>
-            <div class="d-flex flex-column align-items-end gap-2">
-              <span class="badge ${badgeClass} px-3 py-2">${statusText}</span>
-              ${r.status === "PENDING" ? `<button class="btn btn-sm btn-outline-primary fw-bold" onclick="openComment(${r.rowIndex})">ตรวจสอบ</button>` : ""}
-            </div>
-          </div>
-        </div>`;
+          </div>`;
       });
       html += `</div>`;
     });
