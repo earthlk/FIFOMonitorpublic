@@ -3,188 +3,3376 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin — SN Report</title>
+<title>FIFO Monitor</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+
 <style>
-body { background: #f1f5f9; font-size: 16px; }
-.report-card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,.08); }
-.badge-pending { background: #f59e0b; color: #fff; }
-.badge-approved { background: #16a34a; color: #fff; }
-.badge-rejected { background: #dc2626; color: #fff; }
-.group-header { background: linear-gradient(135deg,#2563eb,#4f46e5); color: #fff; border-radius: 12px; padding: 12px 18px; margin: 20px 0 10px; font-weight: 700; }
+#mobileLayout,#pcLayout{display:none;}
+
+:root{
+  --primary:#2563eb;
+  --secondary:#4f46e5;
+  --danger:#dc2626;
+  --success:#16a34a;
+  --warning:#f59e0b;
+  --bg:#eef2ff;
+}
+
+body{
+  background:var(--bg);
+  font-size:30px;
+  line-height:1.5;
+}
+
+body *{
+  font-size:inherit;
+}
+
+button,input{
+  min-height:52px;
+  font-size:30px;
+}
+
+/* ===== App Root ===== */
+.app-root{
+  max-width:100vw;
+  overflow-x:hidden;
+}
+
+/* ===== Text ===== */
+.code{
+  font-size:30px;
+  font-weight:900;
+  color:#111;
+}
+
+.name{
+  font-size:28px;
+  color:#444;
+  margin-bottom:6px;
+}
+
+/* ===== Stat Row ===== */
+.stat-row{
+  display:flex;
+  justify-content:space-between;
+  margin-top:14px;
+  font-size:40px;
+  font-weight:600;
+}
+
+/* ===== Table ===== */
+.table{
+  font-size:26px;
+}
+
+.table td,.table th{
+  padding:18px 12px;
+}
+
+.tr-sale > td{
+  background:#fff3cd !important;
+  color:#7c4a03 !important;
+  font-weight:700;
+}
+
+.tr-stock > td{
+  background:#fff;
+}
+
+.tr-reserve > td{
+  background:#fef3c7;
+  color:#92400e;
+  font-weight:700;
+}
+
+/* ===== Badges ===== */
+/* Base badge */
+.badge{
+  font-weight:700;
+  border-radius:12px;
+  padding:6px 14px;
+  letter-spacing:.2px;
+}
+
+/* Zone – น้ำเงินองค์กร */
+.badge-zone{
+  background:linear-gradient(135deg,#1e40af,#1e3a8a);
+  color:#ffffff;
+}
+
+/* Instock – ฟ้าเข้ม อ่านง่าย */
+.badge-instock{
+  background:linear-gradient(135deg,#38bdf8,#0ea5e9);
+  color:#082f49;
+}
+
+/* Sale – ม่วงเข้มแบบ SaaS */
+.badge-sale{
+  background:linear-gradient(135deg,#a78bfa,#7c3aed);
+  color:#2e1065;
+}
+
+/* FIFO – เขียวมั่นคง (positive signal) */
+.badge-fifo{
+  background:linear-gradient(135deg,#4ade80,#16a34a);
+  color:#052e16;
+}
+
+/* Repeat / Month – ส้มจริงจัง */
+.badge-month{
+  background:linear-gradient(135deg,#fb923c,#f97316);
+  color:#431407;
+}
+
+/* Not FIFO – แดงเข้ม เตือนภัย */
+.badge-notfifo{
+  background:linear-gradient(135deg,#dc2626,#7f1d1d);
+  color:#ffffff;
+  box-shadow:0 4px 12px rgba(127,29,29,.45);
+}
+
+
+.toolbar .btn{padding:.25rem .5rem}
+
+/* ===== Overlay ===== */
+#loadingOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(255,255,255,.75);
+  backdrop-filter:blur(2px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+/* ===== Skeleton Card ===== */
+.skeleton-card{
+  border-radius:1rem;
+  padding:12px;
+  margin-bottom:10px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+.skel-line{
+  height:12px;
+  border-radius:6px;
+  background:linear-gradient(90deg,#eee 25%,#ddd 37%,#eee 63%);
+  background-size:400% 100%;
+  animation:skel 1.4s ease infinite;
+  margin-bottom:8px;
+}
+.skel-line.sm{width:40%;height:10px}
+.skel-line.md{width:65%}
+.skel-line.lg{width:90%;height:14px}
+.skel-row{display:flex;justify-content:space-between}
+.skel-box{
+  height:16px;width:60px;border-radius:6px;
+  background:linear-gradient(90deg,#eee 25%,#ddd 37%,#eee 63%);
+  background-size:400% 100%;
+  animation:skel 1.4s ease infinite
+}
+@keyframes skel{
+  0%{background-position:100% 0}
+  100%{background-position:-100% 0}
+}
+
+.prefix-btn{
+  border-radius:14px;
+  padding:14px 28px;
+  font-size:22px;
+  border:none;
+  background:#e0e7ff;
+  color:var(--primary);
+  font-weight:700;
+  margin:6px;
+  box-shadow:0 3px 6px rgba(0,0,0,.15);
+}
+
+.prefix-btn.active{
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:#fff;
+  box-shadow:0 8px 16px rgba(37,99,235,.45);
+  transform:scale(1.05);
+}
+
+.skeleton-row{
+  height:32px;
+  background:linear-gradient(90deg,#eee,#f5f5f5,#eee);
+  background-size:200% 100%;
+  animation:skeleton 1.2s infinite;
+}
+@keyframes skeleton{
+  from{background-position:200% 0}
+  to{background-position:-200% 0}
+}
+
+/* ===== Header Card Sticky ===== */
+.sn-card-header{
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:#fff;
+  border-radius:22px;
+  padding:22px;
+  margin-bottom:16px;
+  box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+
+.sn-card-header .code{
+  font-size:30px;
+}
+
+.sn-card-header .name{
+  font-size:22px;
+  color:#e0e7ff;
+}
+
+.sn-card-header .badges span{
+  font-size:22px;
+  margin-right:8px;
+  margin-top:6px;
+}
+
+@media (max-width: 576px){
+  .card-item{
+    padding:16px;
+    margin-bottom:14px;
+  }
+}
+
+/* ===== Modal Full App ===== */
+@media (max-width: 900px){
+  .modal-dialog{
+    margin:0;
+    width:100vw;
+    height:100vh;
+    max-width:none;
+  }
+  .modal-content{
+    height:100vh;
+    border-radius:0;
+  }
+}
+
+#loadingText{
+  font-size:16px;
+}
+.progress{
+  height:10px;
+}
+
+.app-modal-header{
+  background:#ffffff;
+  display:flex;
+  align-items:center;
+  padding:16px;
+  border-bottom:1px solid #e0e0e0;
+  position:sticky;
+  top:0;
+  z-index:5;
+}
+
+.app-modal .modal-dialog{
+  position:fixed;
+  right:0;
+  top:0;
+  margin:0;
+  width:100vw;
+  height:100vh;
+  transform:translateX(100%);
+  transition:transform .35s ease;
+}
+
+.app-modal.show .modal-dialog{
+  transform:translateX(0);
+}
+
+.app-modal .modal-content{
+  height:100vh;
+  border-radius:0;
+}
+
+.app-back-btn{
+  font-size:28px;
+  color:var(--primary,#0d6efd);
+  font-weight:700;
+  text-decoration:none;
+  margin-right:12px;
+}
+
+.app-title{
+  font-size:20px;
+  font-weight:700;
+  color:#111;
+}
+
+.app-back-btn:active{
+  opacity:.6;
+  transform:scale(.9);
+}
+
+.modal-content{
+  display:flex;
+  flex-direction:column;
+}
+
+.modal-body{
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+.app-modal-header{
+  flex-shrink:0;
+}
+
+.toast-box{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:99999;
+}
+
+.toast{
+  background:#dc2626;
+  color:#fff;
+  padding:14px 22px;
+  border-radius:14px;
+  font-size:18px;
+  margin-top:10px;
+  box-shadow:0 6px 14px rgba(0,0,0,.3);
+  animation:fadein .3s ease;
+}
+
+.toast.info{background:#2563eb}
+.toast.warn{background:#f59e0b;color:#000}
+.toast.ok{background:#16a34a}
+
+@keyframes fadein{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.search-box{
+  position:relative;
+  margin-bottom:16px;
+}
+
+.search-input{
+  width:100%;
+  padding:18px 18px 18px 56px;
+  font-size:26px;
+  border-radius:18px;
+  border:2px solid #c7d2fe;
+  background:#ffffff;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+  outline:none;
+  transition:.25s;
+}
+
+.search-input:focus{
+  border-color:#2563eb;
+  box-shadow:0 6px 14px rgba(37,99,235,.25);
+}
+
+.search-icon{
+  position:absolute;
+  left:18px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:26px;
+  color:#2563eb;
+}
+
+.filter-bar{
+  display:flex;
+  align-items:center;
+  background:#fff;
+  border-radius:16px;
+  padding:6px 14px;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+  cursor:pointer;
+  font-size:36px;
+  font-weight:700;
+  gap:14px;
+  border:none;
+  color:#111;
+  transition:.25s;
+}
+
+.filter-left{
+  color:#1e3a8a;
+  white-space:nowrap;
+}
+
+.filter-right{
+  color:#2563eb;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.filter-icon{
+  font-size:18px;
+}
+
+/* ===== Modal UI ===== */
+.modal-content{
+  border-radius:26px;
+}
+
+.zone-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.zone-btn{
+  padding:14px 0;
+  border-radius:18px;
+  border:none;
+  background:#eef2ff;
+  color:#2563eb;
+  font-size:26px;
+  font-weight:900;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.zone-btn:hover{
+  background:#dbeafe;
+}
+
+.zone-btn.active{
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+  color:#fff;
+  box-shadow:0 8px 20px rgba(37,99,235,.45);
+  transform:scale(1.05);
+}
+
+.modal-footer .btn{
+  border-radius:18px;
+  font-size:18px;
+  font-weight:700;
+}
+
+.date-picker-box{
+  background:#fff;
+  border-radius:18px;
+  padding:14px 18px;
+  box-shadow:0 6px 16px rgba(0,0,0,.15);
+  margin-bottom:18px;
+}
+
+.date-label{
+  display:block;
+  font-size:20px;
+  font-weight:800;
+  color:#2563eb;
+  margin-bottom:6px;
+}
+
+.date-input{
+  width:100%;
+  font-size:32px;
+  padding:14px 16px;
+  border-radius:14px;
+  border:2px solid #c7d2fe;
+  outline:none;
+  background:#f8fafc;
+  transition:.25s;
+}
+
+.date-input:focus{
+  border-color:#2563eb;
+  background:#fff;
+  box-shadow:0 6px 14px rgba(37,99,235,.25);
+}
+
+.btn-unified{
+  width:100%;
+  padding:18px 0;
+  font-size:32px;
+  font-weight:800;
+  border-radius:20px;
+  border:none;
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+  color:#fff;
+  box-shadow:0 6px 16px rgba(37,99,235,.45);
+  transition:.2s;
+}
+
+.btn-unified2{
+  width:100%;
+  padding:18px 0;
+  font-size:32px;
+  font-weight:800;
+  border-radius:20px;
+  border:none;
+  background:linear-gradient(135deg,#dc2626,#f97316);
+  color:#fff;
+  box-shadow:0 6px 16px rgba(37,99,235,.45);
+  transition:.2s;
+}
+
+.btn-unified:active{
+  transform:scale(.96);
+  box-shadow:0 3px 8px rgba(37,99,235,.35);
+}
+
+.btn-unified:hover{
+  filter:brightness(1.05);
+}
+
+.rc-switch{
+  position:relative;
+  display:inline-block;
+  width:86px;        /* ← ปรับความยาวตรงนี้ */
+  height:36px;
+}
+
+.rc-switch input{
+  opacity:0;
+  width:0;
+  height:0;
+}
+
+.rc-slider{
+  position:absolute;
+  cursor:pointer;
+  inset:0;
+  background:#cbd5f5;
+  border-radius:36px;
+  transition:.3s;
+}
+
+.rc-slider:before{
+  content:"";
+  position:absolute;
+  height:28px;
+  width:28px;
+  left:4px;
+  bottom:4px;
+  background:white;
+  border-radius:50%;
+  transition:.3s;
+  box-shadow:0 3px 8px rgba(0,0,0,.25);
+}
+
+.rc-switch input:checked + .rc-slider{
+  background:#2563eb;
+}
+
+.rc-switch input:checked + .rc-slider:before{
+  transform:translateX(50px);   /* ต้องสัมพันธ์กับ width */
+}
+
+.sn-modal-wide .modal-dialog{
+  max-width: 70vw;
+}
+
+@media (max-width: 900px){
+  .sn-modal-wide .modal-dialog{
+    max-width: 100vw;
+    margin:0;
+  }
+}
+
+@media (orientation:landscape) and (max-width:1024px){
+  body{
+    font-size:28px;
+  }
+}
+
+.search-row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-bottom:16px;
+}
+
+.search-row .search-input{
+  flex:1;
+}
+
+.sn-side-btn{
+  min-width:90px;
+  height:56px;
+  font-size:22px;
+  font-weight:700;
+  border-radius:16px;
+  border:none;
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+  color:#fff;
+  box-shadow:0 4px 10px rgba(37,99,235,.35);
+}
+
+.sn-side-btn:active{
+  transform:scale(.96);
+  opacity:.9;
+}
+
+.big-input{
+  height:72px;
+  font-size:34px;
+  border-radius:26px;
+}
+
+.big-btn{
+  height:72px;
+  min-width:120px;
+  font-size:34px;
+  font-weight:800;
+  border-radius:26px;
+  border:none;
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+  color:#fff;
+  box-shadow:0 6px 14px rgba(37,99,235,.35);
+}
+
+.big-btn:active{
+  transform:scale(.96);
+  opacity:.9;
+}
+
+.app-modal-content{
+  border-radius:28px;
+  padding:40px;
+}
+
+.barcode-box{
+  position:relative;
+  margin-top:12px;
+}
+
+.barcode-video{
+  width:100%;
+  height:340px;
+  background:#000;
+  border-radius:18px;
+  object-fit:cover;
+}
+
+.barcode-video.full{
+  height:420px;
+}
+
+.btn-barcodescan{
+  width:100%;
+  padding:18px 0;
+  font-size:32px;
+  font-weight:800;
+  border-radius:20px;
+  border:none;
+  background:linear-gradient(135deg,#fde047,#f97316);
+  color:#fff;
+  box-shadow:0 6px 16px rgba(37,99,235,.45);
+  transition:.2s;
+}
+
+/* กรอบเล็ง */
+.barcode-frame{
+  position:absolute;
+  inset:12%;
+  border:3px dashed rgba(255,255,255,.85);
+  border-radius:18px;
+  pointer-events:none;
+}
+
+/* ปุ่มแฟลชลอย */
+.barcode-flash-btn{
+  position:absolute;
+  bottom:14px;
+  right:14px;
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  border:none;
+  background:linear-gradient(135deg,#f97316,#dc2626);
+  color:#fff;
+  font-size:28px;
+  box-shadow:0 6px 16px rgba(0,0,0,.4);
+  z-index:5;
+}
+
+.barcode-flash-btn:active{
+  transform:scale(.92);
+}
+
+.barcode-box.fullscreen{
+  position:fixed;
+  inset:0;
+  background:#000;
+  z-index:99999;
+  padding:16px;
+}
+
+.barcode-box.fullscreen .barcode-video{
+  height:100%;
+  border-radius:18px;
+}
+
+.barcode-close-btn{
+  position:absolute;
+  top:16px;
+  right:16px;
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  background:red;
+  color:#fff;
+  border:none;
+  font-size:22px;
+  z-index:10;
+}
+
+.title-toggle{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#ffffff,#f8fafc);
+  border-radius:16px;
+  padding:6px 12px;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+  cursor:pointer;
+  font-size:36px;
+  font-weight:700;
+  gap:10px;
+  border:1.5px solid #e0e7ff;
+  color:#1e3a8a;
+  transition:.25s ease;
+  width:fit-content;
+  white-space:nowrap;
+}
+
+.title-toggle:hover{
+  box-shadow:0 6px 14px rgba(37,99,235,.25);
+  border-color:#2563eb;
+  filter:brightness(1.05);
+}
+
+/* ===== Dashboard Mode ===== */
+.title-toggle.dashboard{
+  background:linear-gradient(135deg,#dc2626,#f97316);
+  color:#ffffff;
+  border-color:#f97316;
+  box-shadow:0 6px 16px rgba(249,115,22,.45);
+}
+
+.title-toggle.dashboard:hover{
+  filter:brightness(1.08);
+}
+
+.title-toggle-pc{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#ffffff,#f8fafc);
+  border-radius:16px;
+  padding:6px 12px;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+  cursor:pointer;
+  font-size:22px;
+  font-weight:700;
+  gap:10px;
+  border:1.5px solid #e0e7ff;
+  color:#1e3a8a;
+  transition:.25s ease;
+  width:fit-content;
+  white-space:nowrap;
+}
+
+.title-toggle-pc:hover{
+  box-shadow:0 6px 14px rgba(37,99,235,.25);
+  border-color:#2563eb;
+  filter:brightness(1.05);
+}
+
+/* ===== Dashboard Mode ===== */
+.title-toggle-pc.dashboard{
+  background:linear-gradient(135deg,#dc2626,#f97316);
+  color:#ffffff;
+  border-color:#f97316;
+  box-shadow:0 6px 16px rgba(249,115,22,.45);
+}
+
+.title-toggle-pc.dashboard:hover{
+  filter:brightness(1.08);
+}
+
+/* ===== Card ===== */
+.card-item{
+  background:#fff;
+  border-radius:20px;
+  padding:20px;
+  box-shadow:0 6px 20px rgba(0,0,0,.08);
+  transition:.2s;
+}
+
+.card-item:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 26px rgba(0,0,0,.12);
+}
+
+
+/* ===== Dashboard Card ===== */
+.dashboard-card{
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+  color:#fff;
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 6px 16px rgba(0,0,0,.25);
+}
+
+.dashboard-value{
+  font-size:32px;
+  font-weight:900;
+  margin-top:4px;
+}
+
+.card-urgent{
+  border:2px solid #dc2626;
+  background:linear-gradient(135deg,#fff1f2,#ffe4e6);
+  box-shadow:0 6px 16px rgba(220,38,38,.35);
+}
+
+.card-warning{
+  border:2px solid #f97316;
+  background:linear-gradient(135deg,#fff7ed,#ffedd5);
+  box-shadow:0 6px 16px rgba(249,115,22,.35);
+}
+
+.card-normal{
+  border:1px solid #e5e7eb;
+}
+
+/* ===== Device Mode ===== */
+body.mobile .pc-only{display:none}
+
+/* ===== PC Card Layout ===== */
+.pc-card{
+  display:flex;
+  align-items:stretch;
+  gap:18px;
+  background:#fff;
+  border-radius:18px;
+  padding:16px 20px;
+  margin-bottom:14px;
+  box-shadow:0 6px 16px rgba(0,0,0,.12);
+}
+
+.card-left{
+  flex:2;
+  min-width:10px;
+}
+
+/* LEFT */
+.pc-card-left{
+  flex:2;
+  min-width:320px;
+}
+.pc-code{
+  font-size:26px;
+  font-weight:900;
+}
+.pc-name{
+  font-size:20px;
+  font-weight:600;
+  color:#555;
+}
+
+/* MID */
+.pc-card-mid{
+  flex:3;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:8px;
+}
+
+.pc-zone{
+  font-size:20px;
+  font-weight:700;
+}
+
+.pc-stats{
+  display:flex;
+  gap:16px;
+  font-size:16px;
+  color:#333;
+}
+.pc-stats b{
+  font-size:18px;
+}
+
+/* RIGHT */
+.pc-card-right{
+  width:110px;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  background:#fff;
+  border-radius:14px;
+}
+
+.card-right{
+  width:50px;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  background:#fff;
+  border-radius:14px;
+}
+
+.pc-zone-label{
+  font-size:18px;
+  text-align:center;
+  font-weight:700;
+  color:#1e40af;
+}
+
+.pc-sale-label{
+  font-size:18px;
+  text-align:center;
+  font-weight:700;
+  color:#6d28d9;
+}
+.pc-fifo-label{
+  font-size:18px;
+  text-align:center;
+  font-weight:700;
+  color:#15803d;
+}
+.pc-notfifo-label{
+  font-size:18px;
+  text-align:center;
+  font-weight:700;
+  color:#b91c1c;
+}
+.pc-notfifo-value{
+  font-size:34px;
+  font-weight:900;
+  color:#dc2626;
+}
+
+.pc-main{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.pc-card-list{
+  flex:1;
+  overflow-y:auto;
+}
+
+.pc-side-box{
+  margin-top:16px;
+  padding:14px;
+  background:#f9fafb;
+  border-radius:14px;
+}
+
+.pc-side-title{
+  font-weight:700;
+  margin-bottom:10px;
+  font-size:22px;
+}
+
+.pc-side-row{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:6px;
+}
+
+.pc-side-row.warn b{
+  color:#b91c1c;
+}
+
+.pc-zone-rule{
+  font-size:18px;
+  color:#444;
+}
+
+.pc-problem-item{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  cursor:pointer;
+  font-size:18px;
+}
+
+.pc-problem-item:hover{
+  color:#b91c1c;
+}
+
+.upload-modal{
+  border-radius:18px;
+}
+
+.upload-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.upload-btn{
+  border:1px solid #cbd5e1;
+  background:#fff;
+  border-radius:10px;
+  padding:8px 14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.upload-btn:hover{
+  background:#f1f5f9;
+}
+
+.upload-filename{
+  font-size:13px;
+  color:#475569;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.upload-loading{
+  margin-top:20px;
+  text-align:center;
+}
+
+.progress{
+  height:10px;
+  border-radius:10px;
+}
+
+/* CSS เพิ่มเติม */
+    
+  .upload-modal { border-radius: 18px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+  .modal-header { border-bottom: 1px solid #f1f5f9; padding: 20px; }
+  .modal-body { padding: 20px; }
+  .modal-footer { border-top: 1px solid #f1f5f9; padding: 15px 20px; background: #fff; }
+
+  .upload-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    background: #fff;
+    padding: 5px;
+    border-radius: 10px;
+  }
+
+  .upload-btn {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+    font-size: 14px;
+    color: #334155;
+    white-space: nowrap;
+  }
+
+  .upload-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+  }
+
+  .upload-filename {
+    font-size: 13px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  .text-success { color: #10b981 !important; }
+  .text-danger { color: #ef4444 !important; }
+    
+  /* Loading Styles */
+  .upload-loading { text-align: center; padding: 20px 0; }
+  .progress { height: 10px; border-radius: 10px; background-color: #e2e8f0; }
+
+body{background:#eef2ff;font-family:system-ui}
+
+.pc-root{display:flex;height:100vh;overflow:hidden}
+
+.pc-sidebar{
+  width:280px;background:#fff;box-shadow:4px 0 12px rgba(0,0,0,.12);
+  padding:16px;display:flex;flex-direction:column;gap:12px
+}
+
+.zone-box{display:flex;flex-wrap:wrap;gap:6px}
+.zone-box button{
+  flex:1 1 28%;
+  border:1px solid #2563eb;
+  background:#fff;
+  border-radius:8px;
+  padding:4px;
+  font-weight:700;
+  color:#2563eb;
+}
+
+.pc-main{flex:1;display:flex;flex-direction:column;padding:16px;gap:14px}
+
+.pc-dashboard{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+.pc-kpi{
+  background:linear-gradient(135deg,#2563eb,#4f46e5);
+  color:#fff;border-radius:16px;padding:14px;
+  box-shadow:0 6px 14px rgba(0,0,0,.25)
+}
+.pc-kpi.red{background:linear-gradient(135deg,#dc2626,#f97316)}
+.pc-kpi.orange{background:linear-gradient(135deg,#f59e0b,#f97316)}
+.pc-kpi.green{background:linear-gradient(135deg,#16a34a,#22c55e)}
+.pc-kpi .val{font-size:28px;font-weight:900}
+
+.pc-loading{
+  position:fixed;inset:0;background:rgba(255,255,255,.85);
+  display:none;align-items:center;justify-content:center;z-index:9999
+}
+.pc-loading .box{
+  background:#fff;padding:20px;border-radius:18px;
+  width:320px;box-shadow:0 8px 20px rgba(0,0,0,.25)
+}
+
+/* ===== PC Table Row Base ===== */
+..pc-table table{
+  border-collapse:separate;
+  border-spacing:0 10px;
+}
+
+/* tr ยังเป็น table-row */
+.pc-table tbody tr{
+  transition:.25s;
+}
+
+/* ทำ card effect ที่ td */
+.pc-table tbody tr td{
+  background:#fff;
+  border:none;
+  padding:14px 12px;
+}
+
+/* โค้งเฉพาะซ้ายขวา */
+.pc-table tbody tr td:first-child{
+  border-radius:14px 0 0 14px;
+}
+.pc-table tbody tr td:last-child{
+  border-radius:0 14px 14px 0;
+}
+
+/* ===== Normal ===== */
+.tr-normal td{
+  background:#ffffff;
+}
+
+/* ===== Warning ===== */
+.tr-warning td{
+  background:linear-gradient(135deg,#fff7ed,#ffedd5);
+  border-top:2px solid #f97316;
+  border-bottom:2px solid #f97316;
+  color:#92400e;
+  font-weight:700;
+}
+
+/* ===== Urgent ===== */
+.tr-urgent td{
+  background:linear-gradient(135deg,#fff1f2,#ffe4e6);
+  border-top:2px solid #dc2626;
+  border-bottom:2px solid #dc2626;
+  color:#7f1d1d;
+  font-weight:800;
+}
+
+/* shadow */
+.tr-warning td,
+.tr-urgent td{
+  box-shadow:0 6px 14px rgba(0,0,0,.18);
+}
+
+/* hover */
+.pc-table tbody tr:hover td{
+  transform:scale(1.01);
+  box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+
+/* ================= PC Filter Bar ================= */
+
+.pc-filter-bar{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:10px;
+  background:#fff;
+  border-radius:16px;
+  width:100%;
+  padding:16px 18px;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+  cursor:pointer;
+  transition:.25s;
+}
+
+/* วันที่ (บรรทัดบน) */
+.pc-filter-date{
+  width:100%;
+  text-align:center;
+  font-size:28px;
+  font-weight:700;
+  color:#1e3a8a;
+  letter-spacing:.3px;
+}
+
+/* Zone (บรรทัดล่าง) */
+.pc-filter-zone{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;   /* 👈 กลางจริง */
+  gap:10px;
+  color:#2563eb;
+}
+
+/* ตัวอักษร Zone ใหญ่มาก */
+.pc-filter-zone .zone-text{
+  font-size:40px;           /* 👈 ใหญ่ชัด */
+  font-weight:900;
+  line-height:1;
+}
+
+/* icon */
+.pc-filter-zone i{
+  font-size:28px;
+}
+
+/* ลูกศร */
+.pc-filter-zone .filter-icon{
+  font-size:18px;
+  opacity:.8;
+  margin-left:6px;
+}
+
+/* hover effect */
+.pc-filter-bar:hover{
+  box-shadow:0 6px 14px rgba(37,99,235,.25);
+  border-color:#2563eb;
+}
+
+/* ==========================================================
+   🌟 CSS สำหรับ Risk Card (โหมดเฝ้าระวัง)
+========================================================== */
+.risk-card-container {
+  border: 3px solid #ffb703;
+  border-radius: 16px;
+  padding: 16px;
+  background: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: .2s;
+}
+.risk-card-container:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+
+.risk-left { flex: 1; min-width: 250px; }
+.risk-code { font-size: 24px; font-weight: 900; color: #111; display:flex; align-items:center; gap:8px;}
+.risk-badge { background: #ffb703; color: #111; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: bold;}
+.risk-name { font-size: 18px; font-weight: bold; color: #444; margin-top: 4px; }
+
+.risk-mid { display: flex; flex-direction: column; gap: 4px; align-items: center; min-width: 100px; }
+.rm-zone-label { color: #1e3a8a; font-weight: 900; font-size: 16px; }
+.rm-zone-badge { background: #1e3a8a; color: #fff; padding: 6px 16px; border-radius: 12px; font-weight: bold; font-size: 18px; }
+
+.risk-matrix { flex: 2; overflow-x: auto; min-width: 300px; padding-bottom: 4px;}
+.rm-table { width: 100%; border-collapse: separate; border-spacing: 4px; text-align: center; }
+.rm-table th { color: #111; font-weight: 900; font-size: 16px; padding-bottom: 6px; }
+.rm-cell { padding: 4px 6px; border-radius: 10px; color: #fff; font-weight: bold; font-size: 16px; min-width: 28px; }
+.rm-blue { background: #0ea5e9; } /* สีฟ้า Instock */
+.rm-orange { background: #f97316; } /* สีส้ม Sale */
+.rm-label { display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color:#555; font-size: 16px; gap: 8px;}
+.rm-label .rm-badge { border-radius: 12px; padding: 4px 10px; color: white; font-weight:bold; }
+
+/* ===== Swipe to Report ===== */
+.swipe-report-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  background: #fee2e2;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 60px;
+  margin-top: 12px;
+  user-select: none;
+  touch-action: none;
+}
+
+.swipe-report-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.swipe-report-thumb {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 52px;
+  height: 52px;
+  background: #dc2626;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 22px;
+  cursor: grab;
+  touch-action: none;
+  z-index: 2;
+}
+
 </style>
 </head>
+
 <body>
-
-<!-- Login Screen -->
-<div id="loginScreen" class="d-flex align-items-center justify-content-center" style="min-height:100vh;">
-  <div class="card p-4" style="width:320px; border-radius:20px;">
-    <h5 class="text-center fw-bold mb-3">🔐 Admin Login</h5>
-    <input type="password" id="pwInput" class="form-control mb-3" placeholder="Password">
-    <button class="btn btn-primary w-100 fw-bold" onclick="checkPassword()">เข้าสู่ระบบ</button>
-  </div>
-</div>
-
-<!-- Admin Screen -->
-<div id="adminScreen" style="display:none; padding:20px; max-width:900px; margin:0 auto;">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0">📋 SN Report Dashboard</h4>
-    <div>
-      <select id="filterStatus" class="form-select" onchange="renderReports()" style="width:150px;">
-        <option value="ALL">ทั้งหมด</option>
-        <option value="PENDING">รอตรวจสอบ</option>
-        <option value="APPROVED">Approved</option>
-        <option value="REJECTED">Rejected</option>
-      </select>
+<div id="loadingOverlay">
+  <div class="text-center w-75">
+    <div class="spinner-border text-primary mb-2"></div>
+    <div id="loadingText">กำลังโหลด...</div>
+    <div class="progress mt-2" style="height:8px;">
+      <div id="loadingBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div>
     </div>
   </div>
-  <div id="reportList"></div>
 </div>
 
-<!-- Comment Modal -->
-<div class="modal fade" id="commentModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content p-3">
-      <h5 class="fw-bold mb-3" id="commentTitle">เพิ่ม Comment</h5>
-      <textarea id="commentInput" class="form-control mb-3" rows="3" placeholder="Comment..."></textarea>
-      <div class="d-flex gap-2">
-        <button class="btn btn-success flex-grow-1 fw-bold" onclick="confirmAction('APPROVED')">✅ Approve</button>
-        <button class="btn btn-danger flex-grow-1 fw-bold" onclick="confirmAction('REJECTED')">❌ Reject</button>
+<div id="mobileLayout">
+  <div class="container-fluid px-1 py-2 app-root">
+    <div class="card p-3 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <button id="titleToggleBtn" class="title-toggle" onclick="toggleMainView()">📦 FIFO Monitoring</button>
+        <div class="filter-bar" onclick="openFilterModal()">
+          <div class="filter-left" id="barDate"></div>
+          <div class="filter-right" id="barZone">
+            <i class="bi bi-geo-fill"></i> A <span class="filter-icon">▾</span>
+          </div>
+        </div>
+      </div>
+      <div class="search-row">
+        <input type="text" id="searchInput" class="search-input big-input" placeholder="ค้นหา Code / Zone / ชื่อสินค้า" oninput="applyFilterSort()">
+        <button class="sn-side-btn big-btn" onclick="openSNInput()">🔍 SN</button>
+      </div>
+      <button id="btnToggleRiskMobile" class="btn btn-outline-warning w-100 mb-3 fw-bold" onclick="toggleRiskMode()" style="border-radius: 12px;">
+        ⏳ Code Risk
+      </button>
+      <div class="toolbar d-flex align-items-center gap-2 flex-wrap">
+        <div class="fw-bold text-secondary me-2" style="font-size:22px;">🔽 เรียงลำดับ:</div>
+        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('notfifo')">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i> Not FIFO วันนี้มากสุด
+        </button>
+        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('notfifoMonth')">
+          <i class="bi bi-calendar-event-fill me-1"></i> Not FIFO รวมเดือนมากสุด
+        </button>
+        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('repeatDays')">
+          <i class="bi bi-arrow-repeat me-1"></i> จำนวนวันซ้ำมากสุด
+        </button>
+        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('zoneAsc')">
+          <i class="bi bi-sort-alpha-down me-1"></i> Zone A → Z
+        </button>
+        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('zoneDesc')">
+          <i class="bi bi-sort-alpha-up-alt me-1"></i> Zone Z → A
+        </button>
+      </div>
+    </div>
+
+    <div id="fifoView">
+      <div id="fifoList"></div>
+    </div>
+
+    <div id="dashboardView" style="display:none">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="dashboard-card"><div>📦 จำนวน Code ทั้งหมด</div><div id="dashTotalCode" class="dashboard-value">0</div></div>
+        </div>
+        <div class="col-6">
+          <div class="dashboard-card"><div>⚠️ Not FIFO รวม</div><div id="dashNotFifo" class="dashboard-value">0</div></div>
+        </div>
+        <div class="col-6">
+          <div class="dashboard-card"><div>🔥 Code Not FIFO สูงสุด</div><div id="dashTopCode" class="dashboard-value">-</div></div>
+        </div>
+        <div class="col-12">
+          <div class="dashboard-card"><div>🔁 วันซ้ำสูงสุด</div><div id="dashRepeat" class="dashboard-value">0</div></div>
+        </div>
+        <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+          <iframe id="lookerMobile"
+            data-src="https://lookerstudio.google.com/embed/reporting/ee908fe3-4f87-4a28-9485-f5da7400c447/page/igJoF" 
+            width="100%"
+            height="2732"
+            frameborder="0" 
+            style="border:0;" 
+            allowfullscreen>
+          </iframe>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<div id="pcLayout">
+  <div id="pcLoading" class="pc-loading">
+    <div class="box text-center">
+      <div class="spinner-border text-primary"></div>
+      <div id="pcLoadingText" class="mt-2">กำลังโหลด...</div>
+      <div class="progress mt-2" style="height:8px"><div id="pcLoadingBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="pc-root">
+    <div class="pc-sidebar">
+      <button id="titleToggleBtnPC" class="title-toggle-pc" onclick="togglePCView()">📦 FIFO Monitoring</button>
+      <div class="filter-bar pc-only pc-filter-bar" onclick="openFilterModal()">
+        <div class="pc-filter-date" id="pcBarDate"></div>
+        <div class="pc-filter-zone" id="pcBarZone"><span class="zone-text"><i class="bi bi-geo-fill"></i> A <span class="filter-icon">▾</span></span></div>
+      </div>
+      <input id="pcSearch" class="form-control" placeholder="ค้นหา Code / Name" oninput="pcApplyFilter()">
+      <select id="pcSort" class="form-select" onchange="pcApplyFilter()">
+        <option value="notfifo">NotFIFO มากสุด</option>
+        <option value="repeat">วันซ้ำมากสุด</option>
+        <option value="zoneAsc">Zone A-Z</option>
+        <option value="zoneDesc">Zone Z-A</option>
+      </select>
+
+      <button class="btn btn-primary w-100 mt-3" onclick="openSNInput()" style="border-radius: 12px; font-weight: bold; background: linear-gradient(135deg,#2563eb,#4f46e5); border: none; box-shadow: 0 4px 10px rgba(37,99,235,.3);">
+        🔍 ค้นหา SN
+      </button>
+      <button id="btnToggleRiskPC" class="btn btn-outline-warning w-100 mt-2 fw-bold" onclick="toggleRiskMode()" style="border-radius: 12px;">
+        ⏳ Code Risk
+      </button>
+      <div class="pc-side-box">
+        <div class="pc-side-title">⚠️ เร่งด่วน กรอบสีส้ม</div>
+        <div id="pcZoneRule" class="pc-zone-rule"></div>
+      </div>
+      <div class="pc-side-box">
+        <div class="pc-side-title">🔥 Problem Code</div>
+        <div id="pcProblemList"></div>
+      </div>
+      <button class="btn btn-outline-primary w-100 mt-3" onclick="openUploadModal()">⬆️ Upload FIFO Data</button>
+    </div>
+
+    <div class="pc-main">
+      <div class="pc-dashboard">
+        <div class="pc-kpi green"><div>Total Code</div><div id="pcKpiTotal" class="val">0</div></div>
+        <div class="pc-kpi orange"><div>Not FIFO รวม</div><div id="pcKpiNotfifo" class="val">0</div></div>
+        <div class="pc-kpi red"><div>Repeat สูงสุด</div><div id="pcKpiRepeat" class="val">0</div></div>
+        <div class="pc-kpi red"><div>Code แย่สุด</div><div id="pcKpiWorst" class="val">-</div></div>
+      </div>
+      <div id="pcCardList" class="pc-card-list">
+        <table class="table pc-table"><tbody id="pcTable"></tbody></table>
+      </div>
+      <div id="dashboardPC" style="display:none">
+        <div class="dashboard-section" style="text-align: center;">
+          <iframe id="lookerPC"
+            width="100%" 
+            height="800" 
+            data-src="https://lookerstudio.google.com/embed/reporting/d40b60f8-54f8-46bc-8e01-04e3a343ff36/page/p_zub42c8t0d" 
+            frameborder="0" 
+            style="border:0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px;" 
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="pcSNModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 id="pcSNTitle">SN</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <table class="table table-sm"><thead><tr><th>SN</th><th>Day</th><th>Status</th></tr></thead><tbody id="pcSNTable"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="filterModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg app-modal-size">
+    <div class="modal-content app-modal-content">
+      <div class="modal-header">
+        <div class="app-modal-title">📅 เลือกวันที่ & Zone</div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="date-picker-box"><input type="date" id="modalDate" class="date-input"></div>
+        <div class="zone-grid" id="zoneGrid">
+          <button class="zone-btn active" onclick="pickZone('A',this)">A</button>
+          <button class="zone-btn" onclick="pickZone('B',this)">B</button>
+          <button class="zone-btn" onclick="pickZone('C',this)">C</button>
+          <button class="zone-btn" onclick="pickZone('D',this)">D</button>
+          <button class="zone-btn" onclick="pickZone('E',this)">E</button>
+          <button class="zone-btn" onclick="pickZone('J',this)">J</button>
+          <button class="zone-btn" onclick="pickZone('D Big',this)" style="font-size: 16px;">D Big</button>
+          <button class="zone-btn" onclick="pickZone('D NB',this)" style="font-size: 16px;">D NB</button>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn-unified" onclick="applyUnifiedFilter()">✔ ตกลง</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="appConfirmModal" tabindex="-1" style="z-index:99999;">
+  <div class="modal-dialog modal-dialog-centered modal-lg app-modal-size">
+    <div class="modal-content app-modal-content">
+      <div id="appConfirmTitle" class="app-modal-title fw-bold mb-2"></div>
+      <div id="appConfirmMsg" class="app-modal-text mb-3" style="font-size:16px; color:#555;"></div>
+
+      <!-- เหตุผล + หมายเหตุ (แสดงเฉพาะตอน Report) -->
+      <div id="reportReasonSection" style="display:none;">
+        <select id="reportReason" class="form-select mb-2" style="font-size:18px;">
+          <option value="">-- เลือกเหตุผล --</option>
+          <option value="วนบิล">วนบิล</option>
+          <option value="โยกสาขา">โยกสาขา</option>
+          <option value="Program Auto">Program Auto</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+        <input type="text" id="reportNote" class="form-control mb-3"
+          placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)" style="font-size:18px;">
+      </div>
+
+      <div class="d-grid gap-3">
+        <button class="btn-unified" onclick="appConfirmYes()">ยืนยัน</button>
+        <button class="btn-unified2" onclick="appConfirmNo()">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade app-modal sn-modal-wide" id="snModal" tabindex="-1">
+  <div class="modal-dialog modal-fullscreen-sm-down modal-dialog-centered">
+    <div class="modal-content">
+      <div class="app-modal-header">
+        <a class="app-back-btn" onclick="closeSNModal()">←</a>
+        <div class="app-title">SN Detail</div>
+      </div>
+      <div class="modal-body">
+        <div id="snCardHeader"></div>
+        <div id="snLoadingBox" class="mb-2" style="display:none;">
+          <div id="snLoadingText" class="small text-muted">กำลังโหลด SN...</div>
+          <div class="progress" style="height:6px;">
+            <div id="snLoadingBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%"></div>
+          </div>
+        </div>
+        <div id="snToggleLoading" style="display:none;text-align:center;padding:10px;">
+          <div class="spinner-border text-primary" role="status"></div>
+          <div class="small mt-1">กำลังเปลี่ยนมุมมอง...</div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="fw-bold">📄 SN List</div>
+          <label class="rc-switch">
+            <input type="checkbox" id="rcToggle" onchange="toggleRCView(this.checked)">
+            <span class="rc-slider"></span>
+          </label>
+        </div>
+        <table class="table table-sm align-middle">
+          <thead class="table-light"><tr><th>SN</th><th>Age</th><th>Status</th></tr></thead>
+          <tbody id="snTable"></tbody>
+        </table>
+	<!-- Swipe to Report -->
+	  <div class="mt-3 px-2" id="reportSection">
+  	    <div class="fw-bold mb-2" style="font-size:18px;">📢 แจ้งปัญหา</div>
+  	    <div id="snSelectedSummary" style="background:#f8fafc; border-radius:12px; padding:10px 14px; margin-bottom:10px; min-height:44px; font-size:14px; color:#6b7280;">
+    	    Swipe SN ที่ต้องการ Report หรือ Swipe Report เลยเพื่อ Report ระดับ Code
+  	      </div>
+  	      <div class="swipe-report-wrap" id="swipeWrap">
+                    <div class="swipe-report-track">เลื่อนเพื่อ Report →</div>
+    	        <div class="swipe-report-thumb" id="swipeThumb">🚨</div>
+  	      </div>
+	    </div>
+  	  </div>
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="snSearchModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg app-modal-size">
+    <div class="modal-content app-modal-content">
+      <div class="modal-header">
+        <div class="app-modal-title">🔍 ค้นหา SN</div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <input id="snInput" class="form-control text-center mb-4" style="font-size:30px;height:80px;border-radius:22px;" placeholder="กรอก SN 10 หลัก" inputmode="numeric" maxlength="10" oninput="onSNInputChange(this)">
+      
+      <button class="btn-barcodescan" onclick="startBarcodeScan()">📷 สแกน Barcode</button>
+      <input type="file" id="fallbackCamera" accept="image/*" capture="environment" class="d-none" onchange="handleFallbackImage(event)">
+      
+      <div class="barcode-box d-none" id="barcodeBox">
+        <button class="barcode-close-btn" onclick="stopBarcodeScan()">✖</button>
+        <video id="barcodeVideo" class="barcode-video" playsinline></video>
+        <div class="barcode-frame"></div>
+        <button class="barcode-flash-btn" onclick="toggleTorch()">🔦</button>
+      </div>
+
+      <div class="d-grid gap-3 mt-3">
+        <button id="snSearchBtn" class="btn-unified" disabled onclick="confirmSearchSN()">🔍 ค้นหา</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="uploadModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content upload-modal">
+      <div class="modal-header">
+        <h5 class="modal-title">📤 Upload FIFO Data (Bulk)</h5>
+        <button class="btn-close" id="btnCloseHeader" onclick="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div id="uploadFormZone">
+          <div class="alert alert-info py-2" style="font-size:13px;">
+            <i class="fas fa-info-circle"></i> กรุณาอัปโหลดไฟล์ให้ถูกต้องตามที่ระบุ
+          </div>
+          <div class="upload-row">
+            <button class="upload-btn" onclick="pickFile('fifoByDay')">📄 เลือกไฟล์ 1</button>
+            <div class="d-flex flex-column" style="overflow: hidden;">
+               <span class="fw-bold text-primary" style="font-size:12px;">fifo_by_day.xlsx</span>
+               <span id="name_fifoByDay" class="upload-filename">ยังไม่ได้เลือกไฟล์</span>
+            </div>
+            <input type="file" accept=".xlsx" hidden id="file_fifoByDay" onchange="onFilePicked('fifoByDay',this)">
+          </div>
+          <div class="upload-row">
+            <button class="upload-btn" onclick="pickFile('snReturn')">📄 เลือกไฟล์ 2</button>
+             <div class="d-flex flex-column" style="overflow: hidden;">
+               <span class="fw-bold text-primary" style="font-size:12px;">fifo_sn_return.xlsx</span>
+               <span id="name_snReturn" class="upload-filename">ยังไม่ได้เลือกไฟล์</span>
+            </div>
+            <input type="file" accept=".xlsx" hidden id="file_snReturn" onchange="onFilePicked('snReturn',this)">
+          </div>
+          <div class="upload-row">
+            <button class="upload-btn" onclick="pickFile('snFile')">📄 เลือกไฟล์ 3</button>
+             <div class="d-flex flex-column" style="overflow: hidden;">
+               <span class="fw-bold text-primary" style="font-size:12px;">fifo_sn_.csv</span>
+               <span id="name_snFile" class="upload-filename">ยังไม่ได้เลือกไฟล์</span>
+             </div>
+            <input type="file" accept=".csv" hidden id="file_snFile" onchange="onFilePicked('snFile',this)">
+          </div>
+        </div>
+        <div id="uploadLoading" class="upload-loading d-none">
+          <div class="spinner-border text-primary mb-3"></div>
+          <h6 id="uploadStatus" class="fw-bold">กำลังประมวลผล...</h6>
+          <p class="text-muted small">ระบบกำลังอัปโหลดและจัดการข้อมูลทั้ง 3 ไฟล์<br>กรุณาอย่าปิดหน้าต่าง</p>
+          <div class="progress mt-2"><div id="uploadProgress" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div></div>
+        </div>
+        <div id="uploadSuccess" class="text-center py-4 d-none">
+          <div style="font-size: 50px;">✅</div>
+          <h5 class="mt-3 text-success">เสร็จสิ้น!</h5>
+          <p class="text-muted">ข้อมูลถูกนำเข้าเรียบร้อยแล้ว</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancel" class="btn btn-secondary" onclick="closeModal()">ยกเลิก</button>
+        <button id="btnUpload" class="btn btn-primary" onclick="startBulkUpload()">🚀 อัปโหลดทั้งหมด</button>
+        <button id="btnDone" class="btn btn-success d-none" onclick="closeModal()">ตกลง (OK)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastBox" class="toast-box"></div>
+<input type="hidden" id="dateInput"> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-const GAS_URL = "https://late-sky-2a8e.pongsakorn-lklaypan.workers.dev"; // ← เปลี่ยนตรงนี้
-const ADMIN_PASSWORD = "Report7780#";
+// 🚨 1. นำ URL Web App อันใหม่ที่ได้จากการ Deploy มาใส่ตรงนี้!
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw9FUQVEOripWQc7x2l7wmL1krMRsh5M_ouW5LGLJonBOXW62H4J850YvPUigJfrFnl/exec";
 
-let allReports = [];
-let pendingRowIndex = null;
-let commentModalInstance = null;
-
-function checkPassword() {
-  const pw = document.getElementById("pwInput").value;
-  if (pw === ADMIN_PASSWORD) {
-    document.getElementById("loginScreen").style.cssText = "display:none !important";
-    document.getElementById("adminScreen").style.display = "block";
-    loadReports();
-  } else {
-    alert("Password ไม่ถูกต้องครับ");
+// 🚀 2. แกนกลาง Fetch API
+async function callGAS(actionName, payloadData = {}) {
+  try {
+    const response = await fetch(GAS_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: actionName, data: payloadData })
+    });
+    const result = await response.json();
+    if (result.status === "error") throw new Error(result.message);
+    return result.data;
+  } catch (error) {
+    console.error("API Error:", error);
+    throw error;
   }
 }
 
-async function loadReports() {
-  document.getElementById("reportList").innerHTML = "<p class='text-muted'>กำลังโหลด...</p>";
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "getSNReports", data: {} })
-  });
-  const json = await res.json();
-  allReports = json.data || [];
-  renderReports();
+// ==========================================================
+// 🧠 ระบบจัดการ Zone (D Big & D NB)
+// ==========================================
+function getDZoneType(zoneStr) {
+  const z = String(zoneStr || '').trim().toUpperCase();
+  if (z.charAt(0) !== 'D') return null;
+
+  const suffix = z.slice(1).trim();
+  if (!suffix) return 'D Big'; // ถ้าเป็น D ตัวเดียว ให้ถือเป็น D Big
+
+  const firstChar = suffix.charAt(0);
+  // ถ้าตัวอักษรที่ตามมาเป็น A-Z ให้เป็น D NB นอกนั้นเป็น D Big
+  if (/[A-Z]/.test(firstChar)) {
+    return 'D NB';
+  } else {
+    return 'D Big';
+  }
 }
 
-function renderReports() {
-  const filter = document.getElementById("filterStatus").value;
-  const filtered = filter === "ALL" ? allReports : allReports.filter(r => r.status === filter);
+function isMatchZone(zoneStr, targetPrefix) {
+  const z = String(zoneStr || '').trim().toUpperCase();
+  if (!z) return false;
 
-  if (!filtered.length) {
-    document.getElementById("reportList").innerHTML = "<p class='text-muted text-center mt-4'>ไม่มีรายการครับ</p>";
+  // สำหรับ D Big หรือ D NB ให้ใช้ฟังก์ชันตรวจสอบเจาะจง
+  if (targetPrefix === 'D Big' || targetPrefix === 'D NB') {
+     return getDZoneType(z) === targetPrefix;
+  }
+
+  // สำหรับ Zone ปกติ A, B, C...
+  return z.charAt(0) === targetPrefix.charAt(0);
+}
+
+
+// ==========================================================
+// 🚀 3. ระบบโหลดข้อมูลให้เป็น Async/Await
+// ==========================================
+async function loadData() {
+  const date = document.getElementById('dateInput').value;
+  showSkeleton();
+  showLoading('กำลังโหลด FIFO...');
+  try {
+    const apiPrefix = currentPrefix.charAt(0); // เอาเฉพาะอักษรตัวแรกส่งไปเซิร์ฟเวอร์
+    const data = await callGAS("getFIFOData", { date: date, prefix: apiPrefix });
+    fifoRawCache = data || [];
+    fifoViewList = data || [];
+    
+    fifoCacheState.date = date;
+    fifoCacheState.zone = apiPrefix;
+
+    applyFilterSort();
+  } catch (e) {
+    showToast(e.message || 'เกิดข้อผิดพลาด', 'warn');
+  } finally {
+    hideLoading();
+  }
+}
+
+function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notfifoMonth) {
+  hideToggleLoading(); snRCGroupCache = null;
+  if (window.snLoading) return;
+  window.snLoading = true; showNormalSN();
+
+  const date = getCurrentDate();
+  if (!date) { showToast("ไม่พบวันที่", "warn"); window.snLoading = false; return; }
+
+  showSNLoading(); showSNSkeleton();
+  new bootstrap.Modal(document.getElementById('snModal')).show();
+
+  const cleanStr = (s) => String(s).replace(/\s+/g, '').toUpperCase();
+  const targetCode = cleanStr(code);
+
+  setTimeout(() => { 
+    snCache = Object.values(snIndexMap).filter(r => cleanStr(r.code) === targetCode);
+    snCache.sort((a,b) => (Number(b.day)||0) - (Number(a.day)||0));
+
+    // 🌟 เลื่อนการวาด Header มาไว้ใน setTimeout เพื่อให้มันใช้นับยอด SN จาก snCache ได้
+    const headerBox = document.getElementById('snCardHeader');
+    if (headerBox) {
+      if (isRiskMode) {
+         // ถ้าอยู่โหมดความเสี่ยง ก็วาดตารางเหมือนหน้าแรกเลย! (ส่ง isHeader = true ไปเพื่อปิดขอบเงาและคลิกไม่ได้)
+         headerBox.innerHTML = buildRiskCardHTML({ code, name, zone }, true);
+      } else {
+         // โหมดปกติแบบหน้าขาวๆ
+         headerBox.innerHTML = `
+          <div class="sn-card-header" style="background: #ffffff; color: #333; border: 1px solid #e5e7eb; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <div class="code fw-bold" style="color: #111;">${code}</div>
+            <div class="name mb-2" style="font-size: 18px; color: #555;">${name}</div>
+            <div class="badges d-flex flex-wrap gap-2 mt-3">
+              <span class="badge badge-zone text-white">Zone: ${zone}</span>
+              <span class="badge badge-instock text-white">Instock: ${instock}</span>
+              <span class="badge badge-sale text-white">Sale: ${sale}</span>
+              <span class="badge badge-fifo text-white">FIFO: ${fifo}</span>
+              <span class="badge badge-notfifo text-white">Not FIFO: ${notfifo}</span>
+            </div>
+          </div>`;
+      }
+    }
+
+    snRenderIndex = 0;
+    const tb = document.getElementById('snTable');
+    if(tb) tb.innerHTML = '';
+    
+    if (!snCache.length) { showToast("ไม่พบข้อมูล SN สำหรับสินค้านี้", "warn"); } 
+    else { renderSNTableAuto(); }
+    
+    hideSNLoading(); window.snLoading = false;
+
+    // เรียก init swipe report ด้วย SN ที่เปิดอยู่
+    const currentDate = getCurrentDate();
+    initSwipeReport(null, code, zone, currentDate);
+  }, 200);
+}
+
+async function onDateOrZoneChange() {
+  if (!currentPrefix) return;
+  const date = getCurrentDate();
+  if (!date) { showToast("ไม่พบวันที่", "warn"); return; }
+  
+  const apiPrefix = currentPrefix.charAt(0);
+  if (!needReloadFIFO(date, apiPrefix)) { applyFilterSort(); return; }
+
+  showSkeleton();
+  showLoading("กำลังโหลดข้อมูลโซน " + apiPrefix + " ...");
+  setProgress(50);
+  
+  try {
+    const result = await callGAS("getZoneDataMerged", { date: date, mainzone: apiPrefix });
+    fifoRawCache = result.fifo || [];
+    fifoViewList = result.fifo || [];
+    snIndexMap = result.sn || {};
+    fifoCacheState.date = date;
+    fifoCacheState.zone = apiPrefix;
+    applyFilterSort();
+    setProgress(100);
+  } catch(e) { showToast(e.message || "โหลดข้อมูลไม่สำเร็จ", "warn"); } finally { hideLoading(); }
+}
+
+async function searchSNInSheet(sn) {
+  const date = getCurrentDate();
+  showLoading("ค้นหา SN จากทุก Zone...");
+  try {
+    const result = await callGAS("searchSNAllZone", { dateStr: date, sn: sn });
+    if (!result) { showToast("ไม่พบ SN ในระบบ", "warn"); return; }
+    handleSNFound(result, true);
+  } catch(e) {
+    showToast("ค้นหา SN ไม่สำเร็จ", "warn");
+  } finally {
+    hideLoading();
+  }
+}
+
+async function moveToZoneAndSearchCode(zone, code) {
+  let displayZone = String(zone||'').trim().charAt(0).toUpperCase();
+  const apiPrefix = displayZone;
+  if (apiPrefix === 'D') displayZone = getDZoneType(zone);
+
+  currentPrefix = displayZone; unifiedZone = displayZone; 
+  const date = getCurrentDate();
+  const barZone = document.getElementById("barZone");
+  const pcbarZone = document.getElementById("pcBarZone");
+  if(barZone) barZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${displayZone} <span class="filter-icon">▾</span>`;
+  if(pcbarZone) pcbarZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${displayZone} <span class="filter-icon">▾</span>`;
+
+  showSkeleton(); showLoading("ย้ายไปโซน " + displayZone + " ...");
+  try {
+    const result = await callGAS("getZoneDataMerged", { date: date, mainzone: apiPrefix });
+    fifoRawCache = result.fifo || [];
+    fifoViewList = result.fifo || [];
+    snIndexMap = result.sn || {};
+    fifoCacheState.date = date; fifoCacheState.zone = apiPrefix;
+    const search = document.getElementById("searchInput");
+    if(search) search.value = code;
+    applyFilterSort();
+    showToast("ย้ายไป Zone " + displayZone + " แล้ว", "ok");
+  } catch(e) { showToast("เกิดข้อผิดพลาด", "warn"); } finally { hideLoading(); }
+}
+
+// ==========================================================
+// 🚀 4. แปลงระบบ Upload File ให้ใช้ fetch 
+// ==========================================================
+async function runGoogleScript(funcName, ...args) {
+  let payload = {};
+  if(funcName === "step1_UploadFifo") payload = { fileData: args[0] };
+  else if(funcName === "step2_UploadSnReturn") payload = { fileData: args[0], targetSS: args[1] };
+  else if(funcName === "step3_PrepareSheet") payload = { targetSS: args[0] };
+  else if(funcName === "step3_AppendChunk") payload = { jsonChunk: args[0], targetSS: args[1] };
+  else if(funcName === "step4_SummarizeFinal") payload = { targetSS: args[0], reportDate: args[1] };
+  
+  return await callGAS(funcName, payload);
+}
+
+function esc(v){
+  return String(v||'').replace(/'/g,"\\'");
+}
+
+function formatDateDMY(dateStr){
+  if(!dateStr) return '';
+  const p = dateStr.split('-');
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+function setModalDateDefault(){
+  const d = new Date();
+  d.setDate(d.getDate()-1);
+  const iso = d.toISOString().slice(0,10);
+  const modal = document.getElementById("modalDate");
+  if(modal){
+    modal.value = iso;
+  }
+}
+
+/* ===== Auto Switch Mobile / PC ===== */
+window.addEventListener("load", detectDeviceLayout);
+window.addEventListener("resize", detectDeviceLayout);
+
+function isMobileDevice(){
+  const ua = navigator.userAgent.toLowerCase();
+  return /android|iphone|ipad|ipod/i.test(ua);
+}
+
+function detectDeviceLayout(){
+  const isMobileUA = isMobileDevice();
+  document.getElementById("searchInput").value = "";
+  document.getElementById("pcSearch").value = "";
+
+  if(isMobileUA || window.innerWidth < 992){
+    showMobile();
+    applyFilterSort();
+    return;
+  }
+  showPC();
+  pcApplyFilter();
+}
+
+function showMobile(){
+  const m = document.getElementById("mobileLayout");
+  const p = document.getElementById("pcLayout");
+  if(m) m.style.display="block";
+  if(p) p.style.display="none";
+}
+
+function showPC(){
+  const m = document.getElementById("mobileLayout");
+  const p = document.getElementById("pcLayout");
+  if(p) p.style.display="block";
+  if(m) m.style.display="none";
+}
+
+let fifoRawCache = [];
+let fifoViewList = [];
+let snCache=[];
+let snIndexMap = {};
+
+let sortMode='notfifo';
+let currentPrefix='A';
+let snRenderIndex = 0;
+const SN_CHUNK = 200;
+let snViewMode = "normal"; 
+let snRCGroupCache = null;
+const SN_RENDER_CHUNK = 100;   
+
+let fifoCacheState = {
+  date: null,
+  zone: null
+};
+
+function mergeSNCache(chunks){
+  const index = {};
+  chunks.forEach(part=>{
+    Object.assign(index, part);
+  });
+  return index;
+}
+
+function needReloadFIFO(date, apiPrefix){
+  if(!fifoCacheState.date || !fifoCacheState.zone) return true;
+  return (
+    fifoCacheState.date !== date ||
+    fifoCacheState.zone !== apiPrefix
+  );
+}
+
+let startY=0;
+const snModal=document.getElementById('snModal');
+if(snModal) {
+  snModal.addEventListener('touchstart',e=>{ startY=e.touches[0].clientY; });
+  snModal.addEventListener('touchmove',e=>{
+    if(e.touches[0].clientY-startY > 140) closeSNModal();
+  });
+}
+let startX=0;
+if(snModal) {
+  snModal.addEventListener('touchstart',e=>{ startX=e.touches[0].clientX; });
+  snModal.addEventListener('touchend',e=>{
+    if(e.changedTouches[0].clientX-startX > 120) closeSNModal();
+  });
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  initDate();
+});
+
+function autoScroll(){
+  const modalBody = document.querySelector('#snModal .modal-body');
+  if(!modalBody) return;
+  modalBody.addEventListener('scroll',function(){
+    if(snRenderIndex >= snCache.length) return;
+    if(this.scrollTop + this.clientHeight >= this.scrollHeight - 80){
+      renderSNTableAuto();
+    }
+  });
+}
+
+function initDate(){
+  const d = new Date();
+  d.setDate(d.getDate()-1);
+  const iso = d.toISOString().slice(0,10); 
+
+  const bar = document.getElementById("barDate");
+  const modalDate = document.getElementById("modalDate");
+  const pcbar = document.getElementById("pcBarDate");
+  if(bar) bar.innerText = "📅 " + formatDateDMY(iso);
+  if(pcbar) pcbar.innerText = "📅 " + formatDateDMY(iso);
+  if(modalDate) modalDate.value = iso;
+}
+
+function setProgress(p){
+  const bar = document.getElementById('loadingBar');
+  if(bar) bar.style.width = p+"%";
+}
+
+function showLoading(t){
+  const overlay = document.getElementById('loadingOverlay');
+  if(overlay) overlay.style.display='flex';
+  if(t) document.getElementById('loadingText').innerText=t;
+  setProgress(0);
+}
+
+function hideLoading(){
+  const overlay = document.getElementById('loadingOverlay');
+  if(overlay) overlay.style.display='none';
+}
+
+function showSNLoading(){
+  const b = document.getElementById('snLoadingBox');
+  const bar = document.getElementById('snLoadingBar');
+  if(b) b.style.display='block';
+  if(bar) bar.style.width='0%';
+}
+
+function setSNProgress(p){
+  const bar = document.getElementById('snLoadingBar');
+  if(bar) bar.style.width=p+"%";
+}
+
+function hideSNLoading(){
+  const b = document.getElementById('snLoadingBox');
+  if(b) b.style.display='none';
+}
+
+function showSNSkeleton(){
+  const tb=document.getElementById('snTable');
+  if(!tb) return;
+  tb.innerHTML='';
+  for(let i=0;i<10;i++){
+    tb.innerHTML+=`<tr><td colspan="3"><div class="skeleton-row"></div></td></tr>`;
+  }
+}
+
+function showSkeleton(count=8){
+  const box=document.getElementById('fifoList');
+  if(!box) return;
+  box.innerHTML='';
+  for(let i=0;i<count;i++){
+    box.innerHTML+=`<div class='skeleton-card'>
+      <div class='skel-line lg'></div>
+      <div class='skel-line md'></div>
+      <div class='skel-line sm'></div>
+      <div class='skel-row'><div class='skel-box'></div><div class='skel-box'></div><div class='skel-box'></div></div>
+    </div>`;
+  }
+}
+
+function getCurrentDate(){
+  const main = document.getElementById('dateInput');
+  if(main && main.value) return main.value;
+  const modal = document.getElementById('modalDate');
+  if(modal && modal.value) return modal.value;
+  return null;
+}
+
+function setSort(mode){
+  sortMode=mode;
+  applyFilterSort();
+}
+
+function getSearchKeyword(){
+  const m = document.getElementById("searchInput");
+  if(m && m.value) return m.value.toLowerCase();
+  const p = document.getElementById("pcSearch");
+  if(p && p.value) return p.value.toLowerCase();
+  return "";
+}
+
+function applyFilterSort(){
+  const q = getSearchKeyword();
+  let list = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
+
+  // 🚨 คัดกรองตามโหมด
+  if (isRiskMode) {
+    list = list.filter(r => r.isRisk); // โหมดเฝ้าระวัง
+  } else {
+    list = list.filter(r => r.notfifo > 0); // โหมดปกติ: บังคับ NotFIFO > 0 อย่างเดียว
+  }
+
+  if(q){
+    list = list.filter(r=>{
+      const code=String(r.code||'').toLowerCase(); const zone=String(r.zone||'').toLowerCase(); const name=String(r.name||'').toLowerCase();
+      return code.startsWith(q) || zone.startsWith(q) || name.includes(q);
+    });
+  }
+
+  // จัดเรียง
+  if (isRiskMode) { list.sort((a,b) => b.riskCount - a.riskCount); } 
+  else {
+     if(sortMode==='notfifo') list.sort((a,b)=>(b.notfifo||0)-(a.notfifo||0));
+     if(sortMode==='notfifoMonth') list.sort((a,b)=>(b.notfifoMonth||0)-(a.notfifoMonth||0));
+     if(sortMode==='repeatDays') list.sort((a,b)=>(b.repeatDays||0)-(a.repeatDays||0));
+     if(sortMode==='zoneAsc') list.sort((a,b)=>String(a.zone||'').localeCompare(String(b.zone||'')));
+     if(sortMode==='zoneDesc') list.sort((a,b)=>String(b.zone||'').localeCompare(String(a.zone||'')));
+  }
+  renderCards(list);
+}
+
+function renderCards(data){
+  const box=document.getElementById('fifoList');
+  if(!box) return;
+  if(!data || !data.length){
+    box.innerHTML=`<div class="card-item text-center text-muted">${isRiskMode ? '✅ ปลอดภัย ไม่มีสินค้าเสี่ยงในโซนนี้' : 'ไม่พบข้อมูล FIFO'}</div>`;
+    return;
+  }
+  
+  // ⚡ สั่งสร้างดัชนีแค่ 1 ครั้ง ก่อนเริ่มวาดการ์ดทั้งหมด
+  if (isRiskMode) prepareSNGroupCache();
+  
+  let htmlStr = '';
+  data.forEach(r => {
+    if (isRiskMode) {
+      htmlStr += buildRiskCardHTML(r, false);
+    } else {
+      const urgentClass = getUrgentClass(r.zone, r.notfifo, r.repeatDays);
+      htmlStr += `<div class='card-item ${urgentClass}' onclick="openSN('${esc(r.code)}','${esc(r.name)}','${esc(r.zone)}',${r.instock},${r.sale},${r.fifo},${r.notfifo},${r.repeatDays},${r.notfifoMonth})">
+        <div class='code'>${r.code}</div>
+        <div class='name'>${r.name}</div>
+        <div class='meta'>Zone: <span class='badge badge-zone text-white'>${r.zone}</span> | Instock: <span class='badge badge-instock text-white'> ${r.instock}</div>
+        <div class='meta'>จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${r.repeatDays}</span> | NotFIFO รวมเดือน: <span class='badge badge-notfifo text-white'>${r.notfifoMonth}</span></div>
+        <div class='stat-row'>
+          <div>Sale: <span class='badge badge-sale text-white'>${r.sale}</div>
+          <div>FIFO: <span class='badge badge-fifo text-white'>${r.fifo}</div>
+          <div><span class='badge badge-notfifo text-white'>Not FIFO: ${r.notfifo}</span></div>
+        </div>
+      </div>`;
+    }
+  });
+  box.innerHTML = htmlStr;
+}
+
+function showNormalSN(){ snViewMode = "normal"; }
+
+function renderSNTableAuto(){
+  const tb=document.getElementById('snTable');
+  if(!tb) return;
+  const end = Math.min(snRenderIndex + SN_CHUNK, snCache.length);
+
+  for(let i=snRenderIndex;i<end;i++){
+    const r=snCache[i];
+    const cls = r.status==='SALE' ? 'tr-sale' : r.status==='RESERVE' ? 'tr-reserve' : 'tr-stock';
+    tb.innerHTML+=`<tr class='${cls}'><td>${r.sn}</td><td>${r.day}</td><td>${r.status}</td></tr>`;
+  }
+  snRenderIndex = end;
+}
+
+function closeSNModal(){
+  const modal = bootstrap.Modal.getInstance(document.getElementById('snModal'));
+  if(modal) modal.hide();
+}
+
+function showToast(msg,type='warn'){
+  const box=document.getElementById('toastBox');
+  if(!box) return;
+  const d=document.createElement('div');
+  d.className='toast '+type;
+  d.innerText=msg;
+  box.appendChild(d);
+  setTimeout(()=>{d.remove()},4000);
+}
+
+let unifiedZone = currentPrefix || 'A';
+let filterModalInstance = null;
+
+function openFilterModal(){
+  if(!filterModalInstance){
+    filterModalInstance = new bootstrap.Modal(document.getElementById('filterModal'));
+  }
+  setModalDateDefault();
+  filterModalInstance.show();
+}
+
+function pickZone(z,el){
+  unifiedZone = z;
+  document.querySelectorAll('.zone-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function applyUnifiedFilter(){
+  const modalDateEl = document.getElementById('modalDate');
+  if(!modalDateEl || !modalDateEl.value){
+    showToast("กรุณาเลือกวันที่","warn"); return;
+  }
+  const d = modalDateEl.value;
+  currentPrefix = unifiedZone;
+
+  const barDate=document.getElementById('barDate');
+  const pcbarDate=document.getElementById('pcBarDate');
+  if(barDate) barDate.innerText="📅 "+formatDateDMY(d);
+  if(pcbarDate) pcbarDate.innerText="📅 "+formatDateDMY(d);
+
+  const barZone=document.getElementById('barZone');
+  const pcbarZone=document.getElementById('pcBarZone');
+  if(barZone) barZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${unifiedZone} <span class="filter-icon">▾</span>`;
+  if(pcbarZone) pcbarZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${unifiedZone} <span class="filter-icon">▾</span>`;
+
+  const mainDate=document.getElementById('dateInput');
+  if(mainDate) mainDate.value=d;
+
+  if(filterModalInstance) filterModalInstance.hide();
+
+  if(isMobileDevice() || window.innerWidth < 992){
+    onDateOrZoneChange(); 
+  }else{
+    pcOnDateOrZoneChange(); 
+    renderZoneRule(currentPrefix);
+  }
+}
+
+let unifiedStartY = 0;
+const filterModalEl = document.getElementById('filterModal');
+if(filterModalEl) {
+  filterModalEl.addEventListener('touchstart',e=>{ unifiedStartY = e.touches[0].clientY; });
+  filterModalEl.addEventListener('touchmove',e=>{
+    if(e.touches[0].clientY - unifiedStartY > 140){
+      bootstrap.Modal.getInstance(filterModalEl)?.hide();
+    }
+  });
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  const mainDate = document.getElementById("dateInput");
+  const d = mainDate ? mainDate.value : '';
+  const barDate = document.getElementById('barDate');
+  const pcbarDate = document.getElementById('pcbarDate');
+  if(barDate && d) barDate.innerText = "📅 "+formatDateDMY(d);
+  if(pcbarDate && d) pcbarDate.innerText = "📅 "+formatDateDMY(d);
+});
+
+function toggleRCView(isRC){
+  showToggleLoading();
+  setTimeout(()=>{
+    snViewMode = isRC ? "rc" : "normal";
+    renderSNByMode();
+    hideToggleLoading();
+  }, 120);
+}
+
+function renderSNByMode(){
+  const tb=document.getElementById("snTable");
+  if(!tb) return;
+  tb.innerHTML="";
+  if(snViewMode==="normal"){
+    snRenderIndex=0;
+    renderSNTableAuto();
+  }else{
+    renderSNGroupByRC();
+  }
+}
+
+function calcRCDate(barDateStr, age){
+  if(!barDateStr || !age) return '';
+  const p = barDateStr.split("-");
+  const d = new Date(p[0], p[1]-1, p[2]);
+  d.setDate(d.getDate() - age);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function renderSNGroupByRC(){
+  const tb=document.getElementById("snTable");
+  if(!tb) return;
+  tb.innerHTML="";
+  const map = buildRCGroup();
+  const barDateRaw = getCurrentDate();
+  const frag = document.createDocumentFragment();
+
+  Object.entries(map).sort((a,b)=>{
+    const dayA = Number(a[1][0].day) || 0;
+    const dayB = Number(b[1][0].day) || 0;
+    return dayB - dayA; 
+  }).forEach((entry) => {
+    const rc = entry[0];
+    const list = entry[1]; 
+    const key = String(rc).replace(/\W/g,'');
+    const rcDay = Number(list[0].day) || 0;
+    const rcDate = calcRCDate(barDateRaw, rcDay);
+
+    let saleCount = 0;
+    list.forEach(r => { if(r.status === "SALE") saleCount++; });
+
+    const head = document.createElement("tr");
+    head.className = "table-primary rc-header";
+    head.innerHTML = `<td colspan="3" class="fw-bold">📦 ${rc} (${list.length} SN)<div class="small text-muted mt-1">วันที่ RC: ${rcDate} | อายุ: ${rcDay} วัน | SALE: ${saleCount}</div><span class="float-end">▾</span></td>`;
+    head.onclick = () => toggleRC(key);
+    frag.appendChild(head);
+
+    list.forEach(r => {
+      const cls = r.status === 'SALE' ? 'tr-sale' : r.status === 'RESERVE' ? 'tr-reserve' : 'tr-stock';
+      const row = document.createElement("tr");
+      row.className = `rc-row rc-${key} ${cls}`;
+      row.style.display = "none";
+      row.innerHTML = `<td>${r.sn}</td><td>${r.day}</td><td>${r.status}</td>`;
+      frag.appendChild(row);
+    });
+  });
+  tb.appendChild(frag);
+}
+
+function buildRCGroup(){
+  if(snRCGroupCache) return snRCGroupCache;
+  const map={};
+  snCache.forEach(r=>{
+    const rc = r.rc || "ไม่ระบุ RC";
+    if(!map[rc]) map[rc]=[];
+    map[rc].push(r);
+  });
+  snRCGroupCache = map;
+  return map;
+}
+
+function toggleRC(key){
+  document.querySelectorAll(".rc-"+key).forEach(r=>{
+    r.style.display = r.style.display==="none" ? "" : "none";
+  });
+}
+
+function showToggleLoading(){
+  const el=document.getElementById("snToggleLoading");
+  if(el) el.style.display="block";
+}
+
+function hideToggleLoading(){
+  const el=document.getElementById("snToggleLoading");
+  if(el) el.style.display="none";
+}
+
+function openSNInput(){
+  new bootstrap.Modal(document.getElementById("snSearchModal")).show();
+  setTimeout(()=>{
+    const el = document.getElementById("snInput");
+    if(el) el.focus();
+  },300);
+}
+
+function confirmSearchSN(){
+  const input = document.getElementById("snInput");
+  const sn = input.value;
+  if(sn.length !== 10){ showToast("SN ต้องเป็นตัวเลข 10 หลักเท่านั้น","warn"); return; }
+  bootstrap.Modal.getInstance(document.getElementById("snSearchModal")).hide();
+  searchSNController(sn);
+  input.value = ""; input.focus();
+}
+
+function normalizeSN(sn){ return String(sn || '').replace(/\D/g,'').padStart(10,'0'); }
+
+function searchSNController(sn){
+  const key = normalizeSN(sn);
+  const cacheResult = searchSNInCache(key);
+  if(cacheResult){ handleSNFound(cacheResult,false); return; }
+  showAppConfirm("ไม่พบ SN ใน Zone และวันที่เลือก", "ต้องการค้นใน Zone อื่นหรือไม่?", ()=> searchSNInSheet(key));
+}
+
+function searchSNInCache(sn){
+  const key = normalizeSN(sn);
+  if(!key) return null;
+  return snIndexMap[key] || null;
+}
+
+function handleSNFound(r){
+  const zone = r.zone;
+  const code = r.code;
+
+  const inputMobile = document.getElementById("searchInput");
+  const inputPC = document.getElementById("pcSearch");
+  if(inputMobile) inputMobile.value = code;
+  if(inputPC) inputPC.value = code;
+
+  applyFilterSort();
+  pcApplyFilter();
+
+  if(isMatchZone(zone, currentPrefix)){
+    showToast("SN อยู่ใน Zone ปัจจุบันแล้ว","ok");
     return;
   }
 
-  // Group by reportDate → Code
-  const grouped = {};
-  filtered.forEach(r => {
-    const dateKey = r.reportDate || "ไม่ระบุวันที่";
-    if (!grouped[dateKey]) grouped[dateKey] = {};
-    if (!grouped[dateKey][r.code]) grouped[dateKey][r.code] = [];
-    grouped[dateKey][r.code].push(r);
-  });
+  showAppConfirm(`พบ SN อยู่ใน Zone ${zone}`, "ต้องการย้ายไป Zone นี้หรือไม่?", ()=> moveToZoneAndSearchCode(zone,code));
+}
 
-  let html = "";
-  Object.keys(grouped).sort().reverse().forEach(date => {
-    html += `<div class="group-header">📅 วันที่ไฟล์: ${date}</div>`;
-    Object.keys(grouped[date]).forEach(code => {
-      const items = grouped[date][code];
-      html += `<div class="report-card">
-        <div class="fw-bold mb-2" style="font-size:18px;">📦 ${code} — ${items[0].zone}</div>`;
-      items.forEach(r => {
-        const badgeClass = r.status === "PENDING" ? "badge-pending" : r.status === "APPROVED" ? "badge-approved" : "badge-rejected";
-        const statusText = r.status === "PENDING" ? "รอตรวจสอบ" : r.status === "APPROVED" ? "Approved" : "Rejected";
-        html += `
-          <div class="border rounded-3 p-3 mb-2">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
-                <div class="fw-bold">SN: ${r.sn}</div>
-                <div class="text-muted" style="font-size:14px;">
-                  RC: ${r.rc || '-'} | Age: ${r.age || '-'} วัน
-                </div>
-                <div class="text-muted" style="font-size:14px;">
-                  📝 ${r.reason} ${r.note ? `— ${r.note}` : ""}
-                </div>
-                <div class="text-muted" style="font-size:13px;">🕐 ${r.timestamp}</div>
-                  ${r.adminComment ? `<div class="text-primary mt-1" style="font-size:14px;">💬 ${r.adminComment}</div>` : ""}
-              </div>
-              <div class="d-flex flex-column align-items-end gap-2">
-                <span class="badge ${badgeClass} px-3 py-2">${statusText}</span>
-                ${r.status === "PENDING" ? `<button class="btn btn-sm btn-outline-primary fw-bold" onclick="openComment(${r.rowIndex})">ตรวจสอบ</button>` : ""}
-              </div>
-            </div>
-          </div>`;
-      });
-      html += `</div>`;
+let appConfirmCallback = null;
+
+function showAppConfirm(title,msg,onYes){
+  const t = document.getElementById("appConfirmTitle");
+  const m = document.getElementById("appConfirmMsg");
+  const modal = document.getElementById("appConfirmModal");
+
+  if(!t || !m || !modal){
+    if(confirm(title+"\n\n"+msg)){ onYes(); }
+    return;
+  }
+  t.innerText = title; m.innerText = msg;
+  appConfirmCallback = onYes;
+  new bootstrap.Modal(modal).show();
+}
+
+function appConfirmYes() {
+  const result = appConfirmCallback ? appConfirmCallback() : null;
+  if (result === false) return; // ถ้า callback return false ไม่ปิด modal
+
+  bootstrap.Modal.getInstance(document.getElementById("appConfirmModal")).hide();
+
+  // ซ่อน reason section กลับ
+  const reasonSection = document.getElementById("reportReasonSection");
+  if (reasonSection) reasonSection.style.display = "none";
+
+  appConfirmCallback = null;
+}
+
+function appConfirmNo() {
+  bootstrap.Modal.getInstance(document.getElementById("appConfirmModal")).hide();
+
+  // ซ่อน reason section กลับ
+  const reasonSection = document.getElementById("reportReasonSection");
+  if (reasonSection) reasonSection.style.display = "none";
+
+  // reset swipe thumb
+  const thumb = document.getElementById("swipeThumb");
+  if (thumb) { thumb.style.left = "4px"; thumb.style.background = "#dc2626"; }
+
+  appConfirmCallback = null;
+}
+
+function appConfirmNo(){
+  bootstrap.Modal.getInstance(document.getElementById("appConfirmModal")).hide();
+  appConfirmCallback = null;
+}
+
+function onSNInputChange(el){
+  let v = el.value.replace(/\D/g,'');
+  if(v.length > 10) v = v.slice(0,10);
+  el.value = v;
+  const btn = document.getElementById("snSearchBtn");
+  if(btn){ btn.disabled = v.length !== 10; }
+}
+
+let barcodeStream = null; let barcodeDetector = null; let zxingReader = null; let scanInterval = null;
+
+async function startBarcodeScan() {
+  const video = document.getElementById("barcodeVideo");
+  const barcodeBox = document.getElementById("barcodeBox");
+  if(!barcodeBox) return;
+  barcodeBox.classList.remove("d-none");
+  video.setAttribute("playsinline", "true");
+  video.playsInline = true; video.autoplay = true; video.muted = true;
+
+  try {
+    barcodeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    video.srcObject = barcodeStream;
+    await video.play();
+    barcodeBox.classList.add("fullscreen");
+
+    if (!zxingReader) zxingReader = new ZXing.BrowserMultiFormatReader();
+
+    if (!isIOS() && 'BarcodeDetector' in window) {
+      barcodeDetector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "code_128", "code_39", "qr_code"] });
+      scanWithNativeDetector(video);
+    } else {
+      scanWithZXingCanvas(video);
+    }
+  } catch (e) {
+    console.error("Camera Error:", e);
+    stopBarcodeScan();
+    alert("ไม่สามารถเปิดกล้องสดได้ (Permission Denied)\n\nหากรันบน Google Apps Script กรุณาเข้าผ่าน 'ลิงก์ตรง' (script.googleusercontent.com) เพื่อให้ระบบอนุญาตให้ใช้กล้องครับ");
+  }
+}
+
+function scanWithNativeDetector(video) {
+  scanInterval = setInterval(() => {
+    if (!barcodeStream) return clearInterval(scanInterval);
+    barcodeDetector.detect(video).then(codes => {
+      if (codes.length > 0) processResult(codes[0].rawValue);
+    }).catch(err => {
+      clearInterval(scanInterval);
+      scanWithZXingCanvas(video); 
     });
-  });
-
-  document.getElementById("reportList").innerHTML = html;
+  }, 300);
 }
 
-function openComment(rowIndex) {
-  pendingRowIndex = rowIndex;
-  document.getElementById("commentInput").value = "";
-  if (!commentModalInstance) {
-    commentModalInstance = new bootstrap.Modal(document.getElementById("commentModal"));
+function scanWithZXingCanvas(video) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  scanInterval = setInterval(() => {
+    if (!barcodeStream) return clearInterval(scanInterval);
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth / 2; canvas.height = video.videoHeight / 2;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      try {
+        const result = zxingReader.decodeFromCanvas(canvas);
+        if (result && result.text) processResult(result.text);
+      } catch (e) { }
+    }
+  }, 300);
+}
+
+function processResult(rawText) {
+  const sn = rawText.replace(/\D/g, '');
+  stopBarcodeScan();
+  const snInput = document.getElementById("snInput");
+  if (snInput) {
+    snInput.value = sn;
+    if (typeof onSNInputChange === "function") onSNInputChange(snInput);
   }
-  commentModalInstance.show();
-}
-
-async function confirmAction(status) {
-  const comment = document.getElementById("commentInput").value;
-  commentModalInstance.hide();
-
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      action: "updateSNReport",
-      data: { rowIndex: pendingRowIndex, status: status, adminComment: comment }
-    })
-  });
-  const json = await res.json();
-  if (json.data?.success) {
-    showToast(status === "APPROVED" ? "Approved แล้วครับ ✅" : "Rejected แล้วครับ ❌");
-    loadReports();
+  if (sn.length !== 10) {
+    if (typeof showToast === "function") showToast("Barcode ไม่ใช่ SN 10 หลัก", "warn");
+    else alert("Barcode ไม่ใช่ SN 10 หลัก");
   }
 }
 
-function showToast(msg) {
-  const d = document.createElement("div");
-  d.style.cssText = "position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 24px;border-radius:12px;font-weight:700;z-index:9999;";
-  d.innerText = msg;
-  document.body.appendChild(d);
-  setTimeout(() => d.remove(), 3000);
+function stopBarcodeScan() {
+  if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+  if (barcodeStream) { barcodeStream.getTracks().forEach(t => t.stop()); barcodeStream = null; }
+  const video = document.getElementById("barcodeVideo");
+  if (video) { video.pause(); video.srcObject = null; }
+  const barcodeBox = document.getElementById("barcodeBox");
+  if (barcodeBox) barcodeBox.classList.add("d-none");
 }
 
-// Enter key login
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("pwInput").addEventListener("keydown", e => {
-    if (e.key === "Enter") checkPassword();
+function isIOS() { return /iPhone|iPad|iPod/i.test(navigator.userAgent); }
+
+let currentView = "fifo";
+let currentViewPC = "fifo";
+
+function toggleMainView(){
+  const btn = document.getElementById("titleToggleBtn");
+  const fifo = document.getElementById("fifoView");
+  const dash = document.getElementById("dashboardView");
+  if(!fifo || !dash) return;
+
+  if(currentView === "fifo"){
+    fifo.style.display = "none"; dash.style.display = "block";
+    btn.innerText = "📊 Dashboard"; btn.classList.add("dashboard");
+    renderDashboard();   
+    
+    // Lazy Load
+    const iframe = document.getElementById("lookerMobile");
+    if (iframe && !iframe.src) iframe.src = iframe.getAttribute("data-src");
+
+    currentView = "dashboard";
+  }else{
+    dash.style.display = "none"; fifo.style.display = "block";
+    btn.innerText = "📦 FIFO Monitoring"; btn.classList.remove("dashboard");
+    currentView = "fifo";
+  }
+}
+
+function togglePCView(){
+  const btn = document.getElementById("titleToggleBtnPC");
+  const fifo = document.getElementById("pcCardList");
+  const dash = document.getElementById("dashboardPC");
+  if(!fifo || !dash) return;
+
+  if(currentViewPC === "fifo"){
+    fifo.style.display = "none"; dash.style.display = "block";
+    btn.innerText = "📊 Dashboard"; btn.classList.add("dashboard");
+
+    // Lazy Load
+    const iframe = document.getElementById("lookerPC");
+    if (iframe && !iframe.src) iframe.src = iframe.getAttribute("data-src");
+
+    currentViewPC = "dashboard";
+  }else{
+    dash.style.display = "none"; fifo.style.display = "block";
+    btn.innerText = "📦 FIFO Monitoring"; btn.classList.remove("dashboard");
+    currentViewPC = "fifo";
+  }
+}
+
+function renderDashboard(){
+  const t = document.getElementById("dashTotalCode");
+  const nf = document.getElementById("dashNotFifo");
+  const tc = document.getElementById("dashTopCode");
+  const rp = document.getElementById("dashRepeat");
+  if(!t || !nf || !tc || !rp) return;
+
+  let list = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
+  
+  if (isRiskMode) {
+     list = list.filter(r => r.isRisk);
+     let sumRisk = 0; let maxRisk = 0; let worstCode = "-";
+     list.forEach(r => {
+        const risk = r.riskCount || 0;
+        sumRisk += risk;
+        if (risk > maxRisk) { maxRisk = risk; worstCode = r.code; }
+     });
+     t.innerText = list.length; t.previousElementSibling.innerText = "📦 Code เฝ้าระวัง";
+     nf.innerText = sumRisk; nf.previousElementSibling.innerText = "⚠️ SN เสี่ยงรวม";
+     tc.innerText = worstCode; tc.previousElementSibling.innerText = "🔥 Code เสี่ยงสูงสุด";
+     rp.innerText = maxRisk; rp.previousElementSibling.innerText = "📈 จำนวนชิ้นสูงสุด";
+  } else {
+     list = list.filter(r => r.notfifo > 0 || r.repeatDays > 0);
+     let sumNot = 0; let maxRepeat = 0; let worstCode = "-"; let maxNot = 0;
+     list.forEach(r => {
+        const nfVal = r.notfifo || 0; const rpVal = r.repeatDays || 0;
+        sumNot += nfVal;
+        if (nfVal > maxNot) { maxNot = nfVal; worstCode = r.code; }
+        if (rpVal > maxRepeat) { maxRepeat = rpVal; }
+     });
+     t.innerText = list.length; t.previousElementSibling.innerText = "📦 จำนวน Code ทั้งหมด";
+     nf.innerText = sumNot; nf.previousElementSibling.innerText = "⚠️ Not FIFO รวม";
+     tc.innerText = worstCode; tc.previousElementSibling.innerText = "🔥 Code Not FIFO สูงสุด";
+     rp.innerText = maxRepeat; rp.previousElementSibling.innerText = "🔁 วันซ้ำสูงสุด";
+  }
+}
+
+function getUrgentClass(zone, notfifo, repeatDays){
+  notfifo = Number(notfifo) || 0;
+  repeatDays = Number(repeatDays) || 0;
+  const z = String(zone||'').charAt(0).toUpperCase();
+
+  const group1 = ["A","B","C","E","J"];
+  const group2 = ["D","R","S","T","U"];
+
+  if(group1.includes(z)){
+    if(notfifo > 10 || repeatDays > 1) return "card-warning";
+  }
+  if(group2.includes(z)){
+    if(notfifo > 3 || repeatDays > 1) return "card-warning";
+  }
+  return "card-normal";
+}
+
+async function pcOnDateOrZoneChange(){
+  if(!currentPrefix) return;
+  const date = getCurrentDate();
+  if(!date){ showToast("ไม่พบวันที่","warn"); return; }
+
+  const apiPrefix = currentPrefix.charAt(0);
+  if(!needReloadFIFO(date, apiPrefix)){ pcApplyFilter(); return; }
+
+  pcShowLoading("กำลังโหลดข้อมูลโซน " + apiPrefix + " ...");
+  pcSetProgress(50);
+
+  try {
+    const result = await callGAS("getZoneDataMerged", { date: date, mainzone: apiPrefix });
+    fifoRawCache = result.fifo || [];
+    fifoViewList = result.fifo || [];
+    snIndexMap = result.sn || {};
+    fifoCacheState.date = date;
+    fifoCacheState.zone = apiPrefix;
+    pcApplyFilter();
+    pcSetProgress(100);
+  } catch (e) { showToast(e.message || "โหลดข้อมูลไม่สำเร็จ", "warn"); } finally { pcHideLoading(); }
+}
+
+function pcApplyFilter() {
+  const q = document.getElementById("pcSearch")?.value.toLowerCase() || "";
+  const sort = document.getElementById("pcSort")?.value || "notfifo";
+  
+  // --------------------------------------------------------
+  // 1. ก้อนภาพรวม (Base List): กรองแค่โซน และ โหมด
+  // --------------------------------------------------------
+  let baseList = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
+
+  if (isRiskMode) {
+    baseList = baseList.filter(r => r.isRisk);
+  } else {
+    baseList = baseList.filter(r => r.notfifo > 0);
+  }
+
+  // วาด Problem Code และ Dashboard (ไม่โดนช่องค้นหากระทบ)
+  renderProblemCode(baseList);
+  renderDashboardPC(baseList);
+
+  // --------------------------------------------------------
+  // 2. ก้อนแสดงผล (Display List): เอาไปกรองต่อด้วยช่องค้นหา
+  // --------------------------------------------------------
+  let list = [...baseList];
+
+  if (q) { 
+    list = list.filter(r => { 
+      return (
+        String(r.code || "").toLowerCase().includes(q) || 
+        String(r.name || "").toLowerCase().includes(q) ||
+        String(r.zone || "").toLowerCase().includes(q) // ✨ จุดที่เพิ่มการค้นหาโซน
+      ); 
+    }); 
+  }
+
+  // --------------------------------------------------------
+  // 3. จัดเรียง Card ตรงกลาง
+  // --------------------------------------------------------
+  if (isRiskMode) { 
+    list.sort((a,b) => b.riskCount - a.riskCount); 
+  } else {
+     if(sort === "notfifo") list.sort((a,b)=>b.notfifo - a.notfifo);
+     if(sort === "repeat") list.sort((a,b)=>b.repeatDays - a.repeatDays);
+     if(sort === "zoneAsc") list.sort((a,b)=>String(a.zone).localeCompare(String(b.zone)));
+     if(sort === "zoneDesc") list.sort((a,b)=>String(b.zone).localeCompare(String(a.zone)));
+  }
+  
+  // 👉 วาดตารางฝั่ง PC ด้วยก้อนแสดงผล
+  renderCardsPC(list); 
+}
+
+function renderCardsPC(list){
+  const box = document.getElementById("pcCardList");
+  if(!box) return;
+  if(!list || !list.length){
+    box.innerHTML = `<div class="text-muted text-center py-4">${isRiskMode ? '✅ ปลอดภัย ไม่มีสินค้าเสี่ยงในโซนนี้' : 'ไม่พบข้อมูล'}</div>`; return;
+  }
+  
+  // ⚡ สั่งสร้างดัชนีแค่ 1 ครั้ง ก่อนเริ่มวาดการ์ดทั้งหมด
+  if (isRiskMode) prepareSNGroupCache();
+  
+  let htmlStr = '';
+  list.forEach(r => {
+    if (isRiskMode) {
+      htmlStr += buildRiskCardHTML(r, false);
+    } else {
+      const urgentClass = getUrgentClass(r.zone,r.notfifo,r.repeatDays);
+      htmlStr += `
+        <div class="pc-card ${urgentClass}" onclick="openSN('${esc(r.code)}','${esc(r.name)}','${esc(r.zone)}',${r.instock||0},${r.sale||0},${r.fifo||0},${r.notfifo||0},${r.repeatDays||0},${r.notfifoMonth||0})">
+          <div class="pc-card-left"><div class="pc-code">${r.code}</div><div class="pc-name">${r.name}</div></div>
+          <div class="pc-card-right"><div class="pc-zone-label">Zone</div><div class='badge badge-zone text-white'>${r.zone}</div></div>
+          <div class="pc-card-mid">
+            <div class="pc-stats">Instock: <span class='badge badge-instock text-white'>${r.instock}</span></div>
+            <div class="pc-stats">จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${r.repeatDays}</b></span></div>
+            <div class="pc-stats">Not FIFO รวมเดือน: <span class='badge badge-notfifo text-white'>${r.notfifoMonth}</b></span></div>
+          </div>
+          <div class="pc-card-right"><div class="pc-sale-label">Sale</div><div class='badge badge-sale text-white'>${r.sale}</div></div>
+          <div class="pc-card-right"><div class="pc-fifo-label">FIFO</div><div class='badge badge-fifo text-white'>${r.fifo}</div></div>
+          <div class="pc-card-right"><div class="pc-notfifo-label">Not FIFO</div><div class='badge badge-notfifo text-white'>${r.notfifo}</div></div>
+        </div>`;
+    }
   });
+  box.innerHTML = htmlStr;
+}
+
+function renderDashboardPC(list){
+  const t = document.getElementById("pcKpiTotal");
+  const nf = document.getElementById("pcKpiNotfifo");
+  const rp = document.getElementById("pcKpiRepeat");
+  const wc = document.getElementById("pcKpiWorst");
+  if(!t || !nf || !rp || !wc) return;
+
+  let total = list.length;
+
+  // 🚨 ถ้าอยู่ในโหมดเฝ้าระวัง ให้คำนวณจากยอดความเสี่ยง (riskCount)
+  if (isRiskMode) {
+     let sumRisk = 0; let maxRisk = 0; let worstCode = "-";
+     list.forEach(r => {
+        const risk = r.riskCount || 0;
+        sumRisk += risk;
+        if (risk > maxRisk) { maxRisk = risk; worstCode = r.code; }
+     });
+     // เปลี่ยนทั้งตัวเลข และข้อความหัวข้อ KPI ให้สอดคล้องกัน
+     t.innerText = total; t.previousElementSibling.innerText = "Code ที่เสี่ยง";
+     nf.innerText = sumRisk; nf.previousElementSibling.innerText = "SN เสี่ยงรวม";
+     rp.innerText = maxRisk; rp.previousElementSibling.innerText = "เสี่ยงสูงสุด (ชิ้น)";
+     wc.innerText = worstCode; wc.previousElementSibling.innerText = "Code เสี่ยงสุด";
+     
+  } else {
+     // ✅ ถ้าอยู่ในโหมดปกติ ให้คำนวณจาก NotFIFO ตามเดิม
+     let sumNot = 0; let maxRepeat = 0; let worstCode = "-"; let maxNot = 0;
+     list.forEach(r => {
+        const nfVal = r.notfifo || 0; const rpVal = r.repeatDays || 0;
+        sumNot += nfVal;
+        if (nfVal > maxNot) { maxNot = nfVal; worstCode = r.code; }
+        if (rpVal > maxRepeat) { maxRepeat = rpVal; }
+     });
+     t.innerText = total; t.previousElementSibling.innerText = "Total Code";
+     nf.innerText = sumNot; nf.previousElementSibling.innerText = "Not FIFO รวม";
+     rp.innerText = maxRepeat; rp.previousElementSibling.innerText = "Repeat สูงสุด";
+     wc.innerText = worstCode; wc.previousElementSibling.innerText = "Code แย่สุด";
+  }
+}
+
+function pcShowLoading(text){
+  const box = document.getElementById("pcLoading");
+  const txt = document.getElementById("pcLoadingText");
+  const bar = document.getElementById("pcLoadingBar");
+  if(box) box.style.display = "flex";
+  if(txt && text) txt.innerText = text;
+  if(bar) bar.style.width = "0%";
+}
+
+function pcSetProgress(p){ const bar = document.getElementById("pcLoadingBar"); if(bar) bar.style.width = p + "%"; }
+
+function pcHideLoading(){ const box = document.getElementById("pcLoading"); if(box) box.style.display = "none"; }
+
+function renderZoneRule(zone){
+  const z = String(zone).charAt(0);
+  let html = "";
+  if(["A","B","C","E","J"].includes(z)){
+    html = `<div>• NotFIFO &gt; 10</div><div>• Repeat &gt; 1 วัน</div>`;
+  }else{
+    html = `<div>• NotFIFO &gt; 3</div><div>• Repeat &gt; 1 วัน</div>`;
+  }
+  const el = document.getElementById("pcZoneRule");
+  if(el) el.innerHTML = html;
+}
+
+function renderProblemCode(list){
+  const box = document.getElementById("pcProblemList");
+  if(!box) return;
+  box.innerHTML = "";
+
+  // เปลี่ยนชื่อหัวข้อเหนือกล่อง Problem Code ตามโหมด
+  const titleEl = box.previousElementSibling; 
+  if (titleEl) {
+     titleEl.innerText = isRiskMode ? "⚠️ Top Risk Codes" : "🔥 Problem Code";
+  }
+
+  let top = [];
+  if (isRiskMode) {
+    // โหมดเฝ้าระวัง: จัดอันดับตามจำนวนชิ้นที่เสี่ยง (มากไปน้อย)
+    top = [...list].sort((a,b) => (b.riskCount||0) - (a.riskCount||0)).slice(0,5);
+  } else {
+    // โหมดปกติ: จัดอันดับตาม NotFIFO (มากไปน้อย)
+    top = [...list].sort((a,b) => (b.notfifo||0) - (a.notfifo||0)).slice(0,5);
+  }
+  
+  if(!top.length){ box.innerHTML = `<div class="text-muted ps-2">ไม่พบ</div>`; return; }
+  
+  top.forEach(r=>{
+    // โชว์ตัวเลขตามโหมดนั้นๆ
+    const val = isRiskMode ? r.riskCount : r.notfifo;
+    box.innerHTML += `<div class="pc-problem-item" onclick="pcSearchByCode('${r.code}')"><span>${r.code}</span><b class="text-danger">${val}</b></div>`;
+  });
+}
+
+function pcSearchByCode(code){
+  const input = document.getElementById("pcSearch");
+  if(!input) return;
+  input.value = code;
+  pcApplyFilter();
+}
+
+// --- Upload Code ---
+const FILE_REQ = { fifoByDay: "fifo_by_day.xlsx", snReturn: "fifo_sn_return.xlsx", snFile: "fifo_sn.csv" };
+let uploadFiles = { fifoByDay: null, snReturn: null, snFile: null };
+let modalInstance = null;
+
+function openUploadModal() {
+  const el = document.getElementById("uploadModal");
+  if(el){
+    modalInstance = new bootstrap.Modal(el);
+    modalInstance.show();
+    resetUI();
+  }
+}
+
+function closeModal() { if(modalInstance) modalInstance.hide(); }
+
+function resetUI() {
+  uploadFiles = { fifoByDay: null, snReturn: null, snFile: null };
+  document.querySelectorAll("input[type=file]").forEach(i => i.value = "");
+  document.querySelectorAll(".upload-filename").forEach(label => {
+    label.innerText = "ยังไม่ได้เลือกไฟล์"; label.className = "upload-filename";
+  });
+  toggleLoading(false); updateProgress(0, "รอเริ่ม...");
+}
+
+function pickFile(key) {
+  const fileEl = document.getElementById("file_" + key);
+  if(fileEl) fileEl.click();
+}
+
+function onFilePicked(key, input) {
+  const file = input.files[0];
+  const nameLabel = document.getElementById("name_" + key);
+  if (!file) {
+    uploadFiles[key] = null; nameLabel.innerText = "ยังไม่ได้เลือกไฟล์"; nameLabel.className = "upload-filename"; return;
+  }
+  if (file.name.toLowerCase() !== FILE_REQ[key].toLowerCase()) {
+    alert(`❌ ชื่อไฟล์ไม่ถูกต้อง!\n\nไฟล์ที่เลือก: ${file.name}\nต้องใช้ชื่อ: ${FILE_REQ[key]}`);
+    input.value = ""; uploadFiles[key] = null;
+    nameLabel.innerText = "ชื่อไฟล์ไม่ถูกต้อง ❌"; nameLabel.className = "upload-filename text-danger fw-bold"; return;
+  }
+  uploadFiles[key] = file;
+  nameLabel.innerText = file.name + " ✅"; nameLabel.className = "upload-filename text-success fw-bold";
+}
+
+const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve({ name: file.name, base64: reader.result });
+  reader.onerror = reject; reader.readAsDataURL(file);
 });
+
+const readFileAsText = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = reject; reader.readAsText(file);
+});
+
+async function startBulkUpload() {
+  if (!uploadFiles.fifoByDay || !uploadFiles.snReturn || !uploadFiles.snFile) { alert("กรุณาเลือกไฟล์ให้ครบทั้ง 3 ไฟล์ครับ"); return; }
+  toggleLoading(true); updateProgress(5, "กำลังเตรียมข้อมูล...");
+  try {
+    const f1 = await readFileAsBase64(uploadFiles.fifoByDay);
+    const f2 = await readFileAsBase64(uploadFiles.snReturn);
+    updateProgress(10, "กำลังอ่านไฟล์ CSV...");
+    const csvText = await readFileAsText(uploadFiles.snFile);
+
+    updateProgress(15, "1/3 กำลังอัปโหลด FIFO By Day...");
+    const res1 = await runGoogleScript("step1_UploadFifo", f1);
+    const targetSS = res1.targetSS; const reportDate = res1.reportDate;
+
+    updateProgress(30, "2/3 กำลังบันทึก SN Return...");
+    await runGoogleScript("step2_UploadSnReturn", f2, targetSS);
+
+    updateProgress(45, "3/3 กำลังประมวลผล CSV...");
+    await runGoogleScript("step3_PrepareSheet", targetSS);
+    const allRows = parseCSVAndMapColumnsFast(csvText);
+    const CHUNK_SIZE = 100000; 
+    const totalChunks = Math.ceil(allRows.length / CHUNK_SIZE);
+
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE; const end = start + CHUNK_SIZE;
+      const chunk = allRows.slice(start, end);
+      const jsonString = JSON.stringify(chunk);
+      const currentProgress = 45 + Math.round(((i + 1) / totalChunks) * 55);
+      updateProgress(currentProgress, `3/3 กำลังบันทึก CSV (${i+1}/${totalChunks})...`);
+      await runGoogleScript("step3_AppendChunk", jsonString, targetSS);
+    }
+    await runGoogleScript("step4_SummarizeFinal", targetSS, reportDate);
+    updateProgress(100, "เสร็จสิ้น!");
+    setTimeout(showSuccessView, 600);
+  } catch (err) { alert("เกิดข้อผิดพลาด: " + err); toggleLoading(false); }
+}
+
+function parseCSVAndMapColumnsFast(csvText) {
+  const lines = csvText.split(/\r\n|\n|\r/);
+  const result = [];
+  for (let i = 0; i < lines.length; i++) { 
+    const line = lines[i]; if (line.length === 0) continue; 
+    const cols = line.split(",");
+    if (cols.length >= 5) {
+      result.push([
+        cols[0].replace(/^"|"$/g, '').trim(), cols[1].replace(/^"|"$/g, '').trim(),
+        cols[3].replace(/^"|"$/g, '').trim(), cols[4].replace(/^"|"$/g, '').trim(),
+        cols[2].replace(/^"|"$/g, '').trim() 
+      ]);
+    }
+  }
+  return result;
+}
+
+function updateProgress(percent, msg) {
+  const bar = document.getElementById("uploadProgress");
+  const stat = document.getElementById("uploadStatus");
+  const perEl = document.getElementById("progressPercent");
+  if(bar) bar.style.width = percent + "%";
+  if(stat) stat.innerText = msg;
+  if(perEl) perEl.innerText = percent + "%";
+}
+
+function toggleLoading(isLoading) {
+  const form = document.getElementById("uploadFormZone");
+  const load = document.getElementById("uploadLoading");
+  const succ = document.getElementById("uploadSuccess");
+  const btnCancel = document.getElementById("btnCancel");
+  const btnUpload = document.getElementById("btnUpload");
+  const btnDone = document.getElementById("btnDone");
+  const btnClose = document.getElementById("btnCloseHeader");
+
+  if (isLoading) {
+    if(form) form.classList.add("d-none");
+    if(load) load.classList.remove("d-none");
+    if(succ) succ.classList.add("d-none");
+    if(btnCancel) btnCancel.classList.add("d-none");
+    if(btnUpload) btnUpload.classList.add("d-none");
+    if(btnDone) btnDone.classList.add("d-none");
+    if(btnClose) btnClose.disabled = true;
+  } else {
+    if(form) form.classList.remove("d-none");
+    if(load) load.classList.add("d-none");
+    if(succ) succ.classList.add("d-none");
+    if(btnCancel) btnCancel.classList.remove("d-none");
+    if(btnUpload) btnUpload.classList.remove("d-none");
+    if(btnDone) btnDone.classList.add("d-none");
+    if(btnClose) btnClose.disabled = false;
+  }
+}
+
+function showSuccessView() {
+  const load = document.getElementById("uploadLoading");
+  const succ = document.getElementById("uploadSuccess");
+  const btnDone = document.getElementById("btnDone");
+  const btnClose = document.getElementById("btnCloseHeader");
+  if(load) load.classList.add("d-none");
+  if(succ) succ.classList.remove("d-none");
+  if(btnDone) btnDone.classList.remove("d-none");
+  if(btnClose) btnClose.disabled = false;
+}
+
+let isRiskMode = false; // ตัวแปรคุมโหมด
+
+function toggleRiskMode() {
+  isRiskMode = !isRiskMode;
+  const btnM = document.getElementById("btnToggleRiskMobile");
+  const btnP = document.getElementById("btnToggleRiskPC");
+  
+  if (isRiskMode) {
+    if(btnM) { btnM.className = "btn btn-warning w-100 mb-3 fw-bold text-dark"; btnM.innerHTML = "📦 กลับไป Not FIFO"; }
+    if(btnP) { btnP.className = "btn btn-warning w-100 mt-2 fw-bold text-dark"; btnP.innerHTML = "📦 กลับไป Not FIFO"; }
+  } else {
+    if(btnM) { btnM.className = "btn btn-outline-warning w-100 mb-3 fw-bold"; btnM.innerHTML = "⏳ Code Risk"; }
+    if(btnP) { btnP.className = "btn btn-outline-warning w-100 mt-2 fw-bold"; btnP.innerHTML = "⏳ Code Risk"; }
+  }
+  
+  // ใช้ setTimeout 10ms เพื่อให้ปุ่มเปลี่ยนสีก่อน แล้วค่อยโหลดข้อมูล (ลดอาการปุ่มค้าง)
+  setTimeout(() => {
+    // เช็กว่าหน้าจอปัจจุบันเป็น Mobile หรือ PC แล้วเรียกฟังก์ชันกรองให้ถูกตัว
+    if (document.getElementById("mobileLayout").style.display !== "none") {
+      applyFilterSort();
+    } else {
+      pcApplyFilter();
+    }
+  }, 10);
+}
+
+// ==========================================================
+// 🛠️ ฟังก์ชันคำนวณยอด SN แยกตามอายุ และตรวจจับ FIFO Violation
+// ==========================================================
+function getRiskMatrixData(code) {
+  if (!snGroupedByCode) prepareSNGroupCache();
+
+  const counts = {
+    instockTotal: 0, saleTotal: 0,
+    instock: { '0-22':0, '23':0, '24':0, '25':0, '26':0, '27':0, '28':0, '29':0 },
+    sale:    { '0-22':0, '23':0, '24':0, '25':0, '26':0, '27':0, '28':0, '29':0 },
+    maxAgeInStock: -1, 
+    minAgeSold: 999,   // ✨ เปลี่ยนมาจดจำ "อายุน้อยที่สุดที่ขายออกไป"
+    riskQty: 0
+  };
+  
+  const cleanTarget = String(code).replace(/\s+/g, '').toUpperCase();
+  const sns = snGroupedByCode[cleanTarget] || [];
+
+  sns.forEach(s => {
+    const age = Number(s.day) || 0;
+    const type = (String(s.status).toUpperCase() === 'SALE') ? 'sale' : 'instock';
+
+    if (type === 'sale') {
+      counts.saleTotal++;
+      // ✨ ถ้าขายของอายุน้อยออกไป ให้จำค่านั้นไว้เพื่อไปจับผิด
+      if (age < counts.minAgeSold) counts.minAgeSold = age; 
+    } else {
+      counts.instockTotal++;
+      if (age > counts.maxAgeInStock) counts.maxAgeInStock = age;
+    }
+
+    if (age >= 23 && age <= 29) {
+      counts[type][age]++;
+    } else {
+      counts[type]['0-22']++;
+    }
+  });
+
+  sns.forEach(s => {
+    const age = Number(s.day) || 0;
+    const type = (String(s.status).toUpperCase() === 'SALE') ? 'sale' : 'instock';
+    if (type === 'instock' && age === counts.maxAgeInStock) {
+      counts.riskQty++;
+    }
+  });
+
+  return counts;
+}
+
+// ==========================================================
+// 🛠️ ฟังก์ชันสร้าง HTML สำหรับ Risk Card
+// ==========================================================
+function buildRiskCardHTML(r, isHeader = false) {
+  const code = r.code || ''; const name = r.name || ''; const zone = r.zone || '';
+  const mx = getRiskMatrixData(code);
+  
+  // 🚨 กฎเหล็ก: ถ้ามีตัวที่ขายไป "อายุน้อยกว่า" ตัวที่เก่าที่สุดที่เหลืออยู่ = ถือว่าหยิบผิด!
+  const isFifoViolation = (mx.minAgeSold !== 999) && (mx.minAgeSold < mx.maxAgeInStock);
+  
+  let riskBadgeHTML = '';
+  if (isFifoViolation) {
+     riskBadgeHTML = `<span class="risk-badge" style="background:#dc2626; color:#fff; font-size: 15px;">🚨 หยิบผิดล็อต! ค้าง ${mx.riskQty} ชิ้น (อายุ ${mx.maxAgeInStock} วัน)</span>`;
+  } else if (mx.maxAgeInStock >= 23) {
+     riskBadgeHTML = `<span class="risk-badge" style="background:#ffb703; color:#111;">⚠️ เสี่ยง ${mx.riskQty} ชิ้น (อายุ ${mx.maxAgeInStock} วัน)</span>`;
+  } else {
+     riskBadgeHTML = `<span class="risk-badge" style="background:#10b981; color:#fff;">✅ ปลอดภัย</span>`;
+  }
+  
+  const onclickAttr = isHeader ? '' : `onclick="openSN('${esc(code)}','${esc(name)}','${esc(zone)}',${r.instock||0},${r.sale||0},${r.fifo||0},${r.notfifo||0},${r.repeatDays||0},${r.notfifoMonth||0})"`;
+  const extraStyle = isHeader ? 'cursor: default; margin-bottom: 0; box-shadow: none;' : '';
+
+  const getInstockHTML = (ageKey, count) => {
+    let isHighlight = false;
+    if (isFifoViolation) {
+      if (ageKey === '0-22' && mx.maxAgeInStock <= 22) isHighlight = true;
+      if (ageKey === String(mx.maxAgeInStock)) isHighlight = true;
+    }
+    
+    if (isHighlight) {
+      return `<div class="rm-cell" style="background-color: #dc2626; box-shadow: 0 0 0 2px #fca5a5; transform: scale(1.2); position: relative; z-index: 2;" title="ตัวปัญหานี้แหละ!">${count}</div>`;
+    }
+    return `<div class="rm-cell rm-blue">${count}</div>`;
+  };
+
+  return `
+  <div class="risk-card-container" ${onclickAttr} style="${extraStyle}">
+    <div class="risk-left">
+      <div class="risk-code">${code} ${riskBadgeHTML}</div>
+      <div class="risk-name">${name}</div>
+    </div>
+    <div class="risk-mid">
+      <div class="rm-zone-label">Zone</div>
+      <div class="rm-zone-badge">${zone}</div>
+    </div>
+    <div class="risk-matrix">
+      <table class="rm-table">
+        <tr>
+          <td style="text-align:right; padding-right:8px; color:#555;">Age</td>
+          <th>0-22</th><th>23</th><th>24</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th>
+        </tr>
+        <tr>
+          <td class="rm-label">Instock <span class="rm-badge rm-blue">${mx.instockTotal}</span></td>
+          <td>${getInstockHTML('0-22', mx.instock['0-22'])}</td>
+          <td>${getInstockHTML('23', mx.instock['23'])}</td>
+          <td>${getInstockHTML('24', mx.instock['24'])}</td>
+          <td>${getInstockHTML('25', mx.instock['25'])}</td>
+          <td>${getInstockHTML('26', mx.instock['26'])}</td>
+          <td>${getInstockHTML('27', mx.instock['27'])}</td>
+          <td>${getInstockHTML('28', mx.instock['28'])}</td>
+          <td>${getInstockHTML('29', mx.instock['29'])}</td>
+        </tr>
+        <tr>
+          <td class="rm-label">Sale <span class="rm-badge rm-orange">${mx.saleTotal}</span></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['0-22']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['23']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['24']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['25']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['26']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['27']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['28']}</div></td>
+          <td><div class="rm-cell rm-orange">${mx.sale['29']}</div></td>
+        </tr>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ==========================================================
+// ⚡ 1. ตัวช่วยสร้างดัชนีข้อมูล (Lookup Table) ความเร็วสูง
+// ==========================================================
+let snGroupedByCode = null;
+
+function prepareSNGroupCache() {
+  snGroupedByCode = {};
+  const allSNs = Object.values(snIndexMap);
+  for (let i = 0; i < allSNs.length; i++) {
+    const s = allSNs[i];
+    const c = String(s.code).replace(/\s+/g, '').toUpperCase();
+    if (!snGroupedByCode[c]) snGroupedByCode[c] = [];
+    snGroupedByCode[c].push(s);
+  }
+}
+
+// ===========================
+// Swipe to Report Logic
+// ===========================
+
+let swipeCurrentSN = null;
+let swipeCurrentCode = null;
+let swipeCurrentZone = null;
+let swipeCurrentDate = null;
+let selectedSNMap = {};
+
+function initSwipeReport(sn, code, zone, date) {
+  swipeCurrentSN = sn;
+  swipeCurrentCode = code;
+  swipeCurrentZone = zone;
+  swipeCurrentDate = date;
+
+  const wrap = document.getElementById("swipeWrap");
+  const thumb = document.getElementById("swipeThumb");
+  if (!wrap || !thumb) return;
+
+  // Reset
+  thumb.style.left = "4px";
+  thumb.style.background = "#dc2626";
+
+  // ลบ event listener เก่าออกโดย clone node
+  const newThumb = thumb.cloneNode(true);
+  thumb.parentNode.replaceChild(newThumb, thumb);
+  const t = document.getElementById("swipeThumb");
+
+  const maxX = wrap.clientWidth - 60;
+  let startX = 0;
+  let isDragging = false;
+
+  const onStart = (clientX) => {
+    startX = clientX - t.offsetLeft;
+    isDragging = true;
+    t.style.transition = "none";
+  };
+
+  const onMove = (clientX) => {
+    if (!isDragging) return;
+    let x = clientX - startX;
+    x = Math.max(4, Math.min(x, maxX));
+    t.style.left = x + "px";
+    const pct = (x - 4) / (maxX - 4);
+    if (pct > 0.7) t.style.background = "#16a34a";
+    else t.style.background = "#dc2626";
+  };
+
+  const onEnd = (clientX) => {
+    if (!isDragging) return;
+    isDragging = false;
+    t.style.transition = "left .3s";
+    const x = clientX - startX;
+    const pct = (x - 4) / (maxX - 4);
+    if (pct > 0.7) {
+      t.style.left = maxX + "px";
+      t.style.background = "#16a34a";
+      showReportConfirm();
+    } else {
+      t.style.left = "4px";
+      t.style.background = "#dc2626";
+    }
+  };
+
+  // Touch
+  t.addEventListener("touchstart", e => onStart(e.touches[0].clientX), { passive: true });
+  t.addEventListener("touchmove", e => onMove(e.touches[0].clientX), { passive: true });
+  t.addEventListener("touchend", e => onEnd(e.changedTouches[0].clientX));
+
+  // Mouse
+  t.addEventListener("mousedown", e => {
+    onStart(e.clientX);
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  });
+
+  function onMouseMove(e) { onMove(e.clientX); }
+  function onMouseUp(e) {
+    onEnd(e.clientX);
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+  }
+}
+
+function showReportConfirm() {
+  const count = Object.keys(selectedSNMap).length;
+
+  let summaryText = `Code: ${swipeCurrentCode}`;
+  if (count === 0) {
+    summaryText += `\nระดับ: Code (ไม่ระบุ SN/RC)`;
+  } else {
+    const lines = Object.values(selectedSNMap).map(s =>
+      s.type === "RC" ? `RC: ${s.rc}` : `SN: ${s.sn}${s.rc ? ` (${s.rc})` : ''}`
+    ).join('\n');
+    summaryText += `\n${lines}`;
+  }
+
+  // แสดง reason section ใน modal
+  const reasonSection = document.getElementById("reportReasonSection");
+  if (reasonSection) reasonSection.style.display = "block";
+
+  // reset reason/note
+  const reasonEl = document.getElementById("reportReason");
+  const noteEl = document.getElementById("reportNote");
+  if (reasonEl) reasonEl.value = "";
+  if (noteEl) noteEl.value = "";
+
+  showAppConfirm("ยืนยัน Report", summaryText, () => {
+    // เช็ค reason ตอนกดยืนยัน
+    const reason = document.getElementById("reportReason")?.value;
+    if (!reason) {
+      showToast("กรุณาเลือกเหตุผลก่อนครับ", "warn");
+      return false; // ไม่ปิด modal
+    }
+    const note = document.getElementById("reportNote")?.value || "";
+    submitReport(reason, note);
+  });
+}
+
+async function submitReport(reason, note) {
+  try {
+    const count = Object.keys(selectedSNMap).length;
+    const items = count === 0
+      ? [{ sn: "", rc: "", age: "", type: "CODE" }]
+      : Object.values(selectedSNMap);
+
+    await callGAS("submitSNReport", {
+      reportDate: swipeCurrentDate,
+      code: swipeCurrentCode,
+      zone: swipeCurrentZone,
+      reason: reason,
+      note: note,
+      items: items
+    });
+
+    const label = count === 0 ? "Code" : `${count} รายการ`;
+    showToast(`Report ${label} สำเร็จ ✅`, "ok");
+
+    // Reset
+    selectedSNMap = {};
+    updateSNSelectedUI();
+    const thumb = document.getElementById("swipeThumb");
+    if (thumb) { thumb.style.left = "4px"; thumb.style.background = "#dc2626"; }
+
+  } catch (err) {
+    showToast("Report ไม่สำเร็จ: " + err.message, "warn");
+  }
+}
+
 </script>
+<div id="toastBox" class="toast-box"></div>
 </body>
 </html>
