@@ -2938,16 +2938,11 @@ function previewFifoByDayDate(file, dateLabel) {
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
 
-      const HEADER_WORDS = ["date", "วันที่"];
       let foundText = null;
-      for (let i = 0; i < rows.length; i++) {
-        const cell = rows[i] && rows[i][0];
-        if (cell === undefined || cell === null) continue;
+      const cell = rows[1] && rows[1][0]; // row 1 = header, row 2 (index 1) = ข้อมูลแถวแรก
+      if (cell !== undefined && cell !== null) {
         const text = String(cell).trim();
-        if (text === "") continue;
-        if (HEADER_WORDS.includes(text.toLowerCase())) continue; // ข้ามแถวหัวตาราง
-        foundText = text;
-        break;
+        if (text !== "") foundText = text;
       }
 
       if (foundText) {
