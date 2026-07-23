@@ -1947,8 +1947,6 @@ function isMobileDevice(){
 
 function detectDeviceLayout(){
   const isMobileUA = isMobileDevice();
-  document.getElementById("searchInput").value = "";
-  document.getElementById("pcSearch").value = "";
 
   if(isMobileUA || window.innerWidth < 992){
     showMobile();
