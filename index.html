@@ -2934,21 +2934,25 @@ function previewFifoByDayDate(file, dateLabel) {
   reader.onload = (e) => {
     try {
       const data = new Uint8Array(e.target.result);
-      const wb = XLSX.read(data, { type: "array", cellDates: true });
+      const wb = XLSX.read(data, { type: "array" }); // ไม่แปลงเป็น Date object เพื่อให้ได้ text ดิบตามไฟล์
       const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, dateNF: "yyyy-mm-dd" });
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
 
-      let foundDate = null;
+      const HEADER_WORDS = ["date", "วันที่"];
+      let foundText = null;
       for (let i = 0; i < rows.length; i++) {
         const cell = rows[i] && rows[i][0];
-        if (cell === undefined || cell === null || cell === "") continue;
-        const parsed = parseAnyDateValue(cell);
-        if (parsed) { foundDate = parsed; break; }
+        if (cell === undefined || cell === null) continue;
+        const text = String(cell).trim();
+        if (text === "") continue;
+        if (HEADER_WORDS.includes(text.toLowerCase())) continue; // ข้ามแถวหัวตาราง
+        foundText = text;
+        break;
       }
 
-      if (foundDate) {
+      if (foundText) {
         dateLabel.className = "upload-filename text-primary fw-bold";
-        dateLabel.innerText = "📅 วันที่: " + formatDateDMY(foundDate);
+        dateLabel.innerText = "📅 วันที่: " + foundText;
       } else {
         dateLabel.className = "upload-filename text-warning fw-bold";
         dateLabel.innerText = "⚠️ ไม่พบวันที่ในคอลัมน์แรก";
