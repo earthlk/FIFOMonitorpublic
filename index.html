@@ -1658,8 +1658,9 @@ body{background:#eef2ff;font-family:system-ui}
           <div class="upload-row">
             <button class="upload-btn" onclick="pickFile('fifoByDay')">📄 เลือกไฟล์ 1</button>
             <div class="d-flex flex-column" style="overflow: hidden;">
-               <span class="fw-bold text-primary" style="font-size:12px;">fifo_by_day.xlsx</span>
-               <span id="name_fifoByDay" class="upload-filename">ยังไม่ได้เลือกไฟล์</span>
+               	<span class="fw-bold text-primary" style="font-size:12px;">fifo_by_day.xlsx</span>
+               	<span id="name_fifoByDay" class="upload-filename">ยังไม่ได้เลือกไฟล์</span>
+			    <span id="date_fifoByDay" class="upload-filename fw-bold" style="display:none;"></span>
             </div>
             <input type="file" accept=".xlsx" hidden id="file_fifoByDay" onchange="onFilePicked('fifoByDay',this)">
           </div>
@@ -1702,7 +1703,9 @@ body{background:#eef2ff;font-family:system-ui}
 </div>
 
 <div id="toastBox" class="toast-box"></div>
-<input type="hidden" id="dateInput"> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<input type="hidden" id="dateInput">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
 // 🚨 1. นำ URL Web App อันใหม่ที่ได้จากการ Deploy มาใส่ตรงนี้!
@@ -2887,6 +2890,8 @@ function closeModal() { if(modalInstance) modalInstance.hide(); }
 function resetUI() {
   uploadFiles = { fifoByDay: null, snReturn: null, snFile: null };
   document.querySelectorAll("input[type=file]").forEach(i => i.value = "");
+  const dateLabel = document.getElementById("date_fifoByDay");
+  if(dateLabel){ dateLabel.style.display = "none"; dateLabel.innerText = ""; }
   document.querySelectorAll(".upload-filename").forEach(label => {
     label.innerText = "ยังไม่ได้เลือกไฟล์"; label.className = "upload-filename";
   });
@@ -2901,16 +2906,64 @@ function pickFile(key) {
 function onFilePicked(key, input) {
   const file = input.files[0];
   const nameLabel = document.getElementById("name_" + key);
+  const dateLabel = document.getElementById("date_" + key);
   if (!file) {
-    uploadFiles[key] = null; nameLabel.innerText = "ยังไม่ได้เลือกไฟล์"; nameLabel.className = "upload-filename"; return;
+    uploadFiles[key] = null; nameLabel.innerText = "ยังไม่ได้เลือกไฟล์"; nameLabel.className = "upload-filename";
+    if(dateLabel){ dateLabel.style.display = "none"; dateLabel.innerText = ""; }
+    return;
   }
   if (file.name.toLowerCase() !== FILE_REQ[key].toLowerCase()) {
     alert(`❌ ชื่อไฟล์ไม่ถูกต้อง!\n\nไฟล์ที่เลือก: ${file.name}\nต้องใช้ชื่อ: ${FILE_REQ[key]}`);
     input.value = ""; uploadFiles[key] = null;
-    nameLabel.innerText = "ชื่อไฟล์ไม่ถูกต้อง ❌"; nameLabel.className = "upload-filename text-danger fw-bold"; return;
+    nameLabel.innerText = "ชื่อไฟล์ไม่ถูกต้อง ❌"; nameLabel.className = "upload-filename text-danger fw-bold";
+    if(dateLabel){ dateLabel.style.display = "none"; dateLabel.innerText = ""; }
+    return;
   }
   uploadFiles[key] = file;
   nameLabel.innerText = file.name + " ✅"; nameLabel.className = "upload-filename text-success fw-bold";
+
+  if (key === "fifoByDay" && dateLabel) {
+    dateLabel.style.display = "inline";
+    dateLabel.className = "upload-filename text-muted";
+    dateLabel.innerText = "⏳ กำลังอ่านวันที่...";
+    previewFifoByDayDate(file, dateLabel);
+  }
+}
+function previewFifoByDayDate(file, dateLabel) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: "array", cellDates: true });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, dateNF: "yyyy-mm-dd" });
+
+      let foundDate = null;
+      for (let i = 0; i < rows.length; i++) {
+        const cell = rows[i] && rows[i][0];
+        if (cell === undefined || cell === null || cell === "") continue;
+        const parsed = parseAnyDateValue(cell);
+        if (parsed) { foundDate = parsed; break; }
+      }
+
+      if (foundDate) {
+        dateLabel.className = "upload-filename text-primary fw-bold";
+        dateLabel.innerText = "📅 วันที่: " + formatDateDMY(foundDate);
+      } else {
+        dateLabel.className = "upload-filename text-warning fw-bold";
+        dateLabel.innerText = "⚠️ ไม่พบวันที่ในคอลัมน์แรก";
+      }
+    } catch (err) {
+      dateLabel.className = "upload-filename text-warning fw-bold";
+      dateLabel.innerText = "⚠️ อ่านไฟล์เพื่อ preview วันที่ไม่ได้";
+      console.error("previewFifoByDayDate error:", err);
+    }
+  };
+  reader.onerror = () => {
+    dateLabel.className = "upload-filename text-warning fw-bold";
+    dateLabel.innerText = "⚠️ อ่านไฟล์เพื่อ preview วันที่ไม่ได้";
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 const readFileAsBase64 = (file) => new Promise((resolve, reject) => {
