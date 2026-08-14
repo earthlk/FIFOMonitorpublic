@@ -2196,16 +2196,14 @@ function renderCards(data){
 function showNormalSN(){ snViewMode = "normal"; }
 
 function renderSNTableAuto(){
-  const tb=document.getElementById('snTable');
+  const tb = document.getElementById('snTable');
   if(!tb) return;
-  const end = Math.min(snRenderIndex + SN_CHUNK, snCache.length);
-
-  for(let i=snRenderIndex;i<end;i++){
-    const r=snCache[i];
+  const html = snCache.map(r => {
     const cls = r.status==='SALE' ? 'tr-sale' : r.status==='RESERVE' ? 'tr-reserve' : 'tr-stock';
-    tb.innerHTML+=`<tr class='${cls}'><td>${r.sn}</td><td>${r.day}</td><td>${r.status}</td></tr>`;
-  }
-  snRenderIndex = end;
+    return `<tr class='${cls}'><td>${r.sn}</td><td>${r.day}</td><td>${r.status}</td></tr>`;
+  }).join('');
+  tb.innerHTML = html;
+  snRenderIndex = snCache.length;
 }
 
 function closeSNModal(){
