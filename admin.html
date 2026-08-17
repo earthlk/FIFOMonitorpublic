@@ -17,17 +17,10 @@
   --bg:#eef2ff;
   --ink:#1e293b;
   --muted:#64748b;
+  --line:#e2e8f0;
 }
 
 *{ -webkit-tap-highlight-color: transparent; }
-
-/* ===== Container ===== */
-.wrap{
-  max-width:1240px;
-  margin:0 auto;
-  padding:0 16px;
-}
-.topbar .wrap{ padding:0; }
 
 body{
   background:var(--bg);
@@ -36,164 +29,179 @@ body{
   line-height:1.5;
   padding-bottom:40px;
 }
-
 button, input, select, textarea{ font-size:17px; }
 
+.wrap{ max-width:1240px; margin:0 auto; padding:0 16px; }
+.topbar .wrap{ padding:0; }
+
 /* ===== Login ===== */
-#loginScreen{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
+#loginScreen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
 .login-card{
-  width:100%;
-  max-width:360px;
-  background:#fff;
-  border-radius:20px;
-  padding:28px 24px;
-  box-shadow:0 10px 30px rgba(37,99,235,.15);
+  width:100%; max-width:360px; background:#fff; border-radius:20px;
+  padding:28px 24px; box-shadow:0 10px 30px rgba(37,99,235,.15);
 }
 
 /* ===== Top bar ===== */
 .topbar{
   background:linear-gradient(135deg,var(--primary),var(--secondary));
-  color:#fff;
-  padding:16px 18px;
-  position:sticky;
-  top:0;
-  z-index:100;
+  color:#fff; padding:16px 18px;
+  position:sticky; top:0; z-index:100;
   box-shadow:0 4px 14px rgba(0,0,0,.12);
 }
 .topbar h1{ font-size:20px; font-weight:800; margin:0; }
 
 .stat-row{ display:flex; gap:8px; margin-top:12px; }
-.stat{
-  flex:1;
-  background:rgba(255,255,255,.16);
-  border-radius:12px;
-  padding:8px 6px;
-  text-align:center;
-}
+.stat{ flex:1; background:rgba(255,255,255,.16); border-radius:12px; padding:8px 6px; text-align:center; }
 .stat b{ display:block; font-size:20px; line-height:1.2; }
 .stat span{ font-size:12px; opacity:.9; }
 
 /* ===== Filter chips ===== */
-.filter-bar{
-  display:flex;
-  gap:8px;
-  padding:14px 0 6px;
-  overflow-x:auto;
-}
+.filter-bar{ display:flex; gap:8px; padding:14px 0 6px; overflow-x:auto; }
 .chip{
-  flex:0 0 auto;
-  border:1.5px solid #cbd5e1;
-  background:#fff;
-  color:var(--muted);
-  border-radius:999px;
-  padding:7px 16px;
-  font-size:15px;
-  font-weight:600;
+  flex:0 0 auto; border:1.5px solid #cbd5e1; background:#fff; color:var(--muted);
+  border-radius:999px; padding:7px 16px; font-size:15px; font-weight:600;
 }
-.chip.active{
-  background:var(--primary);
-  border-color:var(--primary);
-  color:#fff;
-}
+.chip.active{ background:var(--primary); border-color:var(--primary); color:#fff; }
 
-/* ===== Groups ===== */
-.date-header{
-  background:linear-gradient(135deg,var(--primary),var(--secondary));
-  color:#fff;
-  border-radius:12px;
-  padding:10px 16px;
-  margin:22px 0 10px;
-  font-weight:700;
-  font-size:16px;
-}
-.code-header{
-  margin:16px 0 8px;
-  font-weight:700;
-  font-size:15px;
-  color:var(--secondary);
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-.code-header .zone-tag{
-  background:#e0e7ff;
-  color:var(--secondary);
-  border-radius:6px;
-  padding:2px 8px;
-  font-size:13px;
-  font-weight:600;
-}
-
-/* ===== Report card ===== */
-.report-card{
-  background:#fff;
-  border-radius:14px;
-  padding:14px 16px;
-  margin:0 0 10px;
-  box-shadow:0 3px 10px rgba(0,0,0,.07);
-  border-left:5px solid #cbd5e1;
-  display:flex;
-  flex-direction:column;
-}
-.report-card .action-row{ margin-top:auto; }
-
-.card-grid{ display:block; }
-.report-card.pending { border-left-color:var(--warning); }
-.report-card.approved{ border-left-color:var(--success); }
-.report-card.rejected{ border-left-color:var(--danger); }
-
-.sn-line{
-  font-weight:700;
-  font-size:18px;
-  word-break:break-all;
-  margin-bottom:6px;
-}
-.meta{
-  font-size:14px;
-  color:var(--muted);
-  display:flex;
-  flex-wrap:wrap;
-  gap:4px 14px;
-  margin-bottom:8px;
-}
-.reason{
-  background:#f8fafc;
-  border-radius:8px;
-  padding:8px 10px;
-  font-size:15px;
-  margin-bottom:10px;
-}
-.reason .note{ color:var(--muted); font-size:14px; display:block; margin-top:3px; }
-
-.badge-status{ border-radius:999px; padding:4px 12px; font-size:13px; font-weight:700; color:#fff; }
+/* ===== Status badge (ใช้ร่วมกัน 2 layout) ===== */
+.badge-status{ border-radius:999px; padding:4px 12px; font-size:13px; font-weight:700; color:#fff; white-space:nowrap; }
 .badge-pending { background:var(--warning); }
 .badge-approved{ background:var(--success); }
 .badge-rejected{ background:var(--danger); }
 
-.admin-note{
-  border-top:1px dashed #e2e8f0;
-  margin-top:10px;
-  padding-top:8px;
-  font-size:14px;
-  color:var(--muted);
-}
+/* ===== Empty / loading ===== */
+.state-box{ text-align:center; color:var(--muted); padding:60px 24px; }
+.state-box .icon{ font-size:44px; display:block; margin-bottom:10px; }
 
+/* ==========================================================
+   MOBILE — card list
+   ========================================================== */
+.date-header{
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:#fff; border-radius:12px; padding:10px 16px;
+  margin:22px 0 10px; font-weight:700; font-size:16px;
+}
+.code-header{
+  margin:16px 0 8px; font-weight:700; font-size:15px; color:var(--secondary);
+  display:flex; align-items:center; gap:8px;
+}
+.zone-tag{
+  background:#e0e7ff; color:var(--secondary); border-radius:6px;
+  padding:2px 8px; font-size:13px; font-weight:600;
+}
+.report-card{
+  background:#fff; border-radius:14px; padding:14px 16px; margin:0 0 10px;
+  box-shadow:0 3px 10px rgba(0,0,0,.07); border-left:5px solid #cbd5e1;
+}
+.report-card.pending { border-left-color:var(--warning); }
+.report-card.approved{ border-left-color:var(--success); }
+.report-card.rejected{ border-left-color:var(--danger); }
+
+.sn-line{ font-weight:700; font-size:18px; word-break:break-all; margin-bottom:6px; }
+.meta{ font-size:14px; color:var(--muted); display:flex; flex-wrap:wrap; gap:4px 14px; margin-bottom:8px; }
+.reason{ background:#f8fafc; border-radius:8px; padding:8px 10px; font-size:15px; margin-bottom:10px; }
+.reason .note{ color:var(--muted); font-size:14px; display:block; margin-top:3px; }
+.admin-note{ border-top:1px dashed var(--line); margin-top:10px; padding-top:8px; font-size:14px; color:var(--muted); }
 .action-row{ display:flex; gap:8px; margin-top:10px; }
 .action-row .btn{ flex:1; font-weight:700; border-radius:10px; padding:9px 0; }
 
-/* ===== Empty / loading ===== */
-.state-box{
-  text-align:center;
-  color:var(--muted);
-  padding:60px 24px;
+#desktopView{ display:none; }
+
+/* ==========================================================
+   DESKTOP — master / detail
+   ========================================================== */
+@media (min-width: 992px){
+  body{ font-size:15px; padding-bottom:0; }
+  button, input, select, textarea{ font-size:15px; }
+
+  .wrap{ max-width:1560px; padding:0 24px; }
+  .topbar{ padding:12px 24px; }
+  .topbar .wrap{ display:flex; align-items:center; justify-content:space-between; gap:28px; }
+  .topbar h1{ font-size:21px; white-space:nowrap; }
+  .stat-row{ margin-top:0; flex:0 0 auto; gap:10px; }
+  .stat{ min-width:96px; padding:6px 14px; }
+  .stat b{ font-size:21px; }
+
+  .filter-bar{ padding:16px 0 0; overflow:visible; }
+  .chip{ cursor:pointer; transition:.15s; }
+  .chip:hover{ border-color:var(--primary); color:var(--primary); }
+  .chip.active:hover{ color:#fff; }
+
+  #mobileView{ display:none; }
+
+  #desktopView{
+    display:grid;
+    grid-template-columns:320px minmax(0,1fr);
+    gap:18px;
+    margin-top:16px;
+    height:calc(100vh - 160px);
+  }
+
+  /* ---- Sidebar ---- */
+  .sidebar{
+    background:#fff; border-radius:14px; overflow-y:auto;
+    box-shadow:0 3px 12px rgba(0,0,0,.06); padding-bottom:10px;
+  }
+  .sidebar-title{
+    position:sticky; top:0; background:#fff; z-index:2;
+    padding:14px 16px 10px; font-weight:800; font-size:15px;
+    border-bottom:1px solid var(--line);
+  }
+  .side-date{
+    padding:12px 16px 5px; font-size:12px; font-weight:800;
+    letter-spacing:.06em; color:var(--muted); text-transform:uppercase;
+  }
+  .side-item{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 16px; cursor:pointer;
+    border-left:3px solid transparent; transition:.12s;
+  }
+  .side-item:hover{ background:#f1f5f9; }
+  .side-item.active{ background:#eef2ff; border-left-color:var(--primary); }
+  .side-item .code{ font-weight:700; font-size:15px; }
+  .side-item.active .code{ color:var(--primary); }
+  .side-count{
+    margin-left:auto; background:#e2e8f0; color:var(--muted);
+    border-radius:999px; padding:1px 9px; font-size:12px; font-weight:700;
+  }
+  .side-count.has-pending{ background:var(--warning); color:#fff; }
+
+  /* ---- Detail ---- */
+  .detail{
+    background:#fff; border-radius:14px; overflow:auto;
+    box-shadow:0 3px 12px rgba(0,0,0,.06); display:flex; flex-direction:column;
+  }
+  .detail-head{
+    position:sticky; top:0; background:#fff; z-index:3;
+    padding:16px 20px 12px; border-bottom:1px solid var(--line);
+  }
+  .detail-head h2{ font-size:20px; font-weight:800; margin:0; display:flex; align-items:center; gap:10px; }
+  .detail-sub{ color:var(--muted); font-size:13px; margin-top:4px; }
+
+  .bulk-bar{
+    display:flex; align-items:center; gap:10px; margin-top:12px;
+    background:#eef2ff; border-radius:10px; padding:8px 14px; font-size:14px; font-weight:600;
+  }
+  .bulk-bar .btn{ font-weight:700; padding:5px 14px; }
+
+  table.sn-table{ width:100%; border-collapse:collapse; }
+  .sn-table th{
+    position:sticky; top:0; background:#f8fafc; z-index:1;
+    font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.04em; padding:10px 12px; text-align:left;
+    border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  .sn-table td{ padding:11px 12px; border-bottom:1px solid #f1f5f9; vertical-align:top; font-size:14px; }
+  .sn-table tbody tr:hover{ background:#f8fafc; }
+  .sn-table tr.is-selected{ background:#eef2ff; }
+  .sn-table .col-sn{ font-weight:700; font-size:15px; word-break:break-all; }
+  .sn-table .col-note{ color:var(--muted); font-size:13px; }
+  .sn-table .col-chk{ width:38px; }
+  .sn-table .col-act{ white-space:nowrap; width:1%; }
+  .sn-table .col-act .btn{ padding:4px 10px; font-size:13px; font-weight:700; }
+  .sn-table input[type=checkbox]{ width:17px; height:17px; cursor:pointer; }
+  .table-scroll{ overflow-y:auto; flex:1; }
 }
-.state-box .icon{ font-size:44px; display:block; margin-bottom:10px; }
 
 /* ===== Toast ===== */
 .toast-box{ position:fixed; left:0; right:0; bottom:24px; display:flex; justify-content:center; z-index:99999; pointer-events:none; }
@@ -206,59 +214,7 @@ button, input, select, textarea{ font-size:17px; }
 .toast-msg.ok  { background:var(--success); }
 .toast-msg.warn{ background:var(--danger); }
 
-/* ===== PC layout ===== */
-@media (min-width: 992px){
-  body{ font-size:16px; }
-  button, input, select, textarea{ font-size:16px; }
-
-  .topbar{ padding:14px 24px; }
-  .topbar .wrap{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:24px;
-  }
-  .topbar h1{ font-size:22px; white-space:nowrap; }
-
-  .stat-row{ margin-top:0; flex:0 0 auto; gap:10px; }
-  .stat{ min-width:92px; padding:6px 12px; }
-  .stat b{ font-size:22px; }
-
-  .filter-bar{ padding:18px 0 4px; overflow:visible; }
-  .chip{ cursor:pointer; transition:.15s; }
-  .chip:hover{ border-color:var(--primary); color:var(--primary); }
-  .chip.active:hover{ color:#fff; }
-
-  .date-header{ font-size:17px; padding:11px 20px; }
-  .code-header{ font-size:16px; }
-
-  /* หลายคอลัมน์ตามความกว้างจอ */
-  .card-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));
-    gap:12px;
-    align-items:start;
-  }
-  .report-card{
-    margin:0;
-    transition:transform .15s, box-shadow .15s;
-  }
-  .report-card:hover{
-    transform:translateY(-2px);
-    box-shadow:0 8px 20px rgba(0,0,0,.10);
-  }
-  .action-row .btn{ cursor:pointer; }
-
-  .state-box{ padding:80px 24px; }
-}
-
-@media (min-width: 1400px){
-  .wrap{ max-width:1400px; }
-}
-
-@media (prefers-reduced-motion: reduce){
-  *{ transition:none !important; animation:none !important; }
-}
+@media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
 </style>
 </head>
 <body>
@@ -303,7 +259,17 @@ button, input, select, textarea{ font-size:17px; }
       <button class="chip" data-filter="all"      onclick="setFilter('all', this)">ทั้งหมด</button>
     </div>
 
-    <div id="reportList"></div>
+    <!-- มือถือ -->
+    <div id="mobileView"><div id="reportList"></div></div>
+
+    <!-- เดสก์ท็อป -->
+    <div id="desktopView">
+      <aside class="sidebar">
+        <div class="sidebar-title">Code ที่ถูก Report</div>
+        <div id="codeSidebar"></div>
+      </aside>
+      <section class="detail" id="codeDetail"></section>
+    </div>
   </div>
 </div>
 
@@ -373,27 +339,45 @@ document.getElementById("pwInput").addEventListener("keydown", e => {
 // ==========================================================
 let allReports = [];
 let currentFilter = "pending";
-let pendingDecision = null;   // { rowIndex, status, sn }
+let selectedKey = null;              // "วันที่||CODE" ของ Code ที่เลือกฝั่ง Desktop
+let checkedRows = new Set();         // rowIndex ที่ติ๊กไว้
+let pendingDecision = null;          // { rowIndexes:[], status, label }
+
+// ใช้ matchMedia ไม่ใช่ resize — คีย์บอร์ดมือถือเด้งจะไม่ trigger re-render
+const mqDesktop = window.matchMedia("(min-width: 992px)");
+mqDesktop.addEventListener("change", () => renderAll());
 
 // ==========================================================
 // 🔄 Load
 // ==========================================================
 async function loadReports(){
-  const list = document.getElementById("reportList");
-  list.innerHTML = `<div class="state-box"><span class="icon">⏳</span>กำลังโหลดรายการ...</div>`;
+  showLoading();
   try {
     const data = await callGAS("getSNReports");
     allReports = Array.isArray(data) ? data : [];
+    checkedRows.clear();
     updateStats();
-    renderReports();
+    renderAll();
   } catch (err){
-    list.innerHTML = `<div class="state-box">
-        <span class="icon">⚠️</span>
-        โหลดรายการไม่สำเร็จ<br>
-        <span style="font-size:14px;">${escapeHtml(err.message)}</span><br>
-        <button class="btn btn-primary btn-sm mt-3 fw-bold" onclick="loadReports()">ลองใหม่</button>
-      </div>`;
+    showError(err.message);
   }
+}
+
+function showLoading(){
+  const box = `<div class="state-box"><span class="icon">⏳</span>กำลังโหลดรายการ...</div>`;
+  document.getElementById("reportList").innerHTML = box;
+  document.getElementById("codeDetail").innerHTML = box;
+  document.getElementById("codeSidebar").innerHTML = "";
+}
+
+function showError(msg){
+  const box = `<div class="state-box">
+      <span class="icon">⚠️</span>โหลดรายการไม่สำเร็จ<br>
+      <span style="font-size:14px;">${escapeHtml(msg)}</span><br>
+      <button class="btn btn-primary btn-sm mt-3 fw-bold" onclick="loadReports()">ลองใหม่</button>
+    </div>`;
+  document.getElementById("reportList").innerHTML = box;
+  document.getElementById("codeDetail").innerHTML = box;
 }
 
 // ==========================================================
@@ -403,9 +387,8 @@ function normalizeStatus(raw){
   const s = String(raw || "").trim().toLowerCase();
   if (s === "approved" || s === "approve" || s === "อนุมัติ") return "approved";
   if (s === "rejected" || s === "reject" || s === "ปฏิเสธ")  return "rejected";
-  return "pending";   // ว่าง / pending / รอตรวจสอบ
+  return "pending";
 }
-
 const STATUS_LABEL = { pending:"รอตรวจ", approved:"อนุมัติแล้ว", rejected:"ปฏิเสธ" };
 
 function updateStats(){
@@ -421,55 +404,187 @@ function setFilter(f, el){
   currentFilter = f;
   document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
   el.classList.add("active");
-  renderReports();
+  checkedRows.clear();
+  renderAll();
 }
 
 // ==========================================================
-// 🖼️ Render — group by reportDate → code
+// 🧱 Grouping — วันที่ + Code
 // ==========================================================
-function renderReports(){
-  const list = document.getElementById("reportList");
+function getFilteredRows(){
+  return allReports.filter(r =>
+    currentFilter === "all" || normalizeStatus(r.status) === currentFilter);
+}
 
-  const rows = allReports.filter(r =>
-    currentFilter === "all" || normalizeStatus(r.status) === currentFilter
-  );
+function buildGroups(rows){
+  const map = new Map();
+  rows.forEach(r => {
+    const date = fmtDate(r.reportDate);
+    const code = String(r.code || "-");
+    const key  = date + "||" + code;
+    if (!map.has(key)) map.set(key, { key, date, code, zone:r.zone || "-", items:[] });
+    map.get(key).items.push(r);
+  });
+  // วันที่ใหม่ก่อน แล้วเรียง Code A→Z
+  return [...map.values()].sort((a,b) =>
+    a.date === b.date ? a.code.localeCompare(b.code) : b.date.localeCompare(a.date));
+}
 
-  if (!rows.length){
-    list.innerHTML = `<div class="state-box">
-        <span class="icon">📭</span>
-        ไม่มีรายการในหมวด "${STATUS_LABEL[currentFilter] || 'ทั้งหมด'}"
-      </div>`;
+function renderAll(){
+  if (mqDesktop.matches) renderDesktop();
+  else renderMobile();
+}
+
+// ==========================================================
+// 🖥️ DESKTOP — sidebar + ตาราง SN
+// ==========================================================
+function renderDesktop(){
+  const groups = buildGroups(getFilteredRows());
+  const sidebar = document.getElementById("codeSidebar");
+  const detail  = document.getElementById("codeDetail");
+
+  if (!groups.length){
+    sidebar.innerHTML = "";
+    detail.innerHTML = `<div class="state-box"><span class="icon">📭</span>
+      ไม่มีรายการในหมวด "${STATUS_LABEL[currentFilter] || "ทั้งหมด"}"</div>`;
     return;
   }
 
-  // group: date → code → [rows]
-  const byDate = {};
-  rows.forEach(r => {
-    const d = fmtDate(r.reportDate);
-    const c = String(r.code || "-");
-    (byDate[d] = byDate[d] || {});
-    (byDate[d][c] = byDate[d][c] || []).push(r);
+  // ถ้า Code ที่เลือกไว้หายไป (เปลี่ยน filter) ให้เด้งไปอันแรก
+  if (!groups.some(g => g.key === selectedKey)) selectedKey = groups[0].key;
+
+  // ----- Sidebar -----
+  let html = "", lastDate = null;
+  groups.forEach(g => {
+    if (g.date !== lastDate){
+      html += `<div class="side-date">📅 ${escapeHtml(g.date)}</div>`;
+      lastDate = g.date;
+    }
+    const pendingCount = g.items.filter(r => normalizeStatus(r.status) === "pending").length;
+    html += `
+      <div class="side-item ${g.key === selectedKey ? "active" : ""}" onclick="selectCode('${escapeAttr(g.key)}')">
+        <span class="code">${escapeHtml(g.code)}</span>
+        <span class="zone-tag">${escapeHtml(g.zone)}</span>
+        <span class="side-count ${pendingCount ? "has-pending" : ""}">${pendingCount || g.items.length}</span>
+      </div>`;
   });
+  sidebar.innerHTML = html;
 
-  const dates = Object.keys(byDate).sort().reverse();
+  // ----- Detail -----
+  const g = groups.find(x => x.key === selectedKey);
+  const pendingItems = g.items.filter(r => normalizeStatus(r.status) === "pending");
+  const checkedHere  = g.items.filter(r => checkedRows.has(r.rowIndex)).length;
+  const allChecked   = pendingItems.length > 0 && checkedHere === pendingItems.length;
 
-  const html = dates.map(d => {
-    const codes = Object.keys(byDate[d]).sort();
-    const codeHtml = codes.map(c => {
-      const items = byDate[d][c];
-      const zone  = items[0].zone || "-";
-      const cards = items.map(buildCard).join("");
-      return `
-        <div class="code-header">
-          <span>🏷️ ${escapeHtml(c)}</span>
-          <span class="zone-tag">Zone ${escapeHtml(zone)}</span>
-          <span class="ms-auto text-muted" style="font-size:13px;">${items.length} SN</span>
-        </div>
-        <div class="card-grid">${cards}</div>`;
-    }).join("");
-    return `<div class="date-header">📅 ${escapeHtml(d)}</div>${codeHtml}`;
-  }).join("");
+  const bulkBar = pendingItems.length ? `
+    <div class="bulk-bar">
+      <label class="d-flex align-items-center gap-2 mb-0" style="cursor:pointer;">
+        <input type="checkbox" ${allChecked ? "checked" : ""} onchange="toggleAll(this.checked)">
+        เลือกทั้งหมดที่รอตรวจ (${pendingItems.length})
+      </label>
+      ${checkedHere ? `
+        <span class="ms-auto">เลือกไว้ ${checkedHere} รายการ</span>
+        <button class="btn btn-success btn-sm" onclick="askBulk('Approved')">✅ อนุมัติที่เลือก</button>
+        <button class="btn btn-danger btn-sm"  onclick="askBulk('Rejected')">❌ ปฏิเสธที่เลือก</button>
+      ` : `<span class="ms-auto text-muted fw-normal">ติ๊กเลือกเพื่อจัดการหลายรายการพร้อมกัน</span>`}
+    </div>` : "";
 
+  const rowsHtml = g.items.map(buildRow).join("");
+
+  detail.innerHTML = `
+    <div class="detail-head">
+      <h2>🏷️ ${escapeHtml(g.code)} <span class="zone-tag">Zone ${escapeHtml(g.zone)}</span></h2>
+      <div class="detail-sub">📅 ${escapeHtml(g.date)} · SN ที่ถูก Report ทั้งหมด ${g.items.length} รายการ · รอตรวจ ${pendingItems.length}</div>
+      ${bulkBar}
+    </div>
+    <div class="table-scroll">
+      <table class="sn-table">
+        <thead><tr>
+          <th class="col-chk"></th>
+          <th>SN</th><th>RC</th><th>อายุ</th><th>เหตุผล</th>
+          <th>แจ้งเมื่อ</th><th>สถานะ</th><th class="col-act">จัดการ</th>
+        </tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`;
+}
+
+function buildRow(r){
+  const st = normalizeStatus(r.status);
+  const isPending = st === "pending";
+  const checked = checkedRows.has(r.rowIndex);
+
+  const chk = isPending
+    ? `<input type="checkbox" ${checked ? "checked" : ""} onchange="toggleRow(${r.rowIndex}, this.checked)">`
+    : "";
+
+  const act = isPending
+    ? `<button class="btn btn-success btn-sm me-1" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅</button>
+       <button class="btn btn-danger btn-sm" onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌</button>`
+    : `<span class="text-muted" style="font-size:13px;">${escapeHtml(fmtDateTime(r.approvedAt))}</span>`;
+
+  return `
+    <tr class="${checked ? "is-selected" : ""}">
+      <td class="col-chk">${chk}</td>
+      <td class="col-sn">${escapeHtml(r.sn || "-")}</td>
+      <td>${escapeHtml(r.rc || "-")}</td>
+      <td>${r.age !== "" && r.age != null ? escapeHtml(r.age) : "-"}</td>
+      <td>${escapeHtml(r.reason || "-")}
+        ${r.note ? `<div class="col-note">${escapeHtml(r.note)}</div>` : ""}
+        ${!isPending && r.adminComment ? `<div class="col-note">💬 ${escapeHtml(r.adminComment)}</div>` : ""}
+      </td>
+      <td style="white-space:nowrap;">${escapeHtml(fmtDateTime(r.timestamp))}</td>
+      <td><span class="badge-status badge-${st}">${STATUS_LABEL[st]}</span></td>
+      <td class="col-act">${act}</td>
+    </tr>`;
+}
+
+function selectCode(key){
+  selectedKey = key;
+  checkedRows.clear();
+  renderDesktop();
+}
+
+function toggleRow(rowIndex, on){
+  if (on) checkedRows.add(rowIndex); else checkedRows.delete(rowIndex);
+  renderDesktop();
+}
+
+function toggleAll(on){
+  const g = buildGroups(getFilteredRows()).find(x => x.key === selectedKey);
+  if (!g) return;
+  g.items.filter(r => normalizeStatus(r.status) === "pending")
+         .forEach(r => on ? checkedRows.add(r.rowIndex) : checkedRows.delete(r.rowIndex));
+  renderDesktop();
+}
+
+// ==========================================================
+// 📱 MOBILE — card list
+// ==========================================================
+function renderMobile(){
+  const list = document.getElementById("reportList");
+  const groups = buildGroups(getFilteredRows());
+
+  if (!groups.length){
+    list.innerHTML = `<div class="state-box"><span class="icon">📭</span>
+      ไม่มีรายการในหมวด "${STATUS_LABEL[currentFilter] || "ทั้งหมด"}"</div>`;
+    return;
+  }
+
+  let html = "", lastDate = null;
+  groups.forEach(g => {
+    if (g.date !== lastDate){
+      html += `<div class="date-header">📅 ${escapeHtml(g.date)}</div>`;
+      lastDate = g.date;
+    }
+    html += `
+      <div class="code-header">
+        <span>🏷️ ${escapeHtml(g.code)}</span>
+        <span class="zone-tag">Zone ${escapeHtml(g.zone)}</span>
+        <span class="ms-auto text-muted" style="font-size:13px;">${g.items.length} SN</span>
+      </div>
+      ${g.items.map(buildCard).join("")}`;
+  });
   list.innerHTML = html;
 }
 
@@ -478,7 +593,7 @@ function buildCard(r){
   const isPending = st === "pending";
 
   const meta = [
-    r.rc  ? `RC: ${escapeHtml(r.rc)}`   : "",
+    r.rc ? `RC: ${escapeHtml(r.rc)}` : "",
     r.age !== "" && r.age != null ? `อายุ: ${escapeHtml(r.age)} วัน` : "",
     r.timestamp ? `แจ้ง: ${escapeHtml(fmtDateTime(r.timestamp))}` : ""
   ].filter(Boolean).map(t => `<span>${t}</span>`).join("");
@@ -491,8 +606,8 @@ function buildCard(r){
 
   const actions = isPending
     ? `<div class="action-row">
-         <button class="btn btn-success" onclick="askDecision(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ อนุมัติ</button>
-         <button class="btn btn-danger"  onclick="askDecision(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌ ปฏิเสธ</button>
+         <button class="btn btn-success" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ อนุมัติ</button>
+         <button class="btn btn-danger"  onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌ ปฏิเสธ</button>
        </div>` : "";
 
   return `
@@ -512,16 +627,17 @@ function buildCard(r){
 }
 
 // ==========================================================
-// ✅ Approve / Reject
+// ✅ Approve / Reject (เดี่ยว + หลายรายการ)
 // ==========================================================
 let confirmModalInstance = null;
 
-function askDecision(rowIndex, status, sn){
-  pendingDecision = { rowIndex, status, sn };
-
+function openConfirm(rowIndexes, status, label){
+  pendingDecision = { rowIndexes, status, label };
   const isApprove = status === "Approved";
-  document.getElementById("confirmTitle").innerText = isApprove ? "อนุมัติรายการนี้?" : "ปฏิเสธรายการนี้?";
-  document.getElementById("confirmSN").innerText = "SN: " + sn;
+
+  document.getElementById("confirmTitle").innerText =
+    isApprove ? `อนุมัติ ${rowIndexes.length} รายการ?` : `ปฏิเสธ ${rowIndexes.length} รายการ?`;
+  document.getElementById("confirmSN").innerText = label;
   document.getElementById("adminComment").value = "";
 
   const btn = document.getElementById("confirmBtn");
@@ -533,37 +649,49 @@ function askDecision(rowIndex, status, sn){
   confirmModalInstance.show();
 }
 
+function askSingle(rowIndex, status, sn){
+  openConfirm([rowIndex], status, "SN: " + sn);
+}
+
+function askBulk(status){
+  const ids = [...checkedRows];
+  if (!ids.length) return;
+  openConfirm(ids, status, `${ids.length} SN ที่เลือกไว้ — ใส่ comment เดียวกันทุกรายการ`);
+}
+
 async function submitDecision(){
   if (!pendingDecision) return;
-  const { rowIndex, status } = pendingDecision;
+  const { rowIndexes, status } = pendingDecision;
   const comment = document.getElementById("adminComment").value.trim();
 
   const btn = document.getElementById("confirmBtn");
   btn.disabled = true;
-  btn.innerText = "กำลังบันทึก...";
 
-  try {
-    await callGAS("updateSNReport", { rowIndex, status, adminComment: comment });
-
-    // อัปเดตในหน่วยความจำ ไม่ต้องโหลดใหม่ทั้งหมด
-    const target = allReports.find(r => r.rowIndex === rowIndex);
-    if (target){
-      target.status = status;
-      target.adminComment = comment;
-      target.approvedAt = new Date().toISOString();
+  let done = 0, failed = 0;
+  for (const rowIndex of rowIndexes){
+    btn.innerText = `กำลังบันทึก ${done + 1}/${rowIndexes.length}...`;
+    try {
+      await callGAS("updateSNReport", { rowIndex, status, adminComment: comment });
+      const target = allReports.find(r => r.rowIndex === rowIndex);
+      if (target){
+        target.status = status;
+        target.adminComment = comment;
+        target.approvedAt = new Date().toISOString();
+      }
+      checkedRows.delete(rowIndex);
+      done++;
+    } catch (err){
+      failed++;
     }
-
-    confirmModalInstance.hide();
-    updateStats();
-    renderReports();
-    showToast(status === "Approved" ? "อนุมัติแล้ว" : "ปฏิเสธแล้ว", "ok");
-  } catch (err){
-    showToast("บันทึกไม่สำเร็จ: " + err.message, "warn");
-    btn.disabled = false;
-    btn.innerText = "ยืนยัน";
-  } finally {
-    pendingDecision = null;
   }
+
+  confirmModalInstance.hide();
+  updateStats();
+  renderAll();
+  pendingDecision = null;
+
+  if (failed) showToast(`สำเร็จ ${done} · ล้มเหลว ${failed} รายการ`, "warn");
+  else showToast(`${status === "Approved" ? "อนุมัติ" : "ปฏิเสธ"}แล้ว ${done} รายการ`, "ok");
 }
 
 // ==========================================================
@@ -573,7 +701,8 @@ function fmtDate(v){
   if (!v) return "ไม่ระบุวันที่";
   const d = new Date(v);
   if (isNaN(d)) return String(v);
-  return d.toISOString().slice(0,10);
+  const p = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
 }
 
 function fmtDateTime(v){
@@ -581,7 +710,7 @@ function fmtDateTime(v){
   const d = new Date(v);
   if (isNaN(d)) return String(v);
   const p = n => String(n).padStart(2,"0");
-  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 function escapeHtml(s){
