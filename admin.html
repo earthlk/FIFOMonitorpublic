@@ -21,6 +21,14 @@
 
 *{ -webkit-tap-highlight-color: transparent; }
 
+/* ===== Container ===== */
+.wrap{
+  max-width:1240px;
+  margin:0 auto;
+  padding:0 16px;
+}
+.topbar .wrap{ padding:0; }
+
 body{
   background:var(--bg);
   color:var(--ink);
@@ -75,7 +83,7 @@ button, input, select, textarea{ font-size:17px; }
 .filter-bar{
   display:flex;
   gap:8px;
-  padding:14px 16px 6px;
+  padding:14px 0 6px;
   overflow-x:auto;
 }
 .chip{
@@ -100,12 +108,12 @@ button, input, select, textarea{ font-size:17px; }
   color:#fff;
   border-radius:12px;
   padding:10px 16px;
-  margin:18px 16px 10px;
+  margin:22px 0 10px;
   font-weight:700;
   font-size:16px;
 }
 .code-header{
-  margin:14px 16px 8px;
+  margin:16px 0 8px;
   font-weight:700;
   font-size:15px;
   color:var(--secondary);
@@ -127,10 +135,15 @@ button, input, select, textarea{ font-size:17px; }
   background:#fff;
   border-radius:14px;
   padding:14px 16px;
-  margin:0 16px 10px;
+  margin:0 0 10px;
   box-shadow:0 3px 10px rgba(0,0,0,.07);
   border-left:5px solid #cbd5e1;
+  display:flex;
+  flex-direction:column;
 }
+.report-card .action-row{ margin-top:auto; }
+
+.card-grid{ display:block; }
 .report-card.pending { border-left-color:var(--warning); }
 .report-card.approved{ border-left-color:var(--success); }
 .report-card.rejected{ border-left-color:var(--danger); }
@@ -193,6 +206,56 @@ button, input, select, textarea{ font-size:17px; }
 .toast-msg.ok  { background:var(--success); }
 .toast-msg.warn{ background:var(--danger); }
 
+/* ===== PC layout ===== */
+@media (min-width: 992px){
+  body{ font-size:16px; }
+  button, input, select, textarea{ font-size:16px; }
+
+  .topbar{ padding:14px 24px; }
+  .topbar .wrap{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:24px;
+  }
+  .topbar h1{ font-size:22px; white-space:nowrap; }
+
+  .stat-row{ margin-top:0; flex:0 0 auto; gap:10px; }
+  .stat{ min-width:92px; padding:6px 12px; }
+  .stat b{ font-size:22px; }
+
+  .filter-bar{ padding:18px 0 4px; overflow:visible; }
+  .chip{ cursor:pointer; transition:.15s; }
+  .chip:hover{ border-color:var(--primary); color:var(--primary); }
+  .chip.active:hover{ color:#fff; }
+
+  .date-header{ font-size:17px; padding:11px 20px; }
+  .code-header{ font-size:16px; }
+
+  /* หลายคอลัมน์ตามความกว้างจอ */
+  .card-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));
+    gap:12px;
+    align-items:start;
+  }
+  .report-card{
+    margin:0;
+    transition:transform .15s, box-shadow .15s;
+  }
+  .report-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(0,0,0,.10);
+  }
+  .action-row .btn{ cursor:pointer; }
+
+  .state-box{ padding:80px 24px; }
+}
+
+@media (min-width: 1400px){
+  .wrap{ max-width:1400px; }
+}
+
 @media (prefers-reduced-motion: reduce){
   *{ transition:none !important; animation:none !important; }
 }
@@ -218,26 +281,30 @@ button, input, select, textarea{ font-size:17px; }
 <div id="adminScreen" style="display:none;">
 
   <div class="topbar">
-    <div class="d-flex align-items-center justify-content-between">
-      <h1>📋 SN Report</h1>
-      <button class="btn btn-light btn-sm fw-bold" onclick="loadReports()">🔄 โหลดใหม่</button>
-    </div>
-    <div class="stat-row">
-      <div class="stat"><b id="statPending">0</b><span>รอตรวจ</span></div>
-      <div class="stat"><b id="statApproved">0</b><span>อนุมัติ</span></div>
-      <div class="stat"><b id="statRejected">0</b><span>ปฏิเสธ</span></div>
-      <div class="stat"><b id="statTotal">0</b><span>ทั้งหมด</span></div>
+    <div class="wrap">
+      <div class="d-flex align-items-center justify-content-between gap-3">
+        <h1>📋 SN Report</h1>
+        <button class="btn btn-light btn-sm fw-bold" onclick="loadReports()">🔄 โหลดใหม่</button>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><b id="statPending">0</b><span>รอตรวจ</span></div>
+        <div class="stat"><b id="statApproved">0</b><span>อนุมัติ</span></div>
+        <div class="stat"><b id="statRejected">0</b><span>ปฏิเสธ</span></div>
+        <div class="stat"><b id="statTotal">0</b><span>ทั้งหมด</span></div>
+      </div>
     </div>
   </div>
 
-  <div class="filter-bar">
-    <button class="chip active" data-filter="pending"  onclick="setFilter('pending', this)">รอตรวจ</button>
-    <button class="chip" data-filter="approved" onclick="setFilter('approved', this)">อนุมัติแล้ว</button>
-    <button class="chip" data-filter="rejected" onclick="setFilter('rejected', this)">ปฏิเสธ</button>
-    <button class="chip" data-filter="all"      onclick="setFilter('all', this)">ทั้งหมด</button>
-  </div>
+  <div class="wrap">
+    <div class="filter-bar">
+      <button class="chip active" data-filter="pending"  onclick="setFilter('pending', this)">รอตรวจ</button>
+      <button class="chip" data-filter="approved" onclick="setFilter('approved', this)">อนุมัติแล้ว</button>
+      <button class="chip" data-filter="rejected" onclick="setFilter('rejected', this)">ปฏิเสธ</button>
+      <button class="chip" data-filter="all"      onclick="setFilter('all', this)">ทั้งหมด</button>
+    </div>
 
-  <div id="reportList"></div>
+    <div id="reportList"></div>
+  </div>
 </div>
 
 <!-- ==================== CONFIRM MODAL ==================== -->
@@ -397,7 +464,8 @@ function renderReports(){
           <span>🏷️ ${escapeHtml(c)}</span>
           <span class="zone-tag">Zone ${escapeHtml(zone)}</span>
           <span class="ms-auto text-muted" style="font-size:13px;">${items.length} SN</span>
-        </div>${cards}`;
+        </div>
+        <div class="card-grid">${cards}</div>`;
     }).join("");
     return `<div class="date-header">📅 ${escapeHtml(d)}</div>${codeHtml}`;
   }).join("");
