@@ -25,11 +25,11 @@
 body{
   background:var(--bg);
   color:var(--ink);
-  font-size:17px;
+  font-size:16px;
   line-height:1.5;
   padding-bottom:40px;
 }
-button, input, select, textarea{ font-size:17px; }
+button, input, select, textarea{ font-size:16px; }
 
 .wrap{ max-width:1240px; margin:0 auto; padding:0 16px; }
 .topbar .wrap{ padding:0; }
@@ -63,52 +63,98 @@ button, input, select, textarea{ font-size:17px; }
 }
 .chip.active{ background:var(--primary); border-color:var(--primary); color:#fff; }
 
-/* ===== Status badge (ใช้ร่วมกัน 2 layout) ===== */
+/* ===== Shared bits ===== */
+.zone-tag{
+  background:#e0e7ff; color:var(--secondary); border-radius:6px;
+  padding:2px 8px; font-size:13px; font-weight:600;
+}
 .badge-status{ border-radius:999px; padding:4px 12px; font-size:13px; font-weight:700; color:#fff; white-space:nowrap; }
 .badge-pending { background:var(--warning); }
 .badge-approved{ background:var(--success); }
 .badge-rejected{ background:var(--danger); }
 
-/* ===== Empty / loading ===== */
 .state-box{ text-align:center; color:var(--muted); padding:60px 24px; }
 .state-box .icon{ font-size:44px; display:block; margin-bottom:10px; }
 
 /* ==========================================================
-   MOBILE — card list
+   CODE LIST — มือถือ: การ์ดเต็มความกว้าง / เดสก์ท็อป: sidebar
    ========================================================== */
-.date-header{
+.sidebar-title{ display:none; }
+
+.side-date{
   background:linear-gradient(135deg,var(--primary),var(--secondary));
   color:#fff; border-radius:12px; padding:10px 16px;
-  margin:22px 0 10px; font-weight:700; font-size:16px;
+  margin:20px 0 10px; font-weight:700; font-size:15px;
 }
-.code-header{
-  margin:16px 0 8px; font-weight:700; font-size:15px; color:var(--secondary);
+.side-item{
   display:flex; align-items:center; gap:8px;
+  background:#fff; border-radius:12px; padding:15px 16px; margin-bottom:8px;
+  box-shadow:0 3px 10px rgba(0,0,0,.07); cursor:pointer;
 }
-.zone-tag{
-  background:#e0e7ff; color:var(--secondary); border-radius:6px;
-  padding:2px 8px; font-size:13px; font-weight:600;
+.side-item .code{ font-weight:700; font-size:17px; }
+.side-item .chev{ color:#cbd5e1; font-size:20px; margin-left:4px; }
+.side-count{
+  margin-left:auto; background:#e2e8f0; color:var(--muted);
+  border-radius:999px; padding:2px 11px; font-size:13px; font-weight:700;
 }
-.report-card{
-  background:#fff; border-radius:14px; padding:14px 16px; margin:0 0 10px;
-  box-shadow:0 3px 10px rgba(0,0,0,.07); border-left:5px solid #cbd5e1;
-}
-.report-card.pending { border-left-color:var(--warning); }
-.report-card.approved{ border-left-color:var(--success); }
-.report-card.rejected{ border-left-color:var(--danger); }
+.side-count.has-pending{ background:var(--warning); color:#fff; }
 
-.sn-line{ font-weight:700; font-size:18px; word-break:break-all; margin-bottom:6px; }
-.meta{ font-size:14px; color:var(--muted); display:flex; flex-wrap:wrap; gap:4px 14px; margin-bottom:8px; }
-.reason{ background:#f8fafc; border-radius:8px; padding:8px 10px; font-size:15px; margin-bottom:10px; }
-.reason .note{ color:var(--muted); font-size:14px; display:block; margin-top:3px; }
-.admin-note{ border-top:1px dashed var(--line); margin-top:10px; padding-top:8px; font-size:14px; color:var(--muted); }
-.action-row{ display:flex; gap:8px; margin-top:10px; }
-.action-row .btn{ flex:1; font-weight:700; border-radius:10px; padding:9px 0; }
-
-#desktopView{ display:none; }
+.detail{ display:none; }
 
 /* ==========================================================
-   DESKTOP — master / detail
+   DETAIL — หัวเรื่อง + bulk bar + ตาราง SN (ใช้ร่วมกัน 2 layout)
+   ========================================================== */
+.detail-head{
+  position:sticky; top:0; background:#fff; z-index:3;
+  padding:16px 18px 12px; border-bottom:1px solid var(--line);
+}
+.detail-head h2{ font-size:19px; font-weight:800; margin:0; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.detail-sub{ color:var(--muted); font-size:13px; margin-top:4px; }
+
+.bulk-bar{
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:12px;
+  background:#eef2ff; border-radius:10px; padding:9px 14px; font-size:14px; font-weight:600;
+}
+.bulk-bar .btn{ font-weight:700; padding:5px 14px; }
+
+table.sn-table{ width:100%; border-collapse:collapse; }
+.sn-table input[type=checkbox]{ width:18px; height:18px; cursor:pointer; }
+.sn-table .col-sn{ font-weight:700; word-break:break-all; }
+.sn-table .col-note{ color:var(--muted); font-size:13px; }
+
+/* ---- มือถือ: ตารางแตกเป็นการ์ด ---- */
+@media (max-width: 991.98px){
+  .sn-table thead{ display:none; }
+  .sn-table, .sn-table tbody, .sn-table tr, .sn-table td{ display:block; width:100%; }
+  .sn-table tr{
+    position:relative;
+    background:#fff; border:1px solid var(--line); border-left:5px solid #cbd5e1;
+    border-radius:12px; padding:14px 16px; margin-bottom:10px;
+  }
+  .sn-table tr.st-pending { border-left-color:var(--warning); }
+  .sn-table tr.st-approved{ border-left-color:var(--success); }
+  .sn-table tr.st-rejected{ border-left-color:var(--danger); }
+  .sn-table tr.is-selected{ background:#eef2ff; }
+
+  .sn-table td{ border:none; padding:3px 0; font-size:15px; }
+  .sn-table td:empty{ display:none; }
+  .sn-table td::before{
+    content:attr(data-label); font-weight:700; color:var(--muted);
+    font-size:13px; margin-right:6px;
+  }
+  .sn-table td.col-sn{ font-size:18px; padding-right:34px; margin-bottom:4px; }
+  .sn-table td.col-sn::before{ content:none; }
+  .sn-table td.col-chk{ position:absolute; top:14px; right:14px; padding:0; width:auto; }
+  .sn-table td.col-chk::before{ content:none; }
+  .sn-table td.col-status{ margin-top:6px; }
+  .sn-table td.col-status::before{ content:none; }
+  .sn-table td.col-act{ margin-top:10px; display:flex; gap:8px; }
+  .sn-table td.col-act::before{ content:none; }
+  .sn-table td.col-act .btn{ flex:1; font-weight:700; padding:9px 0; }
+}
+
+/* ==========================================================
+   DESKTOP — sidebar + panel
    ========================================================== */
 @media (min-width: 992px){
   body{ font-size:15px; padding-bottom:0; }
@@ -127,64 +173,43 @@ button, input, select, textarea{ font-size:17px; }
   .chip:hover{ border-color:var(--primary); color:var(--primary); }
   .chip.active:hover{ color:#fff; }
 
-  #mobileView{ display:none; }
-
-  #desktopView{
-    display:grid;
-    grid-template-columns:320px minmax(0,1fr);
-    gap:18px;
-    margin-top:16px;
-    height:calc(100vh - 160px);
+  #workspace{
+    display:grid; grid-template-columns:320px minmax(0,1fr);
+    gap:18px; margin-top:16px; height:calc(100vh - 160px);
   }
 
-  /* ---- Sidebar ---- */
   .sidebar{
     background:#fff; border-radius:14px; overflow-y:auto;
     box-shadow:0 3px 12px rgba(0,0,0,.06); padding-bottom:10px;
   }
   .sidebar-title{
-    position:sticky; top:0; background:#fff; z-index:2;
-    padding:14px 16px 10px; font-weight:800; font-size:15px;
-    border-bottom:1px solid var(--line);
+    display:block; position:sticky; top:0; background:#fff; z-index:2;
+    padding:14px 16px 10px; font-weight:800; font-size:15px; border-bottom:1px solid var(--line);
   }
   .side-date{
-    padding:12px 16px 5px; font-size:12px; font-weight:800;
-    letter-spacing:.06em; color:var(--muted); text-transform:uppercase;
+    background:none; color:var(--muted); border-radius:0;
+    padding:12px 16px 5px; margin:0;
+    font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
   }
   .side-item{
-    display:flex; align-items:center; gap:8px;
-    padding:10px 16px; cursor:pointer;
-    border-left:3px solid transparent; transition:.12s;
+    background:none; box-shadow:none; border-radius:0; margin:0;
+    padding:10px 16px; border-left:3px solid transparent; transition:.12s;
   }
   .side-item:hover{ background:#f1f5f9; }
   .side-item.active{ background:#eef2ff; border-left-color:var(--primary); }
-  .side-item .code{ font-weight:700; font-size:15px; }
+  .side-item .code{ font-size:15px; }
   .side-item.active .code{ color:var(--primary); }
-  .side-count{
-    margin-left:auto; background:#e2e8f0; color:var(--muted);
-    border-radius:999px; padding:1px 9px; font-size:12px; font-weight:700;
-  }
-  .side-count.has-pending{ background:var(--warning); color:#fff; }
+  .side-item .chev{ display:none; }
+  .side-count{ font-size:12px; padding:1px 9px; }
 
-  /* ---- Detail ---- */
   .detail{
+    display:flex; flex-direction:column;
     background:#fff; border-radius:14px; overflow:auto;
-    box-shadow:0 3px 12px rgba(0,0,0,.06); display:flex; flex-direction:column;
+    box-shadow:0 3px 12px rgba(0,0,0,.06);
   }
-  .detail-head{
-    position:sticky; top:0; background:#fff; z-index:3;
-    padding:16px 20px 12px; border-bottom:1px solid var(--line);
-  }
-  .detail-head h2{ font-size:20px; font-weight:800; margin:0; display:flex; align-items:center; gap:10px; }
-  .detail-sub{ color:var(--muted); font-size:13px; margin-top:4px; }
+  .detail-head{ padding:16px 20px 12px; }
+  .detail-head h2{ font-size:20px; }
 
-  .bulk-bar{
-    display:flex; align-items:center; gap:10px; margin-top:12px;
-    background:#eef2ff; border-radius:10px; padding:8px 14px; font-size:14px; font-weight:600;
-  }
-  .bulk-bar .btn{ font-weight:700; padding:5px 14px; }
-
-  table.sn-table{ width:100%; border-collapse:collapse; }
   .sn-table th{
     position:sticky; top:0; background:#f8fafc; z-index:1;
     font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;
@@ -192,19 +217,24 @@ button, input, select, textarea{ font-size:17px; }
     border-bottom:1px solid var(--line); white-space:nowrap;
   }
   .sn-table td{ padding:11px 12px; border-bottom:1px solid #f1f5f9; vertical-align:top; font-size:14px; }
+  .sn-table td::before{ content:none; }
   .sn-table tbody tr:hover{ background:#f8fafc; }
   .sn-table tr.is-selected{ background:#eef2ff; }
-  .sn-table .col-sn{ font-weight:700; font-size:15px; word-break:break-all; }
-  .sn-table .col-note{ color:var(--muted); font-size:13px; }
+  .sn-table .col-sn{ font-size:15px; }
   .sn-table .col-chk{ width:38px; }
   .sn-table .col-act{ white-space:nowrap; width:1%; }
   .sn-table .col-act .btn{ padding:4px 10px; font-size:13px; font-weight:700; }
-  .sn-table input[type=checkbox]{ width:17px; height:17px; cursor:pointer; }
   .table-scroll{ overflow-y:auto; flex:1; }
 }
 
+/* ===== Detail modal (มือถือ) ===== */
+#detailModal .modal-body{ padding:0; background:#f8fafc; }
+#detailModal .sn-table{ padding:14px 16px 30px; }
+#detailModal .detail-head{ border-radius:0; }
+#confirmModal{ z-index:99999; }
+
 /* ===== Toast ===== */
-.toast-box{ position:fixed; left:0; right:0; bottom:24px; display:flex; justify-content:center; z-index:99999; pointer-events:none; }
+.toast-box{ position:fixed; left:0; right:0; bottom:24px; display:flex; justify-content:center; z-index:100000; pointer-events:none; }
 .toast-msg{
   background:#0f172a; color:#fff; padding:12px 22px; border-radius:999px;
   font-size:15px; font-weight:600; box-shadow:0 6px 18px rgba(0,0,0,.25);
@@ -259,16 +289,24 @@ button, input, select, textarea{ font-size:17px; }
       <button class="chip" data-filter="all"      onclick="setFilter('all', this)">ทั้งหมด</button>
     </div>
 
-    <!-- มือถือ -->
-    <div id="mobileView"><div id="reportList"></div></div>
-
-    <!-- เดสก์ท็อป -->
-    <div id="desktopView">
+    <div id="workspace">
       <aside class="sidebar">
         <div class="sidebar-title">Code ที่ถูก Report</div>
-        <div id="codeSidebar"></div>
+        <div id="codeList"></div>
       </aside>
       <section class="detail" id="codeDetail"></section>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DETAIL MODAL (มือถือ) ==================== -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      <div class="modal-header py-2" style="background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#fff;">
+        <button class="btn btn-sm text-white fw-bold px-0" data-bs-dismiss="modal">← กลับ</button>
+      </div>
+      <div class="modal-body" id="detailModalBody"></div>
     </div>
   </div>
 </div>
@@ -339,19 +377,38 @@ document.getElementById("pwInput").addEventListener("keydown", e => {
 // ==========================================================
 let allReports = [];
 let currentFilter = "pending";
-let selectedKey = null;              // "วันที่||CODE" ของ Code ที่เลือกฝั่ง Desktop
-let checkedRows = new Set();         // rowIndex ที่ติ๊กไว้
-let pendingDecision = null;          // { rowIndexes:[], status, label }
+let selectedKey = null;
+let checkedRows = new Set();
+let pendingDecision = null;
 
-// ใช้ matchMedia ไม่ใช่ resize — คีย์บอร์ดมือถือเด้งจะไม่ trigger re-render
+// matchMedia ไม่ใช่ resize — คีย์บอร์ดมือถือเด้งจะไม่ trigger
 const mqDesktop = window.matchMedia("(min-width: 992px)");
-mqDesktop.addEventListener("change", () => renderAll());
+mqDesktop.addEventListener("change", () => { closeDetailModal(); renderAll(); });
+
+let detailModal = null, confirmModal = null;
+function getDetailModal(){
+  detailModal = detailModal || new bootstrap.Modal(document.getElementById("detailModal"));
+  return detailModal;
+}
+function isDetailModalOpen(){
+  return document.getElementById("detailModal").classList.contains("show");
+}
+function closeDetailModal(){
+  if (isDetailModalOpen()) getDetailModal().hide();
+}
+
+// ปิด confirm แล้วคืน scroll lock ให้ detail modal ที่ยังเปิดอยู่
+document.getElementById("confirmModal").addEventListener("hidden.bs.modal", () => {
+  if (isDetailModalOpen()) document.body.classList.add("modal-open");
+});
 
 // ==========================================================
 // 🔄 Load
 // ==========================================================
 async function loadReports(){
-  showLoading();
+  document.getElementById("codeList").innerHTML =
+    `<div class="state-box"><span class="icon">⏳</span>กำลังโหลดรายการ...</div>`;
+  document.getElementById("codeDetail").innerHTML = "";
   try {
     const data = await callGAS("getSNReports");
     allReports = Array.isArray(data) ? data : [];
@@ -359,29 +416,15 @@ async function loadReports(){
     updateStats();
     renderAll();
   } catch (err){
-    showError(err.message);
+    document.getElementById("codeList").innerHTML = `<div class="state-box">
+      <span class="icon">⚠️</span>โหลดรายการไม่สำเร็จ<br>
+      <span style="font-size:14px;">${escapeHtml(err.message)}</span><br>
+      <button class="btn btn-primary btn-sm mt-3 fw-bold" onclick="loadReports()">ลองใหม่</button></div>`;
   }
 }
 
-function showLoading(){
-  const box = `<div class="state-box"><span class="icon">⏳</span>กำลังโหลดรายการ...</div>`;
-  document.getElementById("reportList").innerHTML = box;
-  document.getElementById("codeDetail").innerHTML = box;
-  document.getElementById("codeSidebar").innerHTML = "";
-}
-
-function showError(msg){
-  const box = `<div class="state-box">
-      <span class="icon">⚠️</span>โหลดรายการไม่สำเร็จ<br>
-      <span style="font-size:14px;">${escapeHtml(msg)}</span><br>
-      <button class="btn btn-primary btn-sm mt-3 fw-bold" onclick="loadReports()">ลองใหม่</button>
-    </div>`;
-  document.getElementById("reportList").innerHTML = box;
-  document.getElementById("codeDetail").innerHTML = box;
-}
-
 // ==========================================================
-// 🏷️ Status helper
+// 🏷️ Status
 // ==========================================================
 function normalizeStatus(raw){
   const s = String(raw || "").trim().toLowerCase();
@@ -405,11 +448,12 @@ function setFilter(f, el){
   document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
   el.classList.add("active");
   checkedRows.clear();
+  closeDetailModal();
   renderAll();
 }
 
 // ==========================================================
-// 🧱 Grouping — วันที่ + Code
+// 🧱 Grouping
 // ==========================================================
 function getFilteredRows(){
   return allReports.filter(r =>
@@ -425,35 +469,34 @@ function buildGroups(rows){
     if (!map.has(key)) map.set(key, { key, date, code, zone:r.zone || "-", items:[] });
     map.get(key).items.push(r);
   });
-  // วันที่ใหม่ก่อน แล้วเรียง Code A→Z
   return [...map.values()].sort((a,b) =>
     a.date === b.date ? a.code.localeCompare(b.code) : b.date.localeCompare(a.date));
 }
 
-function renderAll(){
-  if (mqDesktop.matches) renderDesktop();
-  else renderMobile();
+function currentGroup(){
+  return buildGroups(getFilteredRows()).find(g => g.key === selectedKey) || null;
 }
 
 // ==========================================================
-// 🖥️ DESKTOP — sidebar + ตาราง SN
+// 🎨 Render
 // ==========================================================
-function renderDesktop(){
+function renderAll(){
   const groups = buildGroups(getFilteredRows());
-  const sidebar = document.getElementById("codeSidebar");
-  const detail  = document.getElementById("codeDetail");
+  const listEl = document.getElementById("codeList");
+  const detailEl = document.getElementById("codeDetail");
 
   if (!groups.length){
-    sidebar.innerHTML = "";
-    detail.innerHTML = `<div class="state-box"><span class="icon">📭</span>
+    listEl.innerHTML = `<div class="state-box"><span class="icon">📭</span>
       ไม่มีรายการในหมวด "${STATUS_LABEL[currentFilter] || "ทั้งหมด"}"</div>`;
+    detailEl.innerHTML = "";
+    closeDetailModal();
     return;
   }
 
-  // ถ้า Code ที่เลือกไว้หายไป (เปลี่ยน filter) ให้เด้งไปอันแรก
-  if (!groups.some(g => g.key === selectedKey)) selectedKey = groups[0].key;
+  // เดสก์ท็อปเลือกอันแรกอัตโนมัติ / มือถือรอผู้ใช้แตะเอง
+  if (mqDesktop.matches && !groups.some(g => g.key === selectedKey)) selectedKey = groups[0].key;
 
-  // ----- Sidebar -----
+  // ----- Code list -----
   let html = "", lastDate = null;
   groups.forEach(g => {
     if (g.date !== lastDate){
@@ -466,12 +509,22 @@ function renderDesktop(){
         <span class="code">${escapeHtml(g.code)}</span>
         <span class="zone-tag">${escapeHtml(g.zone)}</span>
         <span class="side-count ${pendingCount ? "has-pending" : ""}">${pendingCount || g.items.length}</span>
+        <span class="chev">›</span>
       </div>`;
   });
-  sidebar.innerHTML = html;
+  listEl.innerHTML = html;
 
   // ----- Detail -----
   const g = groups.find(x => x.key === selectedKey);
+  if (mqDesktop.matches){
+    detailEl.innerHTML = g ? buildDetail(g) : "";
+  } else if (isDetailModalOpen()){
+    if (g) document.getElementById("detailModalBody").innerHTML = buildDetail(g);
+    else closeDetailModal();
+  }
+}
+
+function buildDetail(g){
   const pendingItems = g.items.filter(r => normalizeStatus(r.status) === "pending");
   const checkedHere  = g.items.filter(r => checkedRows.has(r.rowIndex)).length;
   const allChecked   = pendingItems.length > 0 && checkedHere === pendingItems.length;
@@ -479,22 +532,21 @@ function renderDesktop(){
   const bulkBar = pendingItems.length ? `
     <div class="bulk-bar">
       <label class="d-flex align-items-center gap-2 mb-0" style="cursor:pointer;">
-        <input type="checkbox" ${allChecked ? "checked" : ""} onchange="toggleAll(this.checked)">
+        <input type="checkbox" ${allChecked ? "checked" : ""} onchange="toggleAll(this.checked)"
+               style="width:18px;height:18px;">
         เลือกทั้งหมดที่รอตรวจ (${pendingItems.length})
       </label>
       ${checkedHere ? `
-        <span class="ms-auto">เลือกไว้ ${checkedHere} รายการ</span>
+        <span class="ms-auto">เลือกไว้ ${checkedHere}</span>
         <button class="btn btn-success btn-sm" onclick="askBulk('Approved')">✅ อนุมัติที่เลือก</button>
         <button class="btn btn-danger btn-sm"  onclick="askBulk('Rejected')">❌ ปฏิเสธที่เลือก</button>
-      ` : `<span class="ms-auto text-muted fw-normal">ติ๊กเลือกเพื่อจัดการหลายรายการพร้อมกัน</span>`}
+      ` : ``}
     </div>` : "";
 
-  const rowsHtml = g.items.map(buildRow).join("");
-
-  detail.innerHTML = `
+  return `
     <div class="detail-head">
       <h2>🏷️ ${escapeHtml(g.code)} <span class="zone-tag">Zone ${escapeHtml(g.zone)}</span></h2>
-      <div class="detail-sub">📅 ${escapeHtml(g.date)} · SN ที่ถูก Report ทั้งหมด ${g.items.length} รายการ · รอตรวจ ${pendingItems.length}</div>
+      <div class="detail-sub">📅 ${escapeHtml(g.date)} · SN ที่ถูก Report ${g.items.length} รายการ · รอตรวจ ${pendingItems.length}</div>
       ${bulkBar}
     </div>
     <div class="table-scroll">
@@ -504,7 +556,7 @@ function renderDesktop(){
           <th>SN</th><th>RC</th><th>อายุ</th><th>เหตุผล</th>
           <th>แจ้งเมื่อ</th><th>สถานะ</th><th class="col-act">จัดการ</th>
         </tr></thead>
-        <tbody>${rowsHtml}</tbody>
+        <tbody>${g.items.map(buildRow).join("")}</tbody>
       </table>
     </div>`;
 }
@@ -519,120 +571,70 @@ function buildRow(r){
     : "";
 
   const act = isPending
-    ? `<button class="btn btn-success btn-sm me-1" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅</button>
-       <button class="btn btn-danger btn-sm" onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌</button>`
+    ? `<button class="btn btn-success btn-sm" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ <span class="d-lg-none">อนุมัติ</span></button>
+       <button class="btn btn-danger btn-sm"  onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌ <span class="d-lg-none">ปฏิเสธ</span></button>`
     : `<span class="text-muted" style="font-size:13px;">${escapeHtml(fmtDateTime(r.approvedAt))}</span>`;
 
   return `
-    <tr class="${checked ? "is-selected" : ""}">
+    <tr class="st-${st} ${checked ? "is-selected" : ""}">
       <td class="col-chk">${chk}</td>
       <td class="col-sn">${escapeHtml(r.sn || "-")}</td>
-      <td>${escapeHtml(r.rc || "-")}</td>
-      <td>${r.age !== "" && r.age != null ? escapeHtml(r.age) : "-"}</td>
-      <td>${escapeHtml(r.reason || "-")}
+      <td data-label="RC:">${escapeHtml(r.rc || "-")}</td>
+      <td data-label="อายุ:">${r.age !== "" && r.age != null ? escapeHtml(r.age) : "-"}</td>
+      <td data-label="เหตุผล:">${escapeHtml(r.reason || "-")}
         ${r.note ? `<div class="col-note">${escapeHtml(r.note)}</div>` : ""}
         ${!isPending && r.adminComment ? `<div class="col-note">💬 ${escapeHtml(r.adminComment)}</div>` : ""}
       </td>
-      <td style="white-space:nowrap;">${escapeHtml(fmtDateTime(r.timestamp))}</td>
-      <td><span class="badge-status badge-${st}">${STATUS_LABEL[st]}</span></td>
+      <td data-label="แจ้งเมื่อ:" style="white-space:nowrap;">${escapeHtml(fmtDateTime(r.timestamp))}</td>
+      <td class="col-status"><span class="badge-status badge-${st}">${STATUS_LABEL[st]}</span></td>
       <td class="col-act">${act}</td>
     </tr>`;
 }
 
+// ==========================================================
+// 👆 Interaction
+// ==========================================================
 function selectCode(key){
   selectedKey = key;
   checkedRows.clear();
-  renderDesktop();
+
+  if (mqDesktop.matches){
+    renderAll();
+  } else {
+    const g = currentGroup();
+    if (!g) return;
+    document.getElementById("detailModalBody").innerHTML = buildDetail(g);
+    getDetailModal().show();
+    renderAll();
+  }
+}
+
+function refreshDetail(){
+  const g = currentGroup();
+  if (!g) return;
+  const html = buildDetail(g);
+  if (mqDesktop.matches) document.getElementById("codeDetail").innerHTML = html;
+  else if (isDetailModalOpen()) document.getElementById("detailModalBody").innerHTML = html;
 }
 
 function toggleRow(rowIndex, on){
   if (on) checkedRows.add(rowIndex); else checkedRows.delete(rowIndex);
-  renderDesktop();
+  refreshDetail();
 }
 
 function toggleAll(on){
-  const g = buildGroups(getFilteredRows()).find(x => x.key === selectedKey);
+  const g = currentGroup();
   if (!g) return;
   g.items.filter(r => normalizeStatus(r.status) === "pending")
          .forEach(r => on ? checkedRows.add(r.rowIndex) : checkedRows.delete(r.rowIndex));
-  renderDesktop();
+  refreshDetail();
 }
 
 // ==========================================================
-// 📱 MOBILE — card list
+// ✅ Approve / Reject
 // ==========================================================
-function renderMobile(){
-  const list = document.getElementById("reportList");
-  const groups = buildGroups(getFilteredRows());
-
-  if (!groups.length){
-    list.innerHTML = `<div class="state-box"><span class="icon">📭</span>
-      ไม่มีรายการในหมวด "${STATUS_LABEL[currentFilter] || "ทั้งหมด"}"</div>`;
-    return;
-  }
-
-  let html = "", lastDate = null;
-  groups.forEach(g => {
-    if (g.date !== lastDate){
-      html += `<div class="date-header">📅 ${escapeHtml(g.date)}</div>`;
-      lastDate = g.date;
-    }
-    html += `
-      <div class="code-header">
-        <span>🏷️ ${escapeHtml(g.code)}</span>
-        <span class="zone-tag">Zone ${escapeHtml(g.zone)}</span>
-        <span class="ms-auto text-muted" style="font-size:13px;">${g.items.length} SN</span>
-      </div>
-      ${g.items.map(buildCard).join("")}`;
-  });
-  list.innerHTML = html;
-}
-
-function buildCard(r){
-  const st = normalizeStatus(r.status);
-  const isPending = st === "pending";
-
-  const meta = [
-    r.rc ? `RC: ${escapeHtml(r.rc)}` : "",
-    r.age !== "" && r.age != null ? `อายุ: ${escapeHtml(r.age)} วัน` : "",
-    r.timestamp ? `แจ้ง: ${escapeHtml(fmtDateTime(r.timestamp))}` : ""
-  ].filter(Boolean).map(t => `<span>${t}</span>`).join("");
-
-  const adminNote = (!isPending && (r.adminComment || r.approvedAt))
-    ? `<div class="admin-note">
-         ${r.adminComment ? `💬 ${escapeHtml(r.adminComment)}<br>` : ""}
-         ${r.approvedAt ? `🕐 ${escapeHtml(fmtDateTime(r.approvedAt))}` : ""}
-       </div>` : "";
-
-  const actions = isPending
-    ? `<div class="action-row">
-         <button class="btn btn-success" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ อนุมัติ</button>
-         <button class="btn btn-danger"  onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌ ปฏิเสธ</button>
-       </div>` : "";
-
-  return `
-  <div class="report-card ${st}">
-    <div class="d-flex justify-content-between align-items-start">
-      <div class="sn-line">${escapeHtml(r.sn || "-")}</div>
-      <span class="badge-status badge-${st}">${STATUS_LABEL[st]}</span>
-    </div>
-    <div class="meta">${meta}</div>
-    <div class="reason">
-      📌 ${escapeHtml(r.reason || "ไม่ระบุเหตุผล")}
-      ${r.note ? `<span class="note">${escapeHtml(r.note)}</span>` : ""}
-    </div>
-    ${adminNote}
-    ${actions}
-  </div>`;
-}
-
-// ==========================================================
-// ✅ Approve / Reject (เดี่ยว + หลายรายการ)
-// ==========================================================
-let confirmModalInstance = null;
-
 function openConfirm(rowIndexes, status, label){
-  pendingDecision = { rowIndexes, status, label };
+  pendingDecision = { rowIndexes, status };
   const isApprove = status === "Approved";
 
   document.getElementById("confirmTitle").innerText =
@@ -645,18 +647,16 @@ function openConfirm(rowIndexes, status, label){
   btn.innerText = isApprove ? "ยืนยันอนุมัติ" : "ยืนยันปฏิเสธ";
   btn.disabled = false;
 
-  confirmModalInstance = confirmModalInstance || new bootstrap.Modal(document.getElementById("confirmModal"));
-  confirmModalInstance.show();
+  confirmModal = confirmModal || new bootstrap.Modal(document.getElementById("confirmModal"));
+  confirmModal.show();
 }
 
-function askSingle(rowIndex, status, sn){
-  openConfirm([rowIndex], status, "SN: " + sn);
-}
+function askSingle(rowIndex, status, sn){ openConfirm([rowIndex], status, "SN: " + sn); }
 
 function askBulk(status){
   const ids = [...checkedRows];
   if (!ids.length) return;
-  openConfirm(ids, status, `${ids.length} SN ที่เลือกไว้ — ใส่ comment เดียวกันทุกรายการ`);
+  openConfirm(ids, status, `${ids.length} SN ที่เลือกไว้ — ใช้ comment เดียวกันทุกรายการ`);
 }
 
 async function submitDecision(){
@@ -669,7 +669,7 @@ async function submitDecision(){
 
   let done = 0, failed = 0;
   for (const rowIndex of rowIndexes){
-    btn.innerText = `กำลังบันทึก ${done + 1}/${rowIndexes.length}...`;
+    btn.innerText = `กำลังบันทึก ${done + failed + 1}/${rowIndexes.length}...`;
     try {
       await callGAS("updateSNReport", { rowIndex, status, adminComment: comment });
       const target = allReports.find(r => r.rowIndex === rowIndex);
@@ -680,14 +680,13 @@ async function submitDecision(){
       }
       checkedRows.delete(rowIndex);
       done++;
-    } catch (err){
-      failed++;
-    }
+    } catch (err){ failed++; }
   }
 
-  confirmModalInstance.hide();
+  confirmModal.hide();
   updateStats();
   renderAll();
+  refreshDetail();
   pendingDecision = null;
 
   if (failed) showToast(`สำเร็จ ${done} · ล้มเหลว ${failed} รายการ`, "warn");
