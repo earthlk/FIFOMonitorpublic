@@ -528,48 +528,8 @@ button,input{
   filter:brightness(1.05);
 }
 
-.rc-switch{
-  position:relative;
-  display:inline-block;
-  width:86px;        /* ← ปรับความยาวตรงนี้ */
-  height:36px;
-}
+/* .rc-switch / .rc-slider ถูกลบ — ไม่มีสวิตช์สลับมุมมองแล้ว */
 
-.rc-switch input{
-  opacity:0;
-  width:0;
-  height:0;
-}
-
-.rc-slider{
-  position:absolute;
-  cursor:pointer;
-  inset:0;
-  background:#cbd5f5;
-  border-radius:36px;
-  transition:.3s;
-}
-
-.rc-slider:before{
-  content:"";
-  position:absolute;
-  height:28px;
-  width:28px;
-  left:4px;
-  bottom:4px;
-  background:white;
-  border-radius:50%;
-  transition:.3s;
-  box-shadow:0 3px 8px rgba(0,0,0,.25);
-}
-
-.rc-switch input:checked + .rc-slider{
-  background:#2563eb;
-}
-
-.rc-switch input:checked + .rc-slider:before{
-  transform:translateX(50px);   /* ต้องสัมพันธ์กับ width */
-}
 
 .sn-modal-wide .modal-dialog{
   max-width: 70vw;
@@ -1336,6 +1296,103 @@ body{background:#eef2ff;font-family:system-ui}
   pointer-events: none;
 }
 
+/* ===== เลือก SN เพื่อ Report (Swipe ซ้าย) ===== */
+.sn-row, .rc-header{ cursor:pointer; }
+
+/* ห้ามคลุมข้อความ "เฉพาะตอนกำลังลาก" เท่านั้น
+   ถ้าใส่ถาวรจะ copy SN / RC ไม่ได้เลย */
+.sn-row.swiping, .sn-row.swiping td,
+.rc-header.swiping, .rc-header.swiping td{
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+/* แตะช่อง SN = คัดลอก */
+.sn-row td:first-child{ cursor:copy; }
+.sn-row.copied td{ box-shadow: inset 0 0 0 9999px rgba(37,99,235,.22); }
+
+.rc-copy{
+  cursor:copy;
+  margin-left:8px;
+  font-size:18px;
+  opacity:.75;
+}
+.rc-copy:active{ opacity:1; }
+
+/* เลื่อนกลับแบบนุ่ม ๆ ตอนปล่อยนิ้ว */
+.sn-row td, .rc-header td{
+  transition: transform .22s cubic-bezier(.2,.8,.3,1), box-shadow .18s ease;
+}
+
+/* ตอนลากอยู่ ต้องตามนิ้วทันที ห้ามหน่วง */
+.sn-row.swiping td, .rc-header.swiping td{ transition: box-shadow .12s ease; }
+
+/* ลากถึงระยะแล้ว = ปล่อยได้เลย — เขียว = จะเลือก */
+.sn-row.swipe-armed td, .rc-header.swipe-armed td{
+  box-shadow: inset 0 0 0 9999px rgba(22,163,74,.30);
+}
+/* แดง = อันนี้เลือกไว้อยู่ ปล่อยแล้วจะยกเลิก */
+.sn-row.swipe-armed-off td, .rc-header.swipe-armed-off td{
+  box-shadow: inset 0 0 0 9999px rgba(220,38,38,.28);
+}
+
+/* สถานะถูกเลือก */
+.sn-row.sn-selected td{ box-shadow: inset 0 0 0 9999px rgba(22,163,74,.18); }
+.sn-row.sn-selected td:first-child{ border-left:5px solid #16a34a; }
+
+/* หัวกลุ่ม RC ที่เลือกครบทั้งกลุ่ม */
+.rc-header.rc-selected td{ border-left:5px solid #16a34a; }
+
+/* หัวกลุ่ม RC ที่ตรงกับคำค้นหา */
+.rc-header.rc-match td{
+  background:linear-gradient(135deg,#fde68a,#fbbf24) !important;
+  color:#78350f !important;
+  box-shadow:0 0 0 2px #f59e0b inset;
+}
+.rc-match-tag{
+  background:#dc2626; color:#fff; border-radius:8px;
+  padding:1px 10px; font-size:16px; font-weight:800; margin-left:8px;
+}
+
+/* กันเนื้อหาที่เลื่อนซ้ายทะลุออกนอกกรอบ (div ไม่ใช่ tr จึงใช้ overflow ได้) */
+#snModal .modal-body{ overflow-x:hidden; }
+
+/* ===== popup ยืนยันต้องอยู่เหนือ snModal =====
+   appConfirmModal อยู่ก่อน snModal ใน DOM + z-index เท่ากัน (1055)
+   ผลคือ snModal ทับจนมองไม่เห็นปุ่ม ใช่/ไม่ใช่ */
+#appConfirmModal{ z-index:100000; }
+#appConfirmModal + .modal-backdrop,
+.modal-backdrop.confirm-top{ z-index:99998; }
+
+/* ===== กล่องเตือน / กล่องผลลัพธ์ ใน Report ===== */
+#reportError{
+  background:#fee2e2; color:#991b1b; border:2px solid #dc2626;
+  border-radius:12px; padding:10px 14px; margin-bottom:10px;
+  font-size:18px; font-weight:700;
+}
+#reportResult{
+  background:#dcfce7; color:#14532d; border:2px solid #16a34a;
+  border-radius:12px; padding:10px 14px; margin-bottom:10px;
+  font-size:18px; font-weight:700;
+}
+#reportResult.pending{ background:#e0e7ff; color:#1e3a8a; border-color:#2563eb; }
+
+@keyframes shakeX{
+  0%,100%{ transform:translateX(0) }
+  20%{ transform:translateX(-8px) }
+  40%{ transform:translateX(8px) }
+  60%{ transform:translateX(-5px) }
+  80%{ transform:translateX(5px) }
+}
+.shake{ animation:shakeX .4s ease; }
+
+#reportScope{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  background:#f1f5f9; border-radius:12px; padding:10px 14px;
+  margin-bottom:10px; font-size:18px;
+}
+#reportScope button{ min-height:40px; font-size:16px; padding:4px 14px; }
+
 .swipe-report-thumb {
   position: absolute;
   left: 4px;
@@ -1381,7 +1438,7 @@ body{background:#eef2ff;font-family:system-ui}
         </div>
       </div>
       <div class="search-row">
-        <input type="text" id="searchInput" class="search-input big-input" placeholder="ค้นหา Code / Zone / ชื่อสินค้า" oninput="applyFilterSort()">
+        <input type="text" id="searchInput" class="search-input big-input" placeholder="ค้นหา Code / Zone / ชื่อสินค้า / RC" oninput="applyFilterSort()">
         <button class="sn-side-btn big-btn" onclick="openSNInput()">🔍 SN</button>
       </div>
       <button id="btnToggleRiskMobile" class="btn btn-outline-warning w-100 mb-3 fw-bold" onclick="toggleRiskMode()" style="border-radius: 12px;">
@@ -1456,7 +1513,7 @@ body{background:#eef2ff;font-family:system-ui}
         <div class="pc-filter-date" id="pcBarDate"></div>
         <div class="pc-filter-zone" id="pcBarZone"><span class="zone-text"><i class="bi bi-geo-fill"></i> A <span class="filter-icon">▾</span></span></div>
       </div>
-      <input id="pcSearch" class="form-control" placeholder="ค้นหา Code / Name" oninput="pcApplyFilter()">
+      <input id="pcSearch" class="form-control" placeholder="ค้นหา Code / Name / RC" oninput="pcApplyFilter()">
       <select id="pcSort" class="form-select" onchange="pcApplyFilter()">
         <option value="notfifo">NotFIFO มากสุด</option>
         <option value="repeat">วันซ้ำมากสุด</option>
@@ -1580,11 +1637,9 @@ body{background:#eef2ff;font-family:system-ui}
           <div class="small mt-1">กำลังเปลี่ยนมุมมอง...</div>
         </div>
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="fw-bold">📄 SN List</div>
-          <label class="rc-switch">
-            <input type="checkbox" id="rcToggle" onchange="toggleRCView(this.checked)">
-            <span class="rc-slider"></span>
-          </label>
+          <div class="fw-bold">📦 รายการตาม RC</div>
+          <button class="btn btn-sm btn-outline-primary fw-bold" onclick="toggleAllRC()" id="btnToggleAllRC"
+                  style="font-size:18px;">เปิดทุกกลุ่ม</button>
         </div>
         <table class="table table-sm align-middle">
           <thead class="table-light"><tr><th>SN</th><th>Age</th><th>Status</th></tr></thead>
@@ -1592,10 +1647,13 @@ body{background:#eef2ff;font-family:system-ui}
         </table>
 	<!-- Swipe to Report -->
 	<div class="mt-3 px-2" id="reportSection">
-	  <div class="fw-bold mb-2" style="font-size:18px;">📢 แจ้งปัญหา SN นี้</div>
+	  <div class="fw-bold mb-2" style="font-size:18px;">📢 แจ้งปัญหา</div>
+
+	  <!-- ขอบเขตที่จะ Report -->
+	  <div id="reportScope"></div>
 	  
 	  <!-- เหตุผล -->
-	  <select id="reportReason" class="form-select mb-2" style="font-size:18px;">
+	  <select id="reportReason" class="form-select mb-2" style="font-size:18px;" onchange="onReasonChange()">
 	    <option value="">-- เลือกเหตุผล --</option>
     	    <option value="วนบิล">วนบิล</option>
     	    <option value="โยกสาขา">โยกสาขา</option>
@@ -1605,6 +1663,10 @@ body{background:#eef2ff;font-family:system-ui}
 
 	  <!-- หมายเหตุ -->
   	  <input type="text" id="reportNote" class="form-control mb-2" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)" style="font-size:18px;">
+
+	  <!-- แจ้งเตือน / ผลลัพธ์ -->
+	  <div id="reportError" style="display:none;"></div>
+	  <div id="reportResult" style="display:none;"></div>
 
 	  <!-- Swipe Button -->
   	  <div class="swipe-report-wrap" id="swipeWrap" style="position:relative;overflow:hidden;">
@@ -1788,7 +1850,7 @@ async function loadData() {
 function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notfifoMonth) {
   hideToggleLoading(); snRCGroupCache = null;
   if (window.snLoading) return;
-  window.snLoading = true; showNormalSN();
+  window.snLoading = true;
 
   const date = getCurrentDate();
   if (!date) { showToast("ไม่พบวันที่", "warn"); window.snLoading = false; return; }
@@ -1831,7 +1893,7 @@ function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notf
     if(tb) tb.innerHTML = '';
     
     if (!snCache.length) { showToast("ไม่พบข้อมูล SN สำหรับสินค้านี้", "warn"); } 
-    else { renderSNTableAuto(); }
+    else { renderSNGroupByRC(); }
     
     hideSNLoading(); window.snLoading = false;
 
@@ -1898,10 +1960,14 @@ async function moveToZoneAndSearchCode(zone, code) {
     fifoViewList = result.fifo || [];
     snIndexMap = result.sn || {};
     fifoCacheState.date = date; fifoCacheState.zone = apiPrefix;
-    const search = document.getElementById("searchInput");
-    if(search) search.value = code;
+
+    setSearchBoxes(code);      // ใส่ทั้งช่องมือถือและ PC
     applyFilterSort();
+    pcApplyFilter();           // เดิมเรียกแค่ฝั่งมือถือ ตาราง PC เลยไม่อัปเดต
+
+    renderZoneRule(currentPrefix);
     showToast("ย้ายไป Zone " + displayZone + " แล้ว", "ok");
+    warnIfCodeHidden(code);    // บอกเหตุผลถ้า Code ไม่โผล่ในรายการ
   } catch(e) { showToast("เกิดข้อผิดพลาด", "warn"); } finally { hideLoading(); }
 }
 
@@ -1982,8 +2048,6 @@ let snIndexMap = {};
 let sortMode='notfifo';
 let currentPrefix='A';
 let snRenderIndex = 0;
-const SN_CHUNK = 200;
-let snViewMode = "normal"; 
 let snRCGroupCache = null;
 const SN_RENDER_CHUNK = 100;   
 
@@ -2028,16 +2092,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   initDate();
 });
 
-function autoScroll(){
-  const modalBody = document.querySelector('#snModal .modal-body');
-  if(!modalBody) return;
-  modalBody.addEventListener('scroll',function(){
-    if(snRenderIndex >= snCache.length) return;
-    if(this.scrollTop + this.clientHeight >= this.scrollHeight - 80){
-      renderSNTableAuto();
-    }
-  });
-}
+// autoScroll() ถูกตัดออก — มุมมอง RC วาดครบทุกแถวในครั้งเดียวอยู่แล้ว
 
 function initDate(){
   const d = new Date();
@@ -2144,7 +2199,7 @@ function applyFilterSort(){
   if(q){
     list = list.filter(r=>{
       const code=String(r.code||'').toLowerCase(); const zone=String(r.zone||'').toLowerCase(); const name=String(r.name||'').toLowerCase();
-      return code.startsWith(q) || zone.startsWith(q) || name.includes(q);
+      return code.startsWith(q) || zone.startsWith(q) || name.includes(q) || matchRC(r.code, q);
     });
   }
 
@@ -2193,18 +2248,7 @@ function renderCards(data){
   box.innerHTML = htmlStr;
 }
 
-function showNormalSN(){ snViewMode = "normal"; }
-
-function renderSNTableAuto(){
-  const tb = document.getElementById('snTable');
-  if(!tb) return;
-  const html = snCache.map(r => {
-    const cls = r.status==='SALE' ? 'tr-sale' : r.status==='RESERVE' ? 'tr-reserve' : 'tr-stock';
-    return `<tr class='${cls}'><td>${r.sn}</td><td>${r.day}</td><td>${r.status}</td></tr>`;
-  }).join('');
-  tb.innerHTML = html;
-  snRenderIndex = snCache.length;
-}
+// หน้านี้ใช้มุมมอง RC อย่างเดียว — renderSNTableAuto() ถูกตัดออกแล้ว
 
 function closeSNModal(){
   const modal = bootstrap.Modal.getInstance(document.getElementById('snModal'));
@@ -2289,25 +2333,22 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(pcbarDate && d) pcbarDate.innerText = "📅 "+formatDateDMY(d);
 });
 
-function toggleRCView(isRC){
-  showToggleLoading();
-  setTimeout(()=>{
-    snViewMode = isRC ? "rc" : "normal";
-    renderSNByMode();
-    hideToggleLoading();
-  }, 120);
+// เปิด/ปิดทุกกลุ่มพร้อมกัน
+let allRCExpanded = false;
+
+function toggleAllRC(){
+  allRCExpanded = !allRCExpanded;
+  document.querySelectorAll("#snTable tr.rc-row").forEach(r => {
+    r.style.display = allRCExpanded ? "" : "none";
+  });
+  const btn = document.getElementById("btnToggleAllRC");
+  if (btn) btn.innerText = allRCExpanded ? "ปิดทุกกลุ่ม" : "เปิดทุกกลุ่ม";
 }
 
-function renderSNByMode(){
-  const tb=document.getElementById("snTable");
-  if(!tb) return;
-  tb.innerHTML="";
-  if(snViewMode==="normal"){
-    snRenderIndex=0;
-    renderSNTableAuto();
-  }else{
-    renderSNGroupByRC();
-  }
+function resetToggleAllRC(){
+  allRCExpanded = false;
+  const btn = document.getElementById("btnToggleAllRC");
+  if (btn) btn.innerText = "เปิดทุกกลุ่ม";
 }
 
 function calcRCDate(barDateStr, age){
@@ -2325,7 +2366,14 @@ function renderSNGroupByRC(){
   const tb=document.getElementById("snTable");
   if(!tb) return;
   tb.innerHTML="";
+  resetToggleAllRC();
   const map = buildRCGroup();
+
+  // ถ้าเพิ่งค้นด้วยเลข RC ให้กางกลุ่มนั้นแทนกลุ่มแรก
+  const q = String(getSearchKeyword() || "").trim().toLowerCase();
+  const useRCQuery = q.length >= RC_SEARCH_MIN
+                  && Object.keys(map).some(rc => String(rc).toLowerCase().includes(q));
+  let isFirstGroup = true;
   const barDateRaw = getCurrentDate();
   const frag = document.createDocumentFragment();
 
@@ -2337,26 +2385,40 @@ function renderSNGroupByRC(){
     const rc = entry[0];
     const list = entry[1]; 
     const key = String(rc).replace(/\W/g,'');
+    const isMatch = useRCQuery && String(rc).toLowerCase().includes(q);
+    const openThis = useRCQuery ? isMatch : isFirstGroup;
     const rcDay = Number(list[0].day) || 0;
     const rcDate = calcRCDate(barDateRaw, rcDay);
 
     let saleCount = 0;
     list.forEach(r => { if(r.status === "SALE") saleCount++; });
 
+    const allSel = list.length > 0 && list.every(r => reportSelection.has(String(r.sn)));
+
     const head = document.createElement("tr");
-    head.className = "table-primary rc-header";
-    head.innerHTML = `<td colspan="3" class="fw-bold">📦 ${rc} (${list.length} SN)<div class="small text-muted mt-1">วันที่ RC: ${rcDate} | อายุ: ${rcDay} วัน | SALE: ${saleCount}</div><span class="float-end">▾</span></td>`;
+    head.className = "table-primary rc-header"
+                   + (allSel ? " rc-selected" : "")
+                   + (isMatch ? " rc-match" : "");
+    head.innerHTML = `<td colspan="3" class="fw-bold">📦 ${rc} (${list.length} SN)`
+      + `<span class="rc-copy" onclick="event.stopPropagation(); copyText('${esc(rc)}','RC')" title="คัดลอก RC">📋</span>`
+      + (isMatch ? `<span class="rc-match-tag">ตรงคำค้น</span>` : ``)
+      + `<span class="float-end">▾</span>`
+      + `<div class="small text-muted mt-1">วันที่ RC: ${rcDate} | อายุ: ${rcDay} วัน | SALE: ${saleCount}</div></td>`;
+    head.dataset.rcKey = key;
     head.onclick = () => toggleRC(key);
     frag.appendChild(head);
 
     list.forEach(r => {
       const cls = r.status === 'SALE' ? 'tr-sale' : r.status === 'RESERVE' ? 'tr-reserve' : 'tr-stock';
       const row = document.createElement("tr");
-      row.className = `rc-row rc-${key} ${cls}`;
-      row.style.display = "none";
+      row.className = `rc-row rc-${key} sn-row ${cls}`
+                    + (reportSelection.has(String(r.sn)) ? ' sn-selected' : '');
+      row.style.display = openThis ? "" : "none";
+      row.dataset.sn = r.sn;
       row.innerHTML = `<td>${r.sn}</td><td>${r.day}</td><td>${r.status}</td>`;
       frag.appendChild(row);
     });
+    isFirstGroup = false;
   });
   tb.appendChild(frag);
 }
@@ -2374,6 +2436,7 @@ function buildRCGroup(){
 }
 
 function toggleRC(key){
+  if (snSwipeHandled) return;   // เพิ่งปัดเลือกไป อย่าเผลอพับกลุ่ม
   document.querySelectorAll(".rc-"+key).forEach(r=>{
     r.style.display = r.style.display==="none" ? "" : "none";
   });
@@ -2421,27 +2484,55 @@ function searchSNInCache(sn){
   return snIndexMap[key] || null;
 }
 
+function setSearchBoxes(code){
+  const m = document.getElementById("searchInput");
+  const p = document.getElementById("pcSearch");
+  if(m) m.value = code;
+  if(p) p.value = code;
+}
+
+// Code อยู่ในโซนนี้จริง แต่ไม่ติด FIFO เลยไม่ถูกแสดง — ต้องบอกให้รู้
+function warnIfCodeHidden(code){
+  const key = String(code||'').replace(/\s+/g,'').toUpperCase();
+  const inZone = fifoViewList.some(r =>
+    String(r.code||'').replace(/\s+/g,'').toUpperCase() === key);
+  if(!inZone){
+    showToast(`Code ${code} ไม่ติด FIFO วันนี้ จึงไม่แสดงในรายการ`, "info");
+  }
+}
+
 function handleSNFound(r){
   const zone = r.zone;
   const code = r.code;
 
-  const inputMobile = document.getElementById("searchInput");
-  const inputPC = document.getElementById("pcSearch");
-  if(inputMobile) inputMobile.value = code;
-  if(inputPC) inputPC.value = code;
-
-  applyFilterSort();
-  pcApplyFilter();
-
+  // อยู่โซนเดียวกันอยู่แล้ว → กรองได้เลย ข้อมูลพร้อมแล้ว
   if(isMatchZone(zone, currentPrefix)){
+    setSearchBoxes(code);
+    applyFilterSort();
+    pcApplyFilter();
     showToast("SN อยู่ใน Zone ปัจจุบันแล้ว","ok");
+    warnIfCodeHidden(code);
     return;
   }
 
-  showAppConfirm(`พบ SN อยู่ใน Zone ${zone}`, "ต้องการย้ายไป Zone นี้หรือไม่?", ()=> moveToZoneAndSearchCode(zone,code));
+  // คนละโซน → ย้ายเลย ไม่ถามซ้ำ
+  // ผู้ใช้ตอบ "ใช่" ไปแล้วตอนถามว่าจะค้น Zone อื่นไหม ถามซ้ำ = popup ซ้อน popup
+  showToast(`พบ SN ที่ Zone ${zone} — กำลังย้าย...`, "info");
+  moveToZoneAndSearchCode(zone, code);
 }
 
 let appConfirmCallback = null;
+
+let appConfirmInstance = null;
+
+// ต้องใช้ instance เดียวตลอด — new bootstrap.Modal() ซ้ำบน element เดิม
+// จะทับ instance เก่าที่ยังมี listener ค้าง แล้ว popup ตัวถัดไปจะไม่โผล่
+function getAppConfirmModal(){
+  if(!appConfirmInstance){
+    appConfirmInstance = new bootstrap.Modal(document.getElementById("appConfirmModal"));
+  }
+  return appConfirmInstance;
+}
 
 function showAppConfirm(title,msg,onYes){
   const t = document.getElementById("appConfirmTitle");
@@ -2454,18 +2545,28 @@ function showAppConfirm(title,msg,onYes){
   }
   t.innerText = title; m.innerText = msg;
   appConfirmCallback = onYes;
-  new bootstrap.Modal(modal).show();
+  getAppConfirmModal().show();
 }
 
+// ยิง callback หลัง modal ปิดสนิทแล้วเท่านั้น
+// ถ้ายิงทันทีตอนกด แล้ว callback ไปเปิด popup ตัวใหม่ จะชนกับตัวที่กำลังปิดอยู่
 function appConfirmYes(){
-  bootstrap.Modal.getInstance(document.getElementById("appConfirmModal")).hide();
-  if(appConfirmCallback){ appConfirmCallback(); }
+  const cb = appConfirmCallback;
   appConfirmCallback = null;
+
+  const el = document.getElementById("appConfirmModal");
+  const run = () => {
+    el.removeEventListener("hidden.bs.modal", run);
+    if(cb) cb();
+  };
+  el.addEventListener("hidden.bs.modal", run);
+
+  getAppConfirmModal().hide();
 }
 
 function appConfirmNo(){
-  bootstrap.Modal.getInstance(document.getElementById("appConfirmModal")).hide();
   appConfirmCallback = null;
+  getAppConfirmModal().hide();
 }
 
 function onSNInputChange(el){
@@ -2714,7 +2815,8 @@ function pcApplyFilter() {
       return (
         String(r.code || "").toLowerCase().includes(q) || 
         String(r.name || "").toLowerCase().includes(q) ||
-        String(r.zone || "").toLowerCase().includes(q) // ✨ จุดที่เพิ่มการค้นหาโซน
+        String(r.zone || "").toLowerCase().includes(q) ||
+        matchRC(r.code, q)                              // ✨ ค้นด้วยเลข RC
       ); 
     }); 
   }
@@ -3234,6 +3336,49 @@ function buildRiskCardHTML(r, isHeader = false) {
 // ==========================================================
 let snGroupedByCode = null;
 
+// ==========================================================
+// 🔎 ดัชนี RC → Code (ใช้ตอนค้นหาด้วยเลข RC)
+// ==========================================================
+let rcIndex = null;       // Map: rc(ตัวเล็ก) -> Set(code)
+let rcIndexKey = null;    // ผูกกับ วันที่+โซน ที่โหลดอยู่
+let rcQueryCache = { q: null, key: null, codes: null };
+const RC_SEARCH_MIN = 2;  // สั้นกว่านี้ไม่ค้น RC กันผลลัพธ์เละ
+
+function prepareRCIndex() {
+  const key = fifoCacheState.date + "|" + fifoCacheState.zone;
+  if (rcIndex && rcIndexKey === key) return rcIndex;
+
+  rcIndex = new Map();
+  const all = Object.values(snIndexMap);
+  for (let i = 0; i < all.length; i++) {
+    const rc = String(all[i].rc || "").trim().toLowerCase();
+    if (!rc) continue;
+    const code = String(all[i].code || "").replace(/\s+/g, "").toUpperCase();
+    let set = rcIndex.get(rc);
+    if (!set) { set = new Set(); rcIndex.set(rc, set); }
+    set.add(code);
+  }
+  rcIndexKey = key;
+  return rcIndex;
+}
+
+function getCodesByRC(q) {
+  const idx = prepareRCIndex();
+  if (rcQueryCache.q === q && rcQueryCache.key === rcIndexKey) return rcQueryCache.codes;
+
+  const codes = new Set();
+  idx.forEach((set, rc) => {
+    if (rc.includes(q)) set.forEach(c => codes.add(c));
+  });
+  rcQueryCache = { q: q, key: rcIndexKey, codes: codes };
+  return codes;
+}
+
+function matchRC(code, q) {
+  if (!q || q.length < RC_SEARCH_MIN) return false;
+  return getCodesByRC(q).has(String(code || "").replace(/\s+/g, "").toUpperCase());
+}
+
 function prepareSNGroupCache() {
   snGroupedByCode = {};
   const allSNs = Object.values(snIndexMap);
@@ -3249,6 +3394,246 @@ function prepareSNGroupCache() {
 // Swipe to Report Logic
 // ===========================
 
+let reportSelection = new Set();
+
+function toggleSNSelect(sn, el){
+  sn = String(sn);
+  if (reportSelection.has(sn)) { reportSelection.delete(sn); el.classList.remove('sn-selected'); }
+  else { reportSelection.add(sn); el.classList.add('sn-selected'); }
+  syncRCHeader(el);
+  updateReportScope();
+}
+
+// ถ้า SN ในกลุ่มไม่ครบแล้ว หัวกลุ่มต้องเลิกโชว์ว่าเลือกครบ
+function syncRCHeader(el){
+  const cls = Array.from(el.classList).find(c => /^rc-/.test(c) && c !== 'rc-row' && c !== 'rc-header');
+  if (!cls) return;
+  const key = cls.slice(3);
+  const head = document.querySelector('tr.rc-header[data-rc-key="' + key + '"]');
+  if (!head) return;
+  const rows = document.querySelectorAll('tr.sn-row.rc-' + key);
+  const all = rows.length > 0 && Array.from(rows).every(r => r.classList.contains('sn-selected'));
+  head.classList.toggle('rc-selected', all);
+}
+
+function selectRCGroup(key){
+  const map = buildRCGroup();
+  const rc = Object.keys(map).find(k => String(k).replace(/\W/g,'') === key);
+  if (!rc) return;
+  const list = map[rc];
+  const allSelected = list.every(r => reportSelection.has(String(r.sn)));
+  list.forEach(r => allSelected ? reportSelection.delete(String(r.sn))
+                                : reportSelection.add(String(r.sn)));
+  document.querySelectorAll('.rc-' + key).forEach(row => {
+    if (!row.classList.contains('rc-header')) row.classList.toggle('sn-selected', !allSelected);
+  });
+  const head = document.querySelector('tr.rc-header[data-rc-key="' + key + '"]');
+  if (head) head.classList.toggle('rc-selected', !allSelected);
+  updateReportScope();
+}
+
+// ===========================
+// Swipe ซ้าย = เลือก SN / RC
+// ===========================
+const SWIPE_SELECT_DX = 60;   // ระยะขั้นต่ำที่ถือว่าเลือก
+const SWIPE_SELECT_DY = 45;   // เบี่ยงแนวตั้งเกินนี้ = กำลังสกรอลล์
+const SWIPE_MAX_DX    = 96;   // ลากได้ไกลสุด (มีแรงต้านหลังจากนี้)
+let snSwipeStartX = 0, snSwipeStartY = 0, snSwipeRow = null;
+let snSwipeActive = false;      // เริ่มลากแนวนอนจริงแล้วหรือยัง
+let snSwipeHandled = false;     // กัน click เด้งตามหลัง swipe
+let snSwipeWillDeselect = false;// แถวนี้เลือกไว้อยู่ ปัดแล้วจะเป็นการยกเลิก
+
+function isRowSelected(row){
+  if (row.classList.contains('rc-header')){
+    const key = row.dataset.rcKey;
+    if (!key) return false;
+    const rows = document.querySelectorAll('tr.sn-row.rc-' + key);
+    return rows.length > 0 && Array.from(rows).every(r => r.classList.contains('sn-selected'));
+  }
+  return row.classList.contains('sn-selected');
+}
+
+function setRowOffset(row, dx){
+  const cells = row.cells;
+  for (let i = 0; i < cells.length; i++){
+    cells[i].style.transform = dx ? `translateX(${dx}px)` : '';
+  }
+}
+
+function bindSNSwipeSelect(){
+  const tb = document.getElementById('snTable');
+  if (!tb || tb.dataset.swipeBound) return;
+  tb.dataset.swipeBound = "1";
+
+  const start = (row, x, y) => {
+    snSwipeRow = row; snSwipeStartX = x; snSwipeStartY = y; snSwipeActive = false;
+  };
+
+  const move = (x, y) => {
+    const row = snSwipeRow;
+    if (!row) return;
+    const dx = x - snSwipeStartX;
+    const dy = y - snSwipeStartY;
+
+    if (!snSwipeActive){
+      if (Math.abs(dy) > SWIPE_SELECT_DY){ snSwipeRow = null; return; }  // สกรอลล์ ไม่ใช่ swipe
+      if (dx > -10) return;                                             // ยังไม่ชัดว่าลากซ้าย
+      snSwipeActive = true;
+      snSwipeWillDeselect = isRowSelected(row);
+      row.classList.add('swiping');
+    }
+
+    clearTextSelection();   // ลากบน PC อาจเผลอคลุมข้อความไปด้วย
+
+    // เลย SWIPE_MAX_DX แล้วให้หนืดลง ไม่ให้ลากได้ไม่จำกัด
+    let off = Math.min(0, dx);
+    if (off < -SWIPE_MAX_DX) off = -SWIPE_MAX_DX + (off + SWIPE_MAX_DX) * 0.25;
+
+    setRowOffset(row, off);
+    const armed = off <= -SWIPE_SELECT_DX;
+    row.classList.toggle('swipe-armed', armed && !snSwipeWillDeselect);
+    row.classList.toggle('swipe-armed-off', armed && snSwipeWillDeselect);
+  };
+
+  const end = () => {
+    const row = snSwipeRow;
+    snSwipeRow = null;
+    if (!row || !snSwipeActive) return;
+    snSwipeActive = false;
+
+    const armed = row.classList.contains('swipe-armed')
+               || row.classList.contains('swipe-armed-off');
+
+    row.classList.remove('swiping', 'swipe-armed', 'swipe-armed-off');
+    setRowOffset(row, 0);          // transition พาเลื่อนกลับเอง
+
+    if (!armed) return;
+    snSwipeHandled = true;
+    setTimeout(() => { snSwipeHandled = false; }, 400);
+    applySwipeSelect(row);
+  };
+
+  tb.addEventListener('touchstart', e => {
+    start(e.target.closest('tr'), e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  tb.addEventListener('touchmove', e => {
+    move(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  tb.addEventListener('touchend', end);
+  tb.addEventListener('touchcancel', end);
+
+  // ลากเมาส์บน PC ให้ผลเหมือนกัน
+  tb.addEventListener('mousedown', e => {
+    start(e.target.closest('tr'), e.clientX, e.clientY);
+  });
+  tb.addEventListener('mousemove', e => {
+    if (snSwipeRow) move(e.clientX, e.clientY);
+  });
+  tb.addEventListener('mouseup', end);
+  tb.addEventListener('mouseleave', end);
+
+  // แตะช่อง SN (ช่องแรก) = คัดลอกเลข SN
+  tb.addEventListener('click', e => {
+    if (snSwipeHandled) return;        // เพิ่งปัดเลือกไป ไม่ใช่การแตะ
+    if (getSelectedText()) return;     // ผู้ใช้กำลังคลุมข้อความเอง อย่าไปยุ่ง
+
+    const row = e.target.closest('tr');
+    if (!row || !row.classList.contains('sn-row')) return;
+
+    const cell = e.target.closest('td');
+    if (!cell || cell !== row.cells[0]) return;   // เฉพาะช่อง SN
+
+    copyText(row.dataset.sn || cell.innerText, "SN");
+    row.classList.add('copied');
+    setTimeout(() => row.classList.remove('copied'), 260);
+  });
+}
+
+function applySwipeSelect(row){
+  if (!row) return;
+
+  // ปัดที่หัวกลุ่ม = เลือก/ยกเลิกทั้ง RC
+  if (row.classList.contains('rc-header')) {
+    if (row.dataset.rcKey) selectRCGroup(row.dataset.rcKey);
+    flashRow(row);
+    return;
+  }
+
+  if (!row.classList.contains('sn-row')) return;
+  const sn = row.dataset.sn;
+  if (!sn) return;
+  toggleSNSelect(sn, row);
+  flashRow(row);
+}
+
+function flashRow(row){
+  if (navigator.vibrate) navigator.vibrate(25);
+}
+
+function clearTextSelection(){
+  const sel = window.getSelection && window.getSelection();
+  if (sel && sel.removeAllRanges) sel.removeAllRanges();
+}
+
+function getSelectedText(){
+  const sel = window.getSelection && window.getSelection();
+  return sel ? String(sel.toString()).trim() : "";
+}
+
+async function copyText(text, label){
+  text = String(text || "").trim();
+  if (!text) return;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      // สำรองสำหรับ webview เก่า / http
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    if (navigator.vibrate) navigator.vibrate(15);
+    showToast(`คัดลอก ${label} แล้ว: ${text}`, "ok");
+  } catch (e) {
+    showToast("คัดลอกไม่สำเร็จ กดค้างที่ข้อความเพื่อคัดลอกแทนได้ครับ", "warn");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", bindSNSwipeSelect);
+
+// ปิด popup ยืนยันแล้ว Bootstrap ถอด modal-open ออกจาก body
+// ทำให้ snModal ที่ยังเปิดอยู่เลื่อนไม่ได้ ต้องใส่คืน
+document.addEventListener("DOMContentLoaded", () => {
+  const cm = document.getElementById("appConfirmModal");
+  if (!cm) return;
+  cm.addEventListener("hidden.bs.modal", () => {
+    const sn = document.getElementById("snModal");
+    if (sn && sn.classList.contains("show")) document.body.classList.add("modal-open");
+  });
+});
+
+function clearSNSelect(){
+  reportSelection.clear();
+  document.querySelectorAll('#snTable .sn-selected').forEach(r => r.classList.remove('sn-selected'));
+  document.querySelectorAll('#snTable .rc-selected').forEach(r => r.classList.remove('rc-selected'));
+  updateReportScope();
+}
+
+function updateReportScope(){
+  const box = document.getElementById('reportScope');
+  if (!box) return;
+  const n = reportSelection.size;
+  box.innerHTML = n
+    ? `<span class="fw-bold text-success">✅ เลือกไว้ ${n} SN</span>`
+      + `<button class="btn btn-outline-secondary" onclick="clearSNSelect()">ล้างทั้งหมด</button>`
+    : `<span class="text-muted" style="font-size:16px;">👈 ปัดซ้ายเพื่อเลือก SN/RC · ไม่เลือก = Report ระดับ Code (ไม่ระบุ SN)</span>`;
+}
+
 let swipeCurrentSN = null;
 let swipeCurrentCode = null;
 let swipeCurrentZone = null;
@@ -3259,6 +3644,11 @@ function initSwipeReport(sn, code, zone, date) {
   swipeCurrentCode = code;
   swipeCurrentZone = zone;
   swipeCurrentDate = date;
+
+  reportSelection.clear();
+  updateReportScope();
+  hideReportError();
+  hideReportResult();
 
   const wrap = document.getElementById("swipeWrap");
   const thumb = document.getElementById("swipeThumb");
@@ -3329,44 +3719,154 @@ function initSwipeReport(sn, code, zone, date) {
   }
 }
 
+function resetSwipeThumb() {
+  const thumb = document.getElementById("swipeThumb");
+  if (thumb) { thumb.style.left = "4px"; thumb.style.background = "#dc2626"; }
+}
+
+// ===== แจ้งเตือนในกล่อง Report =====
+function showReportError(msg){
+  const el = document.getElementById("reportError");
+  showToast(msg, "warn");
+  if (!el) return;
+  el.innerHTML = "⚠️ " + msg;
+  el.style.display = "block";
+  el.classList.remove("shake");
+  void el.offsetWidth;          // บังคับ reflow ให้ animation เล่นซ้ำได้
+  el.classList.add("shake");
+}
+
+function hideReportError(){
+  const el = document.getElementById("reportError");
+  if (el) el.style.display = "none";
+}
+
+function showReportResult(msg, pending){
+  const el = document.getElementById("reportResult");
+  if (!el) return;
+  el.className = pending ? "pending" : "";
+  el.innerHTML = (pending ? "⏳ " : "✅ ") + msg;
+  el.style.display = "block";
+  if (!pending) setTimeout(() => { el.style.display = "none"; }, 8000);
+}
+
+function hideReportResult(){
+  const el = document.getElementById("reportResult");
+  if (el) el.style.display = "none";
+}
+
+// เลือก "อื่นๆ" ต้องกรอกหมายเหตุ
+function onReasonChange(){
+  const reason = document.getElementById("reportReason").value;
+  const note = document.getElementById("reportNote");
+  hideReportError();
+  if (!note) return;
+  if (reason === "อื่นๆ") {
+    note.placeholder = "ระบุเหตุผลเพิ่มเติม (จำเป็น) *";
+    note.classList.add("border-danger");
+    setTimeout(() => note.focus(), 120);
+  } else {
+    note.placeholder = "หมายเหตุเพิ่มเติม (ถ้ามี)";
+    note.classList.remove("border-danger");
+  }
+}
+
 function showReportConfirm() {
   const reason = document.getElementById("reportReason").value;
+  const note = document.getElementById("reportNote").value.trim();
+
+  resetSwipeThumb();   // คืนปุ่มทุกกรณี ไม่ให้ค้างเขียวจนกดซ้ำไม่ได้
+
   if (!reason) {
-    showToast("กรุณาเลือกเหตุผลก่อนครับ", "warn");
-    // Reset thumb
-    const thumb = document.getElementById("swipeThumb");
-    if (thumb) { thumb.style.left = "4px"; thumb.style.background = "#dc2626"; }
+    showReportError("กรุณาเลือกเหตุผลก่อน Report");
+    return;
+  }
+  if (reason === "อื่นๆ" && !note) {
+    showReportError('เลือก "อื่นๆ" ต้องระบุหมายเหตุเพิ่มเติมด้วย');
+    const el = document.getElementById("reportNote");
+    if (el) { el.classList.add("border-danger"); el.focus(); }
     return;
   }
 
-  const note = document.getElementById("reportNote").value;
-  const msg = `ยืนยัน Report SN นี้?\n\nCode: ${swipeCurrentCode}\nSN: ${swipeCurrentSN}\nเหตุผล: ${reason}`;
+  hideReportError();
+  hideReportResult();
+
+  const n = reportSelection.size;
+  const scope = n ? `SN ที่เลือก ${n} รายการ` : `ระดับ Code (ไม่ระบุ SN)`;
+  const msg = `ยืนยัน Report?\n\nCode: ${swipeCurrentCode}\nขอบเขต: ${scope}\nเหตุผล: ${reason}`
+            + (note ? `\nหมายเหตุ: ${note}` : "");
 
   showAppConfirm("ยืนยัน Report", msg, () => submitReport(reason, note));
 }
 
+// รวมรายการที่จะส่ง — RC ที่เลือกครบทั้งกลุ่มยุบเป็นแถวเดียว type="RC"
+function buildReportItems(){
+  if (!reportSelection.size) {
+    return [{ type: "CODE", sn: "", rc: "", age: "" }];
+  }
+
+  const map = buildRCGroup();
+  const items = [];
+  const consumed = new Set();
+
+  Object.keys(map).forEach(rc => {
+    if (rc === "ไม่ระบุ RC") return;               // ไม่มี RC จริง ยุบไม่ได้
+    const list = map[rc];
+    const all = list.length > 0 && list.every(r => reportSelection.has(String(r.sn)));
+    if (!all) return;
+    items.push({ type: "RC", sn: "", rc: rc, age: list[0].day || "" });
+    list.forEach(r => consumed.add(String(r.sn)));
+  });
+
+  snCache.forEach(r => {
+    const sn = String(r.sn);
+    if (!reportSelection.has(sn) || consumed.has(sn)) return;
+    items.push({ type: "SN", sn: sn, rc: r.rc || "", age: r.day || "" });
+  });
+
+  return items;
+}
+
 async function submitReport(reason, note) {
+  showReportResult("กำลังส่ง Report...", true);
+
+  const hadSelection = reportSelection.size > 0;
+  const items = buildReportItems();
+
   try {
-    await callGAS("submitSNReport", {
+    const res = await callGAS("submitSNReport", {
       reportDate: swipeCurrentDate,
       code: swipeCurrentCode,
-      sn: swipeCurrentSN,
       zone: swipeCurrentZone,
       reason: reason,
-      note: note
+      note: note,
+      items: items
     });
-    showToast("Report สำเร็จแล้วครับ ✅", "ok");
-    // Reset
-    const thumb = document.getElementById("swipeThumb");
-    if (thumb) { thumb.style.left = "4px"; thumb.style.background = "#dc2626"; }
+
+    const n = (res && res.count) || items.length;
+
+    if (hadSelection) {
+      const rcCount = items.filter(i => i.type === "RC").length;
+      const snCount = items.filter(i => i.type === "SN").length;
+      const detail = [rcCount ? `${rcCount} RC` : "", snCount ? `${snCount} SN` : ""]
+                       .filter(Boolean).join(" + ");
+      showReportResult(`ส่ง Report สำเร็จ ${detail} (${n} แถว) — รอ Admin ตรวจสอบ`, false);
+      clearSNSelect();
+    } else {
+      showReportResult(`ส่ง Report ระดับ Code ${swipeCurrentCode} (ไม่ระบุ SN) สำเร็จ — รอ Admin ตรวจสอบ`, false);
+    }
+
+    resetSwipeThumb();
     document.getElementById("reportReason").value = "";
     document.getElementById("reportNote").value = "";
+    onReasonChange();          // คืน placeholder / ขอบแดงของช่องหมายเหตุ
   } catch (err) {
-    showToast("Report ไม่สำเร็จ: " + err.message, "warn");
+    resetSwipeThumb();
+    hideReportResult();
+    showReportError("ส่ง Report ไม่สำเร็จ: " + err.message);
   }
 }
 
 </script>
-<div id="toastBox" class="toast-box"></div>
 </body>
 </html>
