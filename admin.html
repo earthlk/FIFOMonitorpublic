@@ -63,6 +63,40 @@ button, input, select, textarea{ font-size:16px; }
 }
 .chip.active{ background:var(--primary); border-color:var(--primary); color:#fff; }
 
+/* ===== ลิสต์ Code ===== */
+.side-split{
+  background:#f1f5f9; color:var(--ink); font-weight:800; font-size:13px;
+  padding:8px 16px; margin-top:6px; border-top:1px solid var(--line);
+}
+.side-main{ min-width:0; flex:1; }
+.side-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.side-name{
+  font-size:12px; color:var(--muted); margin-top:2px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.side-item.not-reported .code{ color:var(--muted); font-weight:600; }
+.side-count.none{ background:transparent; color:#cbd5e1; }
+.detail-name{ font-size:14px; color:var(--muted); margin-top:2px; }
+
+/* ===== ช่องค้นหา Code / RC ===== */
+.admin-search{
+  display:flex; gap:8px; align-items:center;
+  margin-top:12px;
+}
+.admin-search input{ flex:1; min-width:0; }
+.admin-search .btn{ white-space:nowrap; }
+
+.rc-block-match{
+  box-shadow:0 0 0 3px #fbbf24;
+}
+.search-hit{
+  background:#fde68a; color:#78350f; border-radius:4px; padding:0 3px; font-weight:800;
+}
+.rc-tag{
+  background:#e0e7ff; color:var(--secondary); border-radius:6px;
+  padding:1px 8px; font-size:11px; font-weight:700; margin-left:4px;
+}
+
 /* ===== Shared bits ===== */
 .zone-tag{
   background:#e0e7ff; color:var(--secondary); border-radius:6px;
@@ -72,6 +106,242 @@ button, input, select, textarea{ font-size:16px; }
 .badge-pending { background:var(--warning); }
 .badge-approved{ background:var(--success); }
 .badge-rejected{ background:var(--danger); }
+
+.type-tag{
+  border-radius:6px; padding:2px 9px; font-size:12px; font-weight:800;
+  color:#fff; white-space:nowrap;
+}
+.type-sn  { background:#0ea5e9; }
+
+/* ===== SN ทั้งหมดของ Code ===== */
+.all-sn-box{
+  border-top:8px solid #f1f5f9;
+  padding:16px 18px 30px;
+}
+.all-sn-head{
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:8px;
+  font-weight:800; font-size:16px; margin-bottom:10px;
+}
+.all-sn-summary{ font-weight:600; font-size:14px; color:var(--muted); }
+.all-sn-state{ color:var(--muted); font-size:14px; padding:14px 0; }
+.all-sn-toolbar{ margin-bottom:12px; }
+
+.rc-block{
+  border:1px solid var(--line);
+  border-left:5px solid #cbd5e1;
+  border-radius:12px;
+  padding:10px 14px;
+  margin-bottom:10px;
+  background:#fff;
+}
+.rc-block-hit{ border-left-color:var(--danger); background:#fff7f7; }
+
+.rc-block-head{
+  display:flex; align-items:center; flex-wrap:wrap; gap:8px;
+  font-weight:700; font-size:15px; margin-bottom:8px;
+}
+.rc-age{ color:var(--muted); font-weight:500; font-size:13px; }
+.rc-flag{
+  margin-left:auto; background:var(--danger); color:#fff;
+  border-radius:999px; padding:2px 12px; font-size:12px; font-weight:800;
+}
+.rc-flag.partial{ background:var(--warning); }
+
+.sn-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+.sn-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  border:1px solid var(--line); border-radius:8px;
+  padding:4px 10px; font-size:13px; background:#f8fafc; color:var(--muted);
+}
+.sn-chip-meta{ font-style:normal; font-size:11px; opacity:.75; }
+
+.sn-chip.hit{
+  border-color:var(--danger); background:#fee2e2;
+  color:#991b1b; font-weight:800;
+}
+.sn-chip.hit.st-approved{ border-color:var(--success); background:#dcfce7; color:#14532d; }
+.sn-chip.hit.st-rejected{ border-color:var(--muted);  background:#e2e8f0; color:#475569; }
+
+/* SN ที่ขายไปแล้ว */
+.sn-chip.is-sale{ background:#fff3cd; border-color:#f0c36d; color:#7c4a03; font-weight:700; }
+.sn-chip.is-sale.hit{ background:#fee2e2; border-color:var(--danger); color:#991b1b; }
+.sn-chip.is-sale.hit.st-approved{ background:#dcfce7; border-color:var(--success); color:#14532d; }
+.sn-chip.is-sale.hit.st-rejected{ background:#e2e8f0; border-color:var(--muted); color:#475569; }
+
+/* เลือกไว้เพื่อลบเพิ่ม — ทับทุกสีด้านบน */
+.sn-chip.sel,
+.sn-chip.is-sale.sel,
+.sn-chip.hit.sel{
+  background:var(--secondary) !important;
+  border-color:var(--secondary) !important;
+  color:#fff !important;
+}
+.sn-chip{ cursor:pointer; user-select:none; }
+
+.rc-pick{
+  border:1px solid var(--secondary); background:#fff; color:var(--secondary);
+  border-radius:8px; padding:2px 10px; font-size:12px; font-weight:700;
+  cursor:pointer; margin-left:8px;
+}
+.rc-pick.on{ background:var(--secondary); color:#fff; }
+
+.extra-bar{
+  position:sticky; top:0; z-index:2;
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+  background:#eef2ff; border:2px solid var(--secondary); border-radius:12px;
+  padding:10px 14px; margin-bottom:12px; font-size:14px; font-weight:700;
+}
+
+.whole-code-note{
+  background:#fff7ed; border:2px solid var(--warning); border-radius:12px;
+  padding:10px 14px; margin-bottom:12px;
+  font-size:14px; font-weight:700; color:#92400e;
+}
+.wc-reason{ font-weight:500; font-size:13px; margin-top:4px; }
+
+/* ===== แถบเลือกวันที่ทำงาน ===== */
+#dateBar{
+  display:flex; align-items:center; gap:8px;
+  padding:14px 0 0;
+  flex-wrap:nowrap; overflow-x:auto;      /* มือถือ: เลื่อนแนวนอน ไม่ตัดบรรทัด */
+  -webkit-overflow-scrolling:touch;
+}
+#dateBar > *{ flex:0 0 auto; }
+@media (min-width: 992px){
+  #dateBar{ flex-wrap:wrap; overflow:visible; }
+}
+.date-chip.more{
+  background:#eef2ff; border-color:var(--secondary); color:var(--secondary);
+  border-style:dashed;
+}
+.date-chip{
+  border:1.5px solid #cbd5e1; background:#fff; color:var(--ink);
+  border-radius:12px; padding:7px 14px; font-size:14px; font-weight:700;
+  cursor:pointer; display:flex; align-items:center; gap:7px; transition:.15s;
+}
+.date-chip:hover{ border-color:var(--primary); }
+.date-chip.active{
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  border-color:transparent; color:#fff;
+}
+.date-chip .cnt{
+  background:var(--warning); color:#fff; border-radius:999px;
+  padding:0 8px; font-size:12px; font-weight:800;
+}
+.date-chip.active .cnt{ background:rgba(255,255,255,.25); }
+.date-chip .cnt.done{ background:#e2e8f0; color:var(--muted); }
+.date-chip.back{ background:#f1f5f9; border-style:dashed; }
+#dateBar input[type=date]{
+  border:1.5px solid #cbd5e1; border-radius:12px; padding:6px 12px;
+  font-size:14px; font-weight:600; max-width:165px;
+}
+
+/* ===== หน้าภาพรวมทุกวัน ===== */
+#dateOverview{ display:none; padding:18px 0 30px; }
+.ov-title{ font-weight:800; font-size:18px; margin-bottom:4px; }
+.ov-sub{ color:var(--muted); font-size:14px; margin-bottom:16px; }
+.ov-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+.ov-card{
+  background:#fff; border-radius:14px; padding:16px 18px;
+  box-shadow:0 3px 12px rgba(0,0,0,.07); cursor:pointer;
+  border-left:5px solid #cbd5e1; transition:.15s;
+}
+.ov-card:hover{ transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.12); }
+.ov-card.has-pending{ border-left-color:var(--warning); }
+.ov-date{ font-weight:800; font-size:17px; }
+.ov-row{ display:flex; gap:14px; margin-top:9px; font-size:13px; flex-wrap:wrap; }
+.ov-row b{ font-size:17px; display:block; line-height:1.2; }
+.ov-pending b{ color:var(--warning); }
+.ov-appr b{ color:var(--success); }
+.ov-rej b{ color:var(--danger); }
+
+.date-status{ font-size:12px; font-weight:700; white-space:nowrap; color:var(--muted); }
+.date-status.loaded{ color:var(--success); }
+
+#globalExtraBar{
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+  background:linear-gradient(135deg,#4f46e5,#4338ca); color:#fff;
+  border-radius:12px; padding:11px 16px; margin-top:12px;
+  font-size:14px; font-weight:700;
+  box-shadow:0 6px 16px rgba(79,70,229,.35);
+}
+#globalExtraBar .ge-codes{ font-weight:500; font-size:13px; opacity:.9; }
+
+#busyOverlay{
+  position:fixed; inset:0; z-index:100002;
+  background:rgba(15,23,42,.55); backdrop-filter:blur(3px);
+  display:none; align-items:center; justify-content:center; padding:20px;
+}
+#busyOverlay.show{ display:flex; }
+.busy-box{
+  background:#fff; border-radius:18px; padding:28px 26px;
+  width:100%; max-width:380px; text-align:center;
+  box-shadow:0 16px 40px rgba(0,0,0,.3);
+}
+.busy-title{ font-weight:800; font-size:18px; }
+.busy-step{ color:var(--muted); font-size:14px; margin-top:6px; min-height:21px; }
+.busy-timer{ color:var(--muted); font-size:13px; margin-top:8px; }
+.busy-warn{ color:var(--danger); font-size:13px; font-weight:700; margin-top:10px; }
+
+.approve-warn{
+  background:#fef2f2; border:2px solid var(--danger); border-radius:12px;
+  padding:10px 14px; margin-bottom:14px; font-size:14px; color:#991b1b;
+}
+.approve-warn span{ font-weight:400; font-size:13px; }
+
+#resultModal{ z-index:100001; }
+.res-head{
+  background:#dcfce7; border-radius:12px; padding:14px 16px; margin-bottom:14px;
+  display:flex; align-items:center; gap:14px; color:#14532d; font-size:15px;
+}
+.res-big{ font-size:34px; font-weight:900; line-height:1; }
+.res-section{ font-weight:800; font-size:14px; margin:14px 0 8px; }
+.res-day{
+  border:1px solid var(--line); border-left:4px solid var(--primary);
+  border-radius:10px; padding:10px 14px; margin-bottom:8px;
+}
+.res-line{ font-size:14px; margin-top:3px; }
+.res-codes{ display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+.res-codes span{
+  background:#eef2ff; color:var(--secondary); border-radius:6px;
+  padding:2px 9px; font-size:12px; font-weight:700;
+}
+.res-sub{ font-weight:800; font-size:13px; margin:12px 0 5px; color:var(--secondary); }
+.res-table{
+  width:100%; border-collapse:collapse; margin-bottom:8px; font-size:13px;
+}
+.res-table th{
+  background:#f8fafc; color:var(--muted); font-size:11px; font-weight:800;
+  text-transform:uppercase; letter-spacing:.03em;
+  padding:6px 8px; text-align:left; border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+.res-table td{ padding:6px 8px; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+.res-table tr.res-changed td{ background:#fffbeb; }
+
+.delta{ font-weight:800; font-size:12px; border-radius:6px; padding:1px 7px; }
+.delta.down{ background:#dcfce7; color:#14532d; }
+.delta.up  { background:#fee2e2; color:#991b1b; }
+.delta.zero{ background:#f1f5f9; color:var(--muted); }
+
+.res-skip{
+  background:#fef2f2; border-radius:8px; padding:7px 12px;
+  margin-bottom:5px; font-size:13px; color:#991b1b;
+}
+
+.blocked-note{
+  display:inline-block; background:#f1f5f9; color:var(--muted);
+  border:1px dashed #cbd5e1; border-radius:8px;
+  padding:3px 10px; font-size:12px; font-weight:700; line-height:1.3;
+}
+.code-level-warn{
+  background:#fef3c7; color:#92400e; border-radius:8px;
+  padding:3px 10px; font-size:13px; font-weight:700;
+}
+
+.type-rc  { background:#7c3aed; }
+.type-code{ background:#f59e0b; }
 
 .state-box{ text-align:center; color:var(--muted); padding:60px 24px; }
 .state-box .icon{ font-size:44px; display:block; margin-bottom:10px; }
@@ -259,7 +529,7 @@ table.sn-table{ width:100%; border-collapse:collapse; }
     </div>
     <input type="password" id="pwInput" class="form-control mb-2" placeholder="รหัสผ่าน" autocomplete="current-password">
     <div id="pwError" class="text-danger mb-2" style="font-size:14px; display:none;">รหัสผ่านไม่ถูกต้อง ลองใหม่อีกครั้ง</div>
-    <button class="btn btn-primary w-100 fw-bold py-2" onclick="checkPassword()">เข้าสู่ระบบ</button>
+    <button id="pwBtn" class="btn btn-primary w-100 fw-bold py-2" onclick="checkPassword()">เข้าสู่ระบบ</button>
   </div>
 </div>
 
@@ -282,12 +552,30 @@ table.sn-table{ width:100%; border-collapse:collapse; }
   </div>
 
   <div class="wrap">
-    <div class="filter-bar">
+    <div id="dateBar"></div>
+
+    <div id="dateOverview"></div>
+
+    <div class="filter-bar" id="filterBar">
       <button class="chip active" data-filter="pending"  onclick="setFilter('pending', this)">รอตรวจ</button>
       <button class="chip" data-filter="approved" onclick="setFilter('approved', this)">อนุมัติแล้ว</button>
       <button class="chip" data-filter="rejected" onclick="setFilter('rejected', this)">ปฏิเสธ</button>
       <button class="chip" data-filter="all"      onclick="setFilter('all', this)">ทั้งหมด</button>
+      <button class="chip" data-filter="unreported" onclick="setFilter('unreported', this)">ยังไม่ Report</button>
     </div>
+
+    <div class="admin-search" id="searchRow">
+      <input id="adminSearch" class="form-control"
+             placeholder="🔍 ค้นหา Code หรือ RC — ใส่หลายตัวคั่นด้วย , หรือเว้นวรรค"
+             oninput="onAdminSearch(this.value)" autocomplete="off">
+      <span id="dateStatus" class="date-status"></span>
+      <button id="deepBtn" class="btn btn-outline-primary fw-bold" onclick="loadAllZoneData()"
+              title="ดึง SN ทุกโซนของวันที่เลือก เพื่อค้น RC ให้ครบทุกตัว">ค้น RC ให้ครบ</button>
+      <button id="clearSearchBtn" class="btn btn-light fw-bold" onclick="onAdminSearch('')"
+              style="display:none;">ล้าง</button>
+    </div>
+
+    <div id="globalExtraBar" style="display:none;"></div>
 
     <div id="workspace">
       <aside class="sidebar">
@@ -319,6 +607,12 @@ table.sn-table{ width:100%; border-collapse:collapse; }
         <div id="confirmTitle" class="fw-bold mb-1" style="font-size:19px;"></div>
         <div id="confirmSN" class="text-muted mb-3" style="font-size:14px; word-break:break-all;"></div>
 
+        <div id="approveWarn" class="approve-warn" style="display:none;">
+          ⚠️ การอนุมัติจะ <b>ลบ SN ออกจากระบบถาวร</b><br>
+          <span>ลบจาก SN Lite / SN File / SN Return แล้วคำนวณ FIFO ใหม่ ย้อนกลับไม่ได้
+          (มีบันทึกไว้ในชีต SN_Deleted)</span>
+        </div>
+
         <label class="fw-bold mb-1" style="font-size:15px;">ความเห็น Admin</label>
         <textarea id="adminComment" class="form-control mb-3" rows="3" placeholder="ระบุเหตุผล (ถ้ามี)"></textarea>
 
@@ -331,6 +625,33 @@ table.sn-table{ width:100%; border-collapse:collapse; }
   </div>
 </div>
 
+<!-- ==================== BUSY OVERLAY ==================== -->
+<div id="busyOverlay">
+  <div class="busy-box">
+    <div class="spinner-border text-primary mb-3"></div>
+    <div id="busyTitle" class="busy-title">กำลังประมวลผล</div>
+    <div id="busyStep" class="busy-step"></div>
+    <div class="progress mt-3" style="height:8px;">
+      <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%"></div>
+    </div>
+    <div id="busyTimer" class="busy-timer">0 วินาที</div>
+    <div class="busy-warn">⚠️ อย่าปิดหน้าต่างระหว่างนี้</div>
+  </div>
+</div>
+
+<!-- ==================== RESULT MODAL ==================== -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:18px;">
+      <div class="modal-body p-4">
+        <div class="fw-bold mb-3" style="font-size:20px;">✅ ผลการอนุมัติ</div>
+        <div id="resultBody"></div>
+        <button class="btn btn-primary w-100 fw-bold mt-3" data-bs-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast-box"><div id="toastMsg" class="toast-msg"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -338,8 +659,6 @@ table.sn-table{ width:100%; border-collapse:collapse; }
 // ==========================================================
 // ⚙️ CONFIG — แก้รหัสผ่านตรงนี้
 // ==========================================================
-const ADMIN_PASSWORD = "CHANGE_ME";
-
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw9FUQVEOripWQc7x2l7wmL1krMRsh5M_ouW5LGLJonBOXW62H4J850YvPUigJfrFnl/exec";
 
 async function callGAS(actionName, payloadData = {}) {
@@ -356,16 +675,36 @@ async function callGAS(actionName, payloadData = {}) {
 // ==========================================================
 // 🔐 Login
 // ==========================================================
-function checkPassword(){
+async function checkPassword(){
   const input = document.getElementById("pwInput");
-  if (input.value === ADMIN_PASSWORD){
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("adminScreen").style.display = "block";
-    loadReports();
-  } else {
-    document.getElementById("pwError").style.display = "block";
+  const err   = document.getElementById("pwError");
+  const btn   = document.getElementById("pwBtn");
+
+  if (!input.value) return;
+
+  btn.disabled = true;
+  btn.innerText = "กำลังตรวจสอบ...";
+  err.style.display = "none";
+
+  try {
+    const res = await callGAS("checkAdminPassword", { password: input.value });
+    if (res && res.ok){
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("adminScreen").style.display = "block";
+      input.value = "";
+      loadReports();
+      return;
+    }
+    err.innerText = (res && res.message) || "รหัสผ่านไม่ถูกต้อง ลองใหม่อีกครั้ง";
+    err.style.display = "block";
     input.value = "";
     input.focus();
+  } catch (e){
+    err.innerText = "เชื่อมต่อไม่สำเร็จ: " + e.message;
+    err.style.display = "block";
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "เข้าสู่ระบบ";
   }
 }
 document.getElementById("pwInput").addEventListener("keydown", e => {
@@ -385,7 +724,7 @@ let pendingDecision = null;
 const mqDesktop = window.matchMedia("(min-width: 992px)");
 mqDesktop.addEventListener("change", () => { closeDetailModal(); renderAll(); });
 
-let detailModal = null, confirmModal = null;
+let detailModal = null, confirmModal = null, resultModal = null;
 function getDetailModal(){
   detailModal = detailModal || new bootstrap.Modal(document.getElementById("detailModal"));
   return detailModal;
@@ -413,8 +752,7 @@ async function loadReports(){
     const data = await callGAS("getSNReports");
     allReports = Array.isArray(data) ? data : [];
     checkedRows.clear();
-    updateStats();
-    renderAll();
+    renderAll();          // workDate ยังเป็น null → เข้าหน้าภาพรวมทุกวันก่อน
   } catch (err){
     document.getElementById("codeList").innerHTML = `<div class="state-box">
       <span class="icon">⚠️</span>โหลดรายการไม่สำเร็จ<br>
@@ -434,13 +772,136 @@ function normalizeStatus(raw){
 }
 const STATUS_LABEL = { pending:"รอตรวจ", approved:"อนุมัติแล้ว", rejected:"ปฏิเสธ" };
 
+// รายงานระดับ Code อนุมัติไม่ได้ เพราะไม่รู้ว่าจะลบ SN ตัวไหน
+function isCodeLevel(r){ return String(r.type || "SN").toUpperCase() === "CODE"; }
+function isApprovable(r){ return normalizeStatus(r.status) === "pending" && !isCodeLevel(r); }
+
+/* ==========================================================
+   📅 วันที่ทำงาน — คุมทั้งหน้า ทำทีละวันเสมอ
+   workDate = null  →  หน้าภาพรวมทุกวัน
+   ========================================================== */
+
+/** สรุปจำนวนรายงานแยกตามวัน */
+function dateSummary(){
+  const map = new Map();
+  allReports.forEach(r => {
+    const d = fmtDate(r.reportDate);
+    if (!d || d === "ไม่ระบุวันที่") return;
+    if (!map.has(d)) map.set(d, { date:d, pending:0, approved:0, rejected:0, total:0 });
+    const o = map.get(d);
+    o[normalizeStatus(r.status)]++;
+    o.total++;
+  });
+  return [...map.values()].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function setWorkDate(d){
+  workDate = d || null;
+  extraSelection.clear();
+  checkedRows.clear();
+  selectedKey = null;
+  closeDetailModal();
+  renderAll();
+}
+
+function onWorkDateChange(v){
+  if (v) setWorkDate(String(v));
+}
+
+function fillDateOptions(){ renderDateBar(); }
+
+function renderDateBar(){
+  const bar = document.getElementById("dateBar");
+  if (!bar) return;
+
+  const days = dateSummary();
+
+  let html = workDate
+    ? `<button class="date-chip back" onclick="setWorkDate(null)">◀ ภาพรวมทุกวัน</button>`
+    : ``;
+
+  const MAX_CHIPS = 7;
+
+  // วันที่เลือกอยู่ต้องเห็นเสมอ ถึงจะเก่ากว่า 7 วันล่าสุดก็ตาม
+  let shown = days.slice(0, MAX_CHIPS);
+  if (workDate && !shown.some(d => d.date === workDate)){
+    const cur = days.find(d => d.date === workDate);
+    shown = [cur || { date: workDate, pending: 0 }].concat(days.slice(0, MAX_CHIPS - 1));
+  }
+
+  shown.forEach(d => {
+    html += `<button class="date-chip ${d.date === workDate ? "active" : ""}"
+                     onclick="setWorkDate('${d.date}')">
+        <span>${escapeHtml(d.date)}</span>
+        <span class="cnt ${d.pending ? "" : "done"}">${d.pending || "✓"}</span>
+      </button>`;
+  });
+
+  const rest = days.length - shown.length;
+  if (rest > 0){
+    html += `<button class="date-chip more" onclick="setWorkDate(null)"
+                     title="ดูวันที่เหลือในหน้าภาพรวม">+${rest} วัน</button>`;
+  }
+
+  html += `<input type="date" value="${workDate || ""}" title="เลือกวันอื่น"
+                  onchange="onWorkDateChange(this.value)">`;
+
+  bar.innerHTML = html;
+}
+
+function renderDateOverview(){
+  const box = document.getElementById("dateOverview");
+  if (!box) return;
+
+  const days = dateSummary();
+
+  let html = `<div class="ov-title">📋 รายงานทั้งหมด</div>
+    <div class="ov-sub">เลือกวันที่เพื่อเข้าไปตรวจสอบ — ทำได้ทีละวัน เพราะข้อมูลแต่ละวันอยู่คนละไฟล์</div>`;
+
+  if (!days.length){
+    html += `<div class="state-box"><span class="icon">📭</span>ยังไม่มีรายงานในระบบ</div>`;
+  } else {
+    html += `<div class="ov-grid">`;
+    days.forEach(d => {
+      html += `<div class="ov-card ${d.pending ? "has-pending" : ""}" onclick="setWorkDate('${d.date}')">
+          <div class="ov-date">📅 ${escapeHtml(d.date)}</div>
+          <div class="ov-row">
+            <div class="ov-pending"><b>${d.pending}</b>รอตรวจ</div>
+            <div class="ov-appr"><b>${d.approved}</b>อนุมัติ</div>
+            <div class="ov-rej"><b>${d.rejected}</b>ปฏิเสธ</div>
+            <div><b>${d.total}</b>ทั้งหมด</div>
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  box.innerHTML = html;
+}
+
+/** บอกว่าวันที่เลือกโหลดข้อมูลมาแล้วกี่โซน */
+function updateDateStatus(){
+  const el = document.getElementById("dateStatus");
+  if (!el) return;
+
+  if (!workDate){ el.innerText = ""; el.className = "date-status"; return; }
+
+  const n = ALL_ZONES.filter(z => zoneSNCache[workDate + "|" + z]).length;
+  el.innerText = n ? `✓ ${n} โซน` : "ยังไม่โหลด";
+  el.className = "date-status" + (n ? " loaded" : "");
+}
+
 function updateStats(){
+  const rows = workDate
+    ? allReports.filter(r => fmtDate(r.reportDate) === workDate)
+    : allReports;
+
   const c = { pending:0, approved:0, rejected:0 };
-  allReports.forEach(r => c[normalizeStatus(r.status)]++);
+  rows.forEach(r => c[normalizeStatus(r.status)]++);
   document.getElementById("statPending").innerText  = c.pending;
   document.getElementById("statApproved").innerText = c.approved;
   document.getElementById("statRejected").innerText = c.rejected;
-  document.getElementById("statTotal").innerText    = allReports.length;
+  document.getElementById("statTotal").innerText    = rows.length;
 }
 
 function setFilter(f, el){
@@ -456,8 +917,10 @@ function setFilter(f, el){
 // 🧱 Grouping
 // ==========================================================
 function getFilteredRows(){
-  return allReports.filter(r =>
-    currentFilter === "all" || normalizeStatus(r.status) === currentFilter);
+  return allReports.filter(r => {
+    if (workDate && fmtDate(r.reportDate) !== workDate) return false;   // ทำทีละวัน
+    return currentFilter === "all" || normalizeStatus(r.status) === currentFilter;
+  });
 }
 
 function buildGroups(rows){
@@ -473,21 +936,228 @@ function buildGroups(rows){
     a.date === b.date ? a.code.localeCompare(b.code) : b.date.localeCompare(a.date));
 }
 
+/* ==========================================================
+   🔍 ค้นหา Code / RC
+   1 RC มีได้หลาย Code และ 1 Code มีได้หลาย RC
+   ========================================================== */
+function onAdminSearch(v){
+  searchQuery = String(v || "").trim().toLowerCase();
+
+  // คั่นด้วย , ; | เว้นวรรค หรือขึ้นบรรทัดใหม่ ก็ได้หมด
+  searchTerms = searchQuery.split(/[\s,;|]+/).filter(Boolean);
+
+  const box = document.getElementById("adminSearch");
+  if (box && box.value !== v) box.value = v;
+
+  const clr = document.getElementById("clearSearchBtn");
+  if (clr) clr.style.display = searchQuery ? "block" : "none";
+
+  selectedKey = null;      // ผลลัพธ์เปลี่ยน ให้เลือกตัวแรกของผลใหม่
+  renderAll();
+}
+
+/** RC ทั้งหมดของกลุ่ม — จากรายงาน + จากข้อมูล SN ที่โหลดไว้แล้ว */
+function groupRCs(g){
+  const set = new Set();
+
+  g.items.forEach(it => {
+    const rc = String(it.rc || "").trim();
+    if (rc) set.add(rc.toLowerCase());
+  });
+
+  const mainzone = String(g.zone || "").trim().charAt(0).toUpperCase();
+  const data = zoneSNCache[g.date + "|" + mainzone];
+  if (data){
+    const target = cleanCode(g.code);
+    Object.values(data).forEach(sn => {
+      if (cleanCode(sn.code) !== target) return;
+      const rc = String(sn.rc || "").trim();
+      if (rc) set.add(rc.toLowerCase());
+    });
+  }
+
+  return set;
+}
+
+/** ตรงกับคำค้นตัวใดตัวหนึ่งก็พอ (OR) */
+function matchGroup(g){
+  if (!searchTerms.length) return true;
+
+  const code = String(g.code || "").toLowerCase();
+  if (searchTerms.some(t => code.includes(t))) return true;
+
+  const rcs = groupRCs(g);
+  for (const rc of rcs){
+    if (searchTerms.some(t => rc.includes(t))) return true;
+  }
+  return false;
+}
+
+/** RC ของกลุ่มที่ตรงกับคำค้น */
+function matchedRCs(g){
+  if (!searchTerms.length) return [];
+  return [...groupRCs(g)].filter(rc => searchTerms.some(t => rc.includes(t)));
+}
+
+/** ดึง SN ทุกโซนของทุกวันที่มีรายงาน เพื่อให้ค้น RC ได้ครบ */
+async function loadAllZoneData(){
+  if (!workDate){
+    showToast("เลือกวันที่ก่อน", "warn");
+    return;
+  }
+
+  // โหลดทุกโซนของวันที่เลือก — ไม่อิงว่ามีรายงานไหม จะได้ค้น RC ของวันไหนก็ได้
+  const need = ALL_ZONES
+    .map(z => workDate + "|" + z)
+    .filter(k => !zoneSNCache[k]);
+
+  if (!need.length){
+    showToast(`ข้อมูลของ ${workDate} ครบแล้ว ค้น RC ได้ทุกตัว`, "ok");
+    return;
+  }
+
+  showBusy(`กำลังดึงข้อมูล SN ของ ${workDate}`, ["เตรียมรายการโซนที่ต้องโหลด..."]);
+  let done = 0, failed = 0;
+
+  for (const key of need){
+    const parts = key.split("|");
+    document.getElementById("busyStep").innerText =
+      `โซน ${parts[1]} วันที่ ${parts[0]}  (${done + failed + 1}/${need.length})`;
+    try {
+      const res = await callGAS("getZoneDataMerged", { date: parts[0], mainzone: parts[1] });
+      zoneSNCache[key] = (res && res.sn) || {};
+      storeFifoNames_(key, res);
+      done++;
+    } catch (e){ failed++; }
+  }
+
+  hideBusy();
+  updateDateStatus();
+  renderAll();
+  showToast(failed ? `โหลดสำเร็จ ${done} · ล้มเหลว ${failed}` : `โหลด ${workDate} ครบแล้ว ${done} โซน`,
+            failed ? "warn" : "ok");
+}
+
+/**
+ * รวมรายชื่อ Code = ที่ถูก Report + ที่มีใน SN Lite แต่ยังไม่ถูก Report
+ * ตัวหลังจะโผล่ต่อเมื่อโหลดข้อมูลโซนแล้ว (กดปุ่ม "ค้น RC ให้ครบ")
+ */
+function buildAllGroups(){
+  const reported = (currentFilter === "unreported")
+    ? []
+    : buildGroups(getFilteredRows());
+
+  reported.forEach(g => {
+    g.reported = true;
+    const info = lookupCodeInfo(g.date, g.zone, g.code);
+    g.name = info ? info.name : "";
+  });
+
+  const out = reported.slice();
+
+  if (currentFilter === "all" || currentFilter === "unreported"){
+    // Code ที่มีรายงานอยู่แล้ว (ทุกสถานะ) ไม่ต้องใส่ซ้ำ
+    const seen = new Set(
+      buildGroups(allReports).map(g => g.date + "||" + cleanCode(g.code))
+    );
+
+    Object.keys(zoneFifoCache).forEach(key => {
+      const date = key.split("|")[0];
+      if (date !== workDate) return;          // เอาแค่วันที่เลือกในช่องค้นหา
+
+      const map = zoneFifoCache[key];
+      Object.keys(map).forEach(cc => {
+        if (seen.has(date + "||" + cc)) return;
+
+        const info = map[cc];
+        if (!(Number(info.notfifo) > 0)) return;   // เอาแค่ Code ที่ติด FIFO
+
+        out.push({
+          key: date + "||" + info.code,
+          date: date,
+          code: info.code,
+          name: info.name,
+          zone: info.zone,
+          items: [],
+          reported: false
+        });
+      });
+    });
+  }
+
+  // ถูก Report ขึ้นก่อน แล้วเรียงวันที่ใหม่→เก่า และ Code A→Z
+  return out.sort((a, b) => {
+    if (a.reported !== b.reported) return a.reported ? -1 : 1;
+    if (a.date !== b.date) return String(b.date).localeCompare(String(a.date));
+    return String(a.code).localeCompare(String(b.code));
+  });
+}
+
 function currentGroup(){
-  return buildGroups(getFilteredRows()).find(g => g.key === selectedKey) || null;
+  return buildAllGroups().filter(matchGroup)
+           .find(g => g.key === selectedKey) || null;
 }
 
 // ==========================================================
 // 🎨 Render
 // ==========================================================
+function renderGlobalExtraBar(){
+  const bar = document.getElementById("globalExtraBar");
+  if (!bar) return;
+
+  if (!extraSelection.size){ bar.style.display = "none"; return; }
+
+  const gx = groupExtras();
+  const codes = gx.slice(0, 4).map(x => `${x.code} (${x.sns.length})`).join(" · ")
+              + (gx.length > 4 ? ` · +${gx.length - 4} Code` : ``);
+
+  bar.style.display = "flex";
+  bar.innerHTML = `
+    <span>🗑️ เลือกไว้ ${extraSelection.size} SN จาก ${gx.length} Code</span>
+    <span class="ge-codes">📅 ${escapeHtml(selectionDate() || "")}</span>
+    <span class="ge-codes">${escapeHtml(codes)}</span>
+    <button class="btn btn-sm btn-light fw-bold ms-auto" onclick="clearExtra()">ล้าง</button>
+    <button class="btn btn-sm btn-danger fw-bold" onclick="askExtraDelete()">ลบทั้งหมดทีเดียว</button>`;
+}
+
 function renderAll(){
-  const groups = buildGroups(getFilteredRows());
+  renderDateBar();
+  updateStats();
+
+  const overview  = document.getElementById("dateOverview");
+  const workspace = document.getElementById("workspace");
+  const filterBar = document.getElementById("filterBar");
+  const searchRow = document.getElementById("searchRow");
+
+  // ยังไม่เลือกวัน → โชว์ภาพรวมทุกวัน ซ่อนส่วนทำงานทั้งหมด
+  if (!workDate){
+    renderDateOverview();
+    overview.style.display  = "block";
+    workspace.style.display = "none";
+    filterBar.style.display = "none";
+    searchRow.style.display = "none";
+    document.getElementById("globalExtraBar").style.display = "none";
+    return;
+  }
+
+  overview.style.display  = "none";
+  workspace.style.display = "";
+  filterBar.style.display = "";
+  searchRow.style.display = "";
+  updateDateStatus();
+
+  renderGlobalExtraBar();
+  const groups = buildAllGroups().filter(matchGroup);
   const listEl = document.getElementById("codeList");
   const detailEl = document.getElementById("codeDetail");
 
   if (!groups.length){
-    listEl.innerHTML = `<div class="state-box"><span class="icon">📭</span>
-      ไม่มีรายการในหมวด "${STATUS_LABEL[currentFilter] || "ทั้งหมด"}"</div>`;
+    listEl.innerHTML = searchTerms.length
+      ? `<div class="state-box"><span class="icon">🔍</span>
+           ไม่พบ Code หรือ RC ที่ตรงกับ ${searchTerms.map(t => `"${escapeHtml(t)}"`).join(" หรือ ")}<br>
+           <span style="font-size:13px;">ถ้าค้นด้วย RC เลือกวันที่แล้วกด "ค้น RC ให้ครบ" ก่อน</span></div>`
+      : `<div class="state-box"><span class="icon">📭</span>
+           ไม่มีรายการในหมวด "${STATUS_LABEL[currentFilter] || "ทั้งหมด"}"</div>`;
     detailEl.innerHTML = "";
     closeDetailModal();
     return;
@@ -497,18 +1167,34 @@ function renderAll(){
   if (mqDesktop.matches && !groups.some(g => g.key === selectedKey)) selectedKey = groups[0].key;
 
   // ----- Code list -----
-  let html = "", lastDate = null;
+  let html = "", lastReported = null;
   groups.forEach(g => {
-    if (g.date !== lastDate){
-      html += `<div class="side-date">📅 ${escapeHtml(g.date)}</div>`;
-      lastDate = g.date;
+    if (g.reported !== lastReported){
+      html += `<div class="side-split">${g.reported ? "📢 ถูก Report แล้ว" : "📦 ยังไม่ถูก Report"}</div>`;
+      lastReported = g.reported;
     }
     const pendingCount = g.items.filter(r => normalizeStatus(r.status) === "pending").length;
+    // ถ้าค้นด้วย RC ให้บอกว่าเจอที่ RC ไหน
+    let rcHint = "";
+    if (searchTerms.length){
+      const hit = matchedRCs(g);
+      rcHint = hit.slice(0, 3).map(rc => `<span class="rc-tag">${escapeHtml(rc.toUpperCase())}</span>`).join("")
+             + (hit.length > 3 ? `<span class="rc-tag">+${hit.length - 3}</span>` : ``);
+    }
+
     html += `
-      <div class="side-item ${g.key === selectedKey ? "active" : ""}" onclick="selectCode('${escapeAttr(g.key)}')">
-        <span class="code">${escapeHtml(g.code)}</span>
-        <span class="zone-tag">${escapeHtml(g.zone)}</span>
-        <span class="side-count ${pendingCount ? "has-pending" : ""}">${pendingCount || g.items.length}</span>
+      <div class="side-item ${g.key === selectedKey ? "active" : ""} ${g.reported ? "" : "not-reported"}"
+           onclick="selectCode('${escapeAttr(g.key)}')">
+        <div class="side-main">
+          <div class="side-top">
+            <span class="code">${escapeHtml(g.code)}</span>${rcHint}
+            <span class="zone-tag">${escapeHtml(g.zone)}</span>
+          </div>
+          ${g.name ? `<div class="side-name">${escapeHtml(g.name)}</div>` : ``}
+        </div>
+        ${g.reported
+          ? `<span class="side-count ${pendingCount ? "has-pending" : ""}">${pendingCount || g.items.length}</span>`
+          : `<span class="side-count none">—</span>`}
         <span class="chev">›</span>
       </div>`;
   });
@@ -517,15 +1203,25 @@ function renderAll(){
   // ----- Detail -----
   const g = groups.find(x => x.key === selectedKey);
   if (mqDesktop.matches){
-    detailEl.innerHTML = g ? buildDetail(g) : "";
+    if (g) paintDetail(g); else detailEl.innerHTML = "";
   } else if (isDetailModalOpen()){
-    if (g) document.getElementById("detailModalBody").innerHTML = buildDetail(g);
-    else closeDetailModal();
+    if (g) paintDetail(g); else closeDetailModal();
   }
 }
 
+// วาด detail ลงที่ที่ถูกต้อง แล้วโหลด SN ทั้งหมดของ Code ตามมา
+function paintDetail(g){
+  const el = mqDesktop.matches
+    ? document.getElementById("codeDetail")
+    : document.getElementById("detailModalBody");
+  if (!el) return;
+  el.innerHTML = buildDetail(g);
+  loadAllSN(g);
+}
+
 function buildDetail(g){
-  const pendingItems = g.items.filter(r => normalizeStatus(r.status) === "pending");
+  const pendingItems = g.items.filter(isApprovable);
+  const codeLevelPending = g.items.filter(r => isCodeLevel(r) && normalizeStatus(r.status) === "pending");
   const checkedHere  = g.items.filter(r => checkedRows.has(r.rowIndex)).length;
   const allChecked   = pendingItems.length > 0 && checkedHere === pendingItems.length;
 
@@ -536,6 +1232,7 @@ function buildDetail(g){
                style="width:18px;height:18px;">
         เลือกทั้งหมดที่รอตรวจ (${pendingItems.length})
       </label>
+      ${codeLevelPending.length ? `<span class="code-level-warn">⚠️ มีรายงานระดับ Code ${codeLevelPending.length} รายการ ที่อนุมัติไม่ได้</span>` : ``}
       ${checkedHere ? `
         <span class="ms-auto">เลือกไว้ ${checkedHere}</span>
         <button class="btn btn-success btn-sm" onclick="askBulk('Approved')">✅ อนุมัติที่เลือก</button>
@@ -546,39 +1243,397 @@ function buildDetail(g){
   return `
     <div class="detail-head">
       <h2>🏷️ ${escapeHtml(g.code)} <span class="zone-tag">Zone ${escapeHtml(g.zone)}</span></h2>
-      <div class="detail-sub">📅 ${escapeHtml(g.date)} · SN ที่ถูก Report ${g.items.length} รายการ · รอตรวจ ${pendingItems.length}</div>
+      ${g.name ? `<div class="detail-name">${escapeHtml(g.name)}</div>` : ``}
+      <div class="detail-sub">📅 ${escapeHtml(g.date)} · ${
+        g.items.length
+          ? `SN ที่ถูก Report ${g.items.length} รายการ · รอตรวจ ${pendingItems.length}`
+          : `ยังไม่ถูก Report — เลือก SN ด้านล่างได้ แต่ต้องมีรายงานรอตรวจถึงจะลบได้`
+      }</div>
       ${bulkBar}
     </div>
     <div class="table-scroll">
       <table class="sn-table">
         <thead><tr>
           <th class="col-chk"></th>
-          <th>SN</th><th>RC</th><th>อายุ</th><th>เหตุผล</th>
+          <th>ประเภท</th><th>SN</th><th>RC</th><th>อายุ</th><th>เหตุผล</th>
           <th>แจ้งเมื่อ</th><th>สถานะ</th><th class="col-act">จัดการ</th>
         </tr></thead>
         <tbody>${g.items.map(buildRow).join("")}</tbody>
       </table>
+
+      <div class="all-sn-box" id="allSNBox">
+        <div class="all-sn-head">
+          <span>📦 SN ทั้งหมดของ Code นี้</span>
+          <span id="allSNSummary" class="all-sn-summary">กำลังโหลด...</span>
+        </div>
+        <div id="allSNBody" class="all-sn-body">
+          <div class="all-sn-state">⏳ กำลังดึงข้อมูล SN ของวันที่ ${escapeHtml(g.date)}...</div>
+        </div>
+      </div>
     </div>`;
 }
+
+// ==========================================================
+// 📦 SN ทั้งหมดของ Code (ดึงจากข้อมูล FIFO ของวันนั้น)
+// ==========================================================
+const zoneSNCache = {};        // "วันที่|โซน" -> snIndexMap
+const zoneFifoCache = {};      // "วันที่|โซน" -> { codeClean: {code, name, zone} }
+let allSNShowOnlyReported = false;
+// SN ที่เลือกไว้ลบ — คงอยู่ข้าม Code เพื่อรวบลบทีเดียว (ลบ+คำนวณใหม่ช้า)
+// key = "วันที่|Code|SN"  value = { date, code, zone, sn }
+let extraSelection = new Map();
+let searchQuery = "";             // ค้นหา Code / RC (ใส่หลายตัวได้)
+let searchTerms = [];             // คำค้นที่แตกแล้ว
+let workDate = null;            // วันที่ทำงาน — null = หน้าภาพรวมทุกวัน
+const ALL_ZONES = ["A","B","C","D","E","J"];
+
+function cleanCode(c){ return String(c || "").replace(/\s+/g, "").toUpperCase(); }
+
+/** เก็บชื่อ Code จาก FIFO Lite ไว้โชว์ในลิสต์ */
+function storeFifoNames_(key, result){
+  const list = (result && result.fifo) || [];
+  const map = zoneFifoCache[key] = zoneFifoCache[key] || {};
+  list.forEach(f => {
+    map[cleanCode(f.code)] = {
+      code: String(f.code).trim(),
+      name: f.name || "",
+      zone: f.zone || "",
+      notfifo: Number(f.notfifo) || 0
+    };
+  });
+}
+
+function lookupCodeInfo(date, zone, code){
+  const key = date + "|" + String(zone || "").trim().charAt(0).toUpperCase();
+  const map = zoneFifoCache[key];
+  return (map && map[cleanCode(code)]) || null;
+}
+
+async function loadAllSN(g){
+  const body = document.getElementById("allSNBody");
+  const sum  = document.getElementById("allSNSummary");
+  if (!body) return;
+
+  const mainzone = String(g.zone || "").trim().charAt(0).toUpperCase();
+  if (!mainzone || !g.date || g.date === "ไม่ระบุวันที่"){
+    body.innerHTML = `<div class="all-sn-state">ไม่มีวันที่หรือโซนพอจะดึงข้อมูล SN ได้</div>`;
+    if (sum) sum.innerText = "";
+    return;
+  }
+
+  const cacheKey = g.date + "|" + mainzone;
+  try {
+    if (!zoneSNCache[cacheKey]){
+      const result = await callGAS("getZoneDataMerged", { date: g.date, mainzone: mainzone });
+      zoneSNCache[cacheKey] = (result && result.sn) || {};
+      storeFifoNames_(cacheKey, result);
+    }
+
+    // ผู้ใช้อาจกดไป Code อื่นระหว่างรอโหลด
+    if (!currentGroup() || currentGroup().key !== g.key) return;
+
+    const target = cleanCode(g.code);
+    const list = Object.values(zoneSNCache[cacheKey]).filter(s => cleanCode(s.code) === target);
+    list.sort((a, b) => (Number(b.day) || 0) - (Number(a.day) || 0));
+
+    renderAllSN(g, list);
+  } catch (err){
+    body.innerHTML = `<div class="all-sn-state">
+        โหลดรายการ SN ไม่สำเร็จ — ${escapeHtml(err.message)}<br>
+        <button class="btn btn-sm btn-outline-primary mt-2 fw-bold" onclick="retryAllSN()">ลองใหม่</button>
+      </div>`;
+    if (sum) sum.innerText = "";
+  }
+}
+
+function retryAllSN(){
+  const g = currentGroup();
+  if (g) loadAllSN(g);
+}
+
+// สร้างชุดอ้างอิงว่า SN / RC ไหนถูก Report มาบ้าง
+function buildReportedIndex(g){
+  const bySN = new Map();     // sn -> report item
+  const byRC = new Map();     // rc -> report item
+  let wholeCode = null;
+
+  g.items.forEach(it => {
+    const type = String(it.type || "SN").toUpperCase();
+    if (type === "CODE") { wholeCode = it; return; }
+    if (type === "RC" || (!it.sn && it.rc)) { byRC.set(String(it.rc), it); return; }
+    if (it.sn) bySN.set(String(it.sn), it);
+  });
+
+  return { bySN, byRC, wholeCode };
+}
+
+function toggleAllSNFilter(){
+  allSNShowOnlyReported = !allSNShowOnlyReported;
+  retryAllSN();
+}
+
+function renderAllSN(g, list){
+  const body = document.getElementById("allSNBody");
+  const sum  = document.getElementById("allSNSummary");
+  if (!body) return;
+
+  if (!list.length){
+    body.innerHTML = `<div class="all-sn-state">ไม่พบ SN ของ Code นี้ในข้อมูลวันที่ ${escapeHtml(g.date)}</div>`;
+    if (sum) sum.innerText = "";
+    return;
+  }
+
+  const idx = buildReportedIndex(g);
+
+  // Type=CODE คือแจ้งที่ระดับ Code โดยไม่ระบุ SN — ไม่นับว่า SN ทุกตัวถูกแจ้ง
+  const isReported = (s) =>
+    idx.bySN.has(String(s.sn)) || idx.byRC.has(String(s.rc || ""));
+  const reportOf = (s) =>
+    idx.bySN.get(String(s.sn)) || idx.byRC.get(String(s.rc || "")) || null;
+
+  const reportedCount = list.filter(isReported).length;
+  if (sum){
+    sum.innerHTML = reportedCount
+      ? `ระบุ SN มา <b>${reportedCount}</b> จาก <b>${list.length}</b> SN`
+      : `ทั้งหมด <b>${list.length}</b> SN`;
+  }
+
+  // จัดกลุ่มตาม RC เรียงตามอายุมาก → น้อย
+  const groups = new Map();
+  list.forEach(s => {
+    const rc = s.rc || "ไม่ระบุ RC";
+    if (!groups.has(rc)) groups.set(rc, []);
+    groups.get(rc).push(s);
+  });
+
+  const ordered = [...groups.entries()].sort((a, b) =>
+    (Number(b[1][0].day) || 0) - (Number(a[1][0].day) || 0));
+
+  let html = "";
+
+  // นับเฉพาะของ Code นี้ ส่วนยอดรวมข้าม Code อยู่บนแถบลอยด้านบน
+  const hereCount = list.filter(s => extraSelection.has(extraKey(g, s.sn))).length;
+  if (hereCount || extraSelection.size){
+    html += `<div class="extra-bar">
+        <span>🗑️ Code นี้ ${hereCount} SN · รวมทุก Code ${extraSelection.size} SN</span>
+        <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="clearExtra()">ล้าง</button>
+        <button class="btn btn-sm btn-danger fw-bold" onclick="askExtraDelete()">ลบ SN ที่เลือก</button>
+      </div>`;
+  }
+
+  if (idx.wholeCode){
+    html += `<div class="whole-code-note">
+        📢 มีรายงานระดับ Code (ไม่ระบุ SN) — ต้องประเมินจากภาพรวมด้านล่างเอง
+        ${idx.wholeCode.reason ? `<div class="wc-reason">เหตุผล: ${escapeHtml(idx.wholeCode.reason)}`
+          + `${idx.wholeCode.note ? ` · ${escapeHtml(idx.wholeCode.note)}` : ``}</div>` : ``}
+      </div>`;
+  }
+
+  if (reportedCount){
+    html += `<div class="all-sn-toolbar">
+        <button class="btn btn-sm ${allSNShowOnlyReported ? "btn-primary" : "btn-outline-secondary"} fw-bold"
+                onclick="toggleAllSNFilter()">
+          ${allSNShowOnlyReported ? "กำลังแสดงเฉพาะที่ถูก Report" : "แสดงทั้งหมด"}
+        </button>
+      </div>`;
+  } else {
+    allSNShowOnlyReported = false;   // ไม่มีอะไรให้กรอง อย่าให้ค้างโหมดกรองจนจอว่าง
+  }
+
+  ordered.forEach(([rc, items]) => {
+    const rcReported = idx.byRC.has(String(rc));
+    const hitCount = items.filter(isReported).length;
+    const shown = allSNShowOnlyReported ? items.filter(isReported) : items;
+    if (!shown.length) return;
+
+    const rcLower = String(rc).toLowerCase();
+    const rcMatch  = searchTerms.some(t => rcLower.includes(t));
+    html += `<div class="rc-block ${rcReported ? "rc-block-hit" : ""} ${rcMatch ? "rc-block-match" : ""}">
+      <div class="rc-block-head">
+        <span>📦 ${escapeHtml(rc)}</span>
+        <span class="rc-age">อายุ ${escapeHtml(items[0].day)} วัน · ${items.length} SN</span>
+        ${rcReported ? `<span class="rc-flag">Report ทั้ง RC</span>`
+                     : (hitCount ? `<span class="rc-flag partial">Report ${hitCount}</span>` : ``)}
+        <button class="rc-pick ${items.every(x => extraSelection.has(extraKey(g, x.sn))) ? "on" : ""}"
+                onclick="toggleExtraRC('${escapeAttr(rc)}')">เลือกทั้ง RC</button>
+      </div>
+      <div class="sn-chips">`;
+
+    shown.forEach(s => {
+      const rep  = isReported(s);
+      const item = rep ? reportOf(s) : null;
+      const st   = item ? normalizeStatus(item.status) : "";
+      const sale = String(s.status || "").trim().toUpperCase() === "SALE";
+      const sel  = extraSelection.has(extraKey(g, s.sn));
+      const title = item ? `${item.reason || ""} ${item.note || ""}`.trim() : "แตะเพื่อเลือกลบ";
+
+      html += `<span class="sn-chip ${sale ? "is-sale" : ""} ${rep ? "hit st-" + st : ""} ${sel ? "sel" : ""}"
+            title="${escapeHtml(title)}"
+            onclick="toggleExtra('${escapeAttr(s.sn)}')">
+          ${escapeHtml(s.sn)}
+          <i class="sn-chip-meta">${escapeHtml(s.status || "")}</i>
+        </span>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  body.innerHTML = html;
+}
+
+/* ==========================================================
+   🗑️ เลือก SN ลบเพิ่มเอง — ใช้ได้กับรายงานทุกประเภท (SN / RC / CODE)
+   ========================================================== */
+function extraKey(g, sn){ return g.date + "|" + cleanCode(g.code) + "|" + String(sn); }
+
+/** วันที่ของรายการที่เลือกไว้ (ล็อกไว้วันเดียว) */
+function selectionDate(){
+  const first = extraSelection.values().next();
+  return first.done ? null : first.value.date;
+}
+
+/**
+ * ลบข้ามวันไม่ได้ เพราะแต่ละวันอยู่คนละ Spreadsheet
+ * และการคำนวณ FIFO ใหม่ต้องจบทีละวัน
+ */
+function canSelectDate(date){
+  const cur = selectionDate();
+  if (!cur || cur === date) return true;
+  showToast(`เลือกได้ทีละวัน — ตอนนี้เลือกของ ${cur} อยู่ ต้องลบหรือล้างก่อน`, "warn");
+  return false;
+}
+
+/** SN ของ Code ที่เปิดอยู่ ถูกเลือกไว้ไหม */
+function isExtraSelected(sn){
+  const g = currentGroup();
+  return g ? extraSelection.has(extraKey(g, sn)) : false;
+}
+
+function toggleExtra(sn){
+  const g = currentGroup();
+  if (!g) return;
+
+  const k = extraKey(g, sn);
+  if (!extraSelection.has(k) && !canSelectDate(g.date)) return;
+
+  if (extraSelection.has(k)) extraSelection.delete(k);
+  else extraSelection.set(k, { date:g.date, code:g.code, zone:g.zone, sn:String(sn) });
+  afterExtraChange();
+}
+
+/** เลือก/ยกเลิกแล้วต้องวาดใหม่ 2 ที่ — ตาราง SN และแถบปุ่มลบด้านบน */
+function afterExtraChange(){
+  renderGlobalExtraBar();
+  retryAllSN();
+}
+
+function toggleExtraRC(rc){
+  const g = currentGroup();
+  if (!g) return;
+
+  const list = currentSNList().filter(s => String(s.rc || "ไม่ระบุ RC") === String(rc));
+  const already = list.length > 0 && list.every(s => extraSelection.has(extraKey(g, s.sn)));
+  if (!already && !canSelectDate(g.date)) return;
+  const all = already;
+
+  list.forEach(s => {
+    const k = extraKey(g, s.sn);
+    if (all) extraSelection.delete(k);
+    else extraSelection.set(k, { date:g.date, code:g.code, zone:g.zone, sn:String(s.sn) });
+  });
+  afterExtraChange();
+}
+
+function clearExtra(){
+  extraSelection.clear();
+  afterExtraChange();
+}
+
+/** จัดกลุ่มที่เลือกไว้ตาม วันที่+Code */
+function groupExtras(){
+  const map = new Map();
+  extraSelection.forEach(v => {
+    const k = v.date + "||" + v.code;
+    if (!map.has(k)) map.set(k, { date:v.date, code:v.code, zone:v.zone, sns:[] });
+    map.get(k).sns.push(v.sn);
+  });
+  return [...map.values()];
+}
+
+/** SN ของ Code ที่เปิดอยู่ (จาก cache ที่โหลดไว้แล้ว) */
+function currentSNList(){
+  const g = currentGroup();
+  if (!g) return [];
+  const mainzone = String(g.zone || "").trim().charAt(0).toUpperCase();
+  const data = zoneSNCache[g.date + "|" + mainzone];
+  if (!data) return [];
+  const target = cleanCode(g.code);
+  return Object.values(data).filter(s => cleanCode(s.code) === target);
+}
+
+/**
+ * ผูกการลบเข้ากับรายงานที่รอตรวจในกลุ่มนี้
+ * เลือกรายงานระดับ Code ก่อน เพราะเป็นเคสที่ต้องให้ admin ระบุ SN เองอยู่แล้ว
+ */
+/**
+ * ลบ SN ที่เลือกไว้ทั้งหมด — ข้าม Code และข้ามวันที่ได้ ยิงครั้งเดียว
+ * Code ที่มีรายงานรอตรวจ → ผูกกับรายงานนั้น (รายงานจะถูก APPROVED ไปด้วย)
+ * Code ที่ไม่มีรายงาน    → ส่งเป็น manual ลบอย่างเดียว ไม่แตะสถานะใคร
+ */
+function askExtraDelete(){
+  if (!extraSelection.size) return;
+
+  const groups = buildAllGroups();
+  const extras = [], manual = [];
+
+  groupExtras().forEach(x => {
+    const g = groups.find(gg => gg.date === x.date && cleanCode(gg.code) === cleanCode(x.code));
+    const pending = g ? g.items.filter(r => normalizeStatus(r.status) === "pending") : [];
+
+    if (pending.length){
+      const target = pending.find(isCodeLevel) || pending[0];
+      extras.push({ rowIndex: target.rowIndex, sns: x.sns });
+    } else {
+      manual.push({ date: x.date, code: x.code, sns: x.sns });
+    }
+  });
+
+  const codeCount = extras.length + manual.length;
+  const label = `${extraSelection.size} SN จาก ${codeCount} Code`
+    + (extras.length ? ` · ผูกกับรายงาน ${extras.length} Code` : ``)
+    + (manual.length ? ` · ไม่มีรายงาน ${manual.length} Code` : ``);
+
+  openConfirm([], "Approved", label, extras, manual);
+}
+
 
 function buildRow(r){
   const st = normalizeStatus(r.status);
   const isPending = st === "pending";
   const checked = checkedRows.has(r.rowIndex);
 
-  const chk = isPending
+  const codeLevel = isCodeLevel(r);
+
+  const chk = (isPending && !codeLevel)
     ? `<input type="checkbox" ${checked ? "checked" : ""} onchange="toggleRow(${r.rowIndex}, this.checked)">`
     : "";
 
-  const act = isPending
-    ? `<button class="btn btn-success btn-sm" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ <span class="d-lg-none">อนุมัติ</span></button>
-       <button class="btn btn-danger btn-sm"  onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌ <span class="d-lg-none">ปฏิเสธ</span></button>`
-    : `<span class="text-muted" style="font-size:13px;">${escapeHtml(fmtDateTime(r.approvedAt))}</span>`;
+  let act;
+  if (!isPending){
+    act = `<span class="text-muted" style="font-size:13px;">${escapeHtml(fmtDateTime(r.approvedAt))}</span>`;
+  } else if (codeLevel){
+    act = `<div class="blocked-note">อนุมัติไม่ได้<br><small>ไม่ระบุ SN</small></div>
+           <button class="btn btn-danger btn-sm mt-1" onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.code)}')">❌ <span class="d-lg-none">ปฏิเสธ</span></button>`;
+  } else {
+    act = `<button class="btn btn-success btn-sm" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ <span class="d-lg-none">อนุมัติ</span></button>
+           <button class="btn btn-danger btn-sm"  onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌ <span class="d-lg-none">ปฏิเสธ</span></button>`;
+  }
 
   return `
     <tr class="st-${st} ${checked ? "is-selected" : ""}">
       <td class="col-chk">${chk}</td>
-      <td class="col-sn">${escapeHtml(r.sn || "-")}</td>
+      <td data-label="ประเภท:"><span class="type-tag type-${String(r.type || "SN").toLowerCase()}">${escapeHtml(r.type || "SN")}</span></td>
+      <td class="col-sn">${escapeHtml(r.sn || (r.type === "RC" ? "— ทั้ง RC —" : "— ไม่ระบุ SN —"))}</td>
       <td data-label="RC:">${escapeHtml(r.rc || "-")}</td>
       <td data-label="อายุ:">${r.age !== "" && r.age != null ? escapeHtml(r.age) : "-"}</td>
       <td data-label="เหตุผล:">${escapeHtml(r.reason || "-")}
@@ -603,8 +1658,8 @@ function selectCode(key){
   } else {
     const g = currentGroup();
     if (!g) return;
-    document.getElementById("detailModalBody").innerHTML = buildDetail(g);
     getDetailModal().show();
+    paintDetail(g);
     renderAll();
   }
 }
@@ -612,9 +1667,7 @@ function selectCode(key){
 function refreshDetail(){
   const g = currentGroup();
   if (!g) return;
-  const html = buildDetail(g);
-  if (mqDesktop.matches) document.getElementById("codeDetail").innerHTML = html;
-  else if (isDetailModalOpen()) document.getElementById("detailModalBody").innerHTML = html;
+  paintDetail(g);
 }
 
 function toggleRow(rowIndex, on){
@@ -625,7 +1678,7 @@ function toggleRow(rowIndex, on){
 function toggleAll(on){
   const g = currentGroup();
   if (!g) return;
-  g.items.filter(r => normalizeStatus(r.status) === "pending")
+  g.items.filter(isApprovable)
          .forEach(r => on ? checkedRows.add(r.rowIndex) : checkedRows.delete(r.rowIndex));
   refreshDetail();
 }
@@ -633,14 +1686,23 @@ function toggleAll(on){
 // ==========================================================
 // ✅ Approve / Reject
 // ==========================================================
-function openConfirm(rowIndexes, status, label){
-  pendingDecision = { rowIndexes, status };
+function openConfirm(rowIndexes, status, label, extras, manual){
+  extras = extras || [];
+  manual = manual || [];
+  pendingDecision = { rowIndexes, status, extras, manual };
   const isApprove = status === "Approved";
 
-  document.getElementById("confirmTitle").innerText =
-    isApprove ? `อนุมัติ ${rowIndexes.length} รายการ?` : `ปฏิเสธ ${rowIndexes.length} รายการ?`;
+  const extraCount = extras.concat(manual).reduce((a, e) => a + (e.sns || []).length, 0);
+  const n = rowIndexes.length;
+
+  document.getElementById("confirmTitle").innerText = isApprove
+    ? (extraCount ? `ลบ ${extraCount} SN ที่เลือก?` : `อนุมัติ ${n} รายการ?`)
+    : `ปฏิเสธ ${n} รายการ?`;
   document.getElementById("confirmSN").innerText = label;
   document.getElementById("adminComment").value = "";
+
+  const warn = document.getElementById("approveWarn");
+  if (warn) warn.style.display = isApprove ? "block" : "none";
 
   const btn = document.getElementById("confirmBtn");
   btn.className = "btn flex-fill fw-bold " + (isApprove ? "btn-success" : "btn-danger");
@@ -661,36 +1723,244 @@ function askBulk(status){
 
 async function submitDecision(){
   if (!pendingDecision) return;
-  const { rowIndexes, status } = pendingDecision;
+  const { rowIndexes, status, extras, manual } = pendingDecision;
   const comment = document.getElementById("adminComment").value.trim();
 
   const btn = document.getElementById("confirmBtn");
   btn.disabled = true;
 
+  if (status === "Approved") await runApprove(rowIndexes, comment, btn, extras || [], manual || []);
+  else                       await runReject(rowIndexes, comment, btn);
+
+  pendingDecision = null;
+}
+
+
+/* ---------- Loading เต็มจอ ---------- */
+let busyTimer = null, busyStepTimer = null;
+
+function showBusy(title, steps){
+  const ov = document.getElementById("busyOverlay");
+  if (!ov) return;
+
+  document.getElementById("busyTitle").innerText = title;
+  ov.classList.add("show");
+
+  // นับเวลาจริง — งานนี้ใช้เวลาไม่แน่นอน จะได้รู้ว่ายังทำงานอยู่ ไม่ใช่ค้าง
+  let sec = 0;
+  document.getElementById("busyTimer").innerText = "0 วินาที";
+  clearInterval(busyTimer);
+  busyTimer = setInterval(() => {
+    sec++;
+    document.getElementById("busyTimer").innerText = sec + " วินาที";
+  }, 1000);
+
+  // บอกขั้นตอนคร่าวๆ ตามลำดับที่ GAS ทำจริง
+  let i = 0;
+  const stepEl = document.getElementById("busyStep");
+  stepEl.innerText = steps[0] || "";
+  clearInterval(busyStepTimer);
+  busyStepTimer = setInterval(() => {
+    i = Math.min(i + 1, steps.length - 1);
+    stepEl.innerText = steps[i];
+  }, 4000);
+}
+
+function hideBusy(){
+  clearInterval(busyTimer);
+  clearInterval(busyStepTimer);
+  const ov = document.getElementById("busyOverlay");
+  if (ov) ov.classList.remove("show");
+}
+
+
+/* ---------- อนุมัติ = ลบ SN + คำนวณใหม่ ยิงครั้งเดียวทั้งชุด ---------- */
+async function runApprove(rowIndexes, comment, btn, extras, manual){
+  extras = extras || [];
+  manual = manual || [];
+  btn.innerText = "กำลังประมวลผล...";
+  confirmModal.hide();
+
+  showBusy("กำลังลบ SN และคำนวณใหม่", [
+    "กำลังตรวจสอบรายการที่เลือก...",
+    "กำลังลบ SN ออกจาก SN Lite / SN File / SN Return...",
+    "กำลังบันทึกลงชีต SN_Deleted...",
+    "กำลังคำนวณ FIFO ใหม่...",
+    "กำลังอัปเดต DAILY_SUMMARY และ SN_Summary...",
+    "ใกล้เสร็จแล้ว รออีกสักครู่..."
+  ]);
+
+  try {
+    const res = await callGAS("approveSNReports", {
+      rowIndexes: rowIndexes,
+      extras: extras,
+      manual: manual,
+      adminComment: comment
+    });
+
+    const skippedRows = new Set((res.skipped || []).map(x => x.rowIndex));
+    const now = new Date().toISOString();
+
+    // ใช้รายการที่ GAS อนุมัติจริง — รวมรายงานที่ถูกอนุมัติอัตโนมัติเพราะ SN ตรงกัน
+    const touched = (res && res.approvedRows && res.approvedRows.length)
+      ? res.approvedRows
+      : rowIndexes.concat(extras.map(e => e.rowIndex));
+
+    touched.forEach(rowIndex => {
+      if (skippedRows.has(rowIndex)) return;      // ไม่ผ่าน ปล่อยให้ค้างสถานะเดิม
+      const t = allReports.find(r => r.rowIndex === rowIndex);
+      if (t){ t.status = "APPROVED"; t.adminComment = comment; t.approvedAt = now; }
+      checkedRows.delete(rowIndex);
+    });
+
+    // ข้อมูล SN เปลี่ยนแล้ว ต้องดึงใหม่ ไม่งั้นตารางล่างยังโชว์ของเก่า
+    Object.keys(zoneSNCache).forEach(k => delete zoneSNCache[k]);
+    extraSelection.clear();
+
+    hideBusy();
+    updateStats();
+    renderAll();
+    showApproveResult(res);
+
+  } catch (err){
+    hideBusy();
+    btn.disabled = false;
+    btn.innerText = "ยืนยันอนุมัติ";
+    showToast("อนุมัติไม่สำเร็จ: " + err.message, "warn");
+  }
+}
+
+
+/* ---------- ปฏิเสธ = แค่เปลี่ยนสถานะ ไม่แตะข้อมูล ---------- */
+async function runReject(rowIndexes, comment, btn){
   let done = 0, failed = 0;
+  confirmModal.hide();
+  showBusy("กำลังบันทึกการปฏิเสธ", ["กำลังอัปเดตสถานะ..."]);
+
   for (const rowIndex of rowIndexes){
-    btn.innerText = `กำลังบันทึก ${done + failed + 1}/${rowIndexes.length}...`;
+    document.getElementById("busyStep").innerText =
+      `กำลังบันทึก ${done + failed + 1} / ${rowIndexes.length} รายการ`;
     try {
-      await callGAS("updateSNReport", { rowIndex, status, adminComment: comment });
-      const target = allReports.find(r => r.rowIndex === rowIndex);
-      if (target){
-        target.status = status;
-        target.adminComment = comment;
-        target.approvedAt = new Date().toISOString();
+      await callGAS("updateSNReport", { rowIndex, status: "REJECTED", adminComment: comment });
+      const t = allReports.find(r => r.rowIndex === rowIndex);
+      if (t){
+        t.status = "REJECTED";
+        t.adminComment = comment;
+        t.approvedAt = new Date().toISOString();
       }
       checkedRows.delete(rowIndex);
       done++;
     } catch (err){ failed++; }
   }
 
-  confirmModal.hide();
+  hideBusy();
   updateStats();
   renderAll();
   refreshDetail();
-  pendingDecision = null;
 
   if (failed) showToast(`สำเร็จ ${done} · ล้มเหลว ${failed} รายการ`, "warn");
-  else showToast(`${status === "Approved" ? "อนุมัติ" : "ปฏิเสธ"}แล้ว ${done} รายการ`, "ok");
+  else showToast(`ปฏิเสธแล้ว ${done} รายการ`, "ok");
+}
+
+
+/* ---------- สรุปผลหลังอนุมัติ ---------- */
+function showApproveResult(res){
+  const box = document.getElementById("resultBody");
+  if (!box) return;
+
+  const days    = res.byDate || [];
+  const skipped = res.skipped || [];
+  const totalSN = days.reduce((a, d) => a + (d.deletedSN || 0), 0);
+
+  let html = `<div class="res-head">
+      <div class="res-big">${res.approved || 0}</div>
+      <div>รายการที่อนุมัติ · ลบ SN ทั้งหมด <b>${totalSN}</b> ตัว</div>
+    </div>`;
+
+  days.forEach(d => {
+    html += `<div class="res-section">📅 ${escapeHtml(d.date)}</div>`;
+    html += `<div class="res-line text-muted mb-2">
+        ลบ SN <b>${d.deletedSN || 0}</b> ตัว ·
+        คำนวณใหม่ <b>${(d.codes || []).length}</b> Code ·
+        อัปเดต FIFO File ${d.fifoFileRows === -1 ? "— ข้าม (เป็นสูตร)" : (d.fifoFileRows || 0) + " แถว"}
+      </div>`;
+
+    const rep = d.report;
+    if (!rep){ html += `<div class="res-line text-muted">ไม่มีข้อมูลเปรียบเทียบ</div>`; return; }
+
+    // ---- ภาพรวมทั้งวัน + รายโซน ----
+    html += `<div class="res-sub">% NotFIFO (not_fifo2 ÷ sale)</div>`;
+    html += `<table class="res-table"><thead><tr>
+        <th>ขอบเขต</th><th>Sale</th><th>NotFIFO</th><th>ก่อน</th><th>หลัง</th><th>เปลี่ยน</th>
+      </tr></thead><tbody>`;
+
+    html += pctRow("🌍 ทั้งวัน", rep.total.before, rep.total.after, rep.total.pctBefore, rep.total.pctAfter);
+    (rep.zones || []).forEach(z => {
+      html += pctRow("📍 Zone " + escapeHtml(z.zone), z.before, z.after, z.pctBefore, z.pctAfter);
+    });
+    html += `</tbody></table>`;
+
+    // ---- รายละเอียดราย Code ----
+    (rep.codes || []).forEach(c => {
+      html += `<div class="res-sub">🏷️ ${escapeHtml(c.code)}</div>`;
+      if (!c.before && !c.after){
+        html += `<div class="res-line text-muted">ไม่พบ Code นี้ใน FIFO File</div>`;
+        return;
+      }
+      html += `<table class="res-table"><thead><tr>
+          <th>รายการ</th><th>ก่อน</th><th>หลัง</th><th>เปลี่ยน</th>
+        </tr></thead><tbody>`;
+      [
+        ["Instock","instock"], ["Sale","sale"], ["Instock Return","instock_return"],
+        ["Instock Aging","instock_aging"], ["Instock Not Aging","instock_not_aging"],
+        ["Sale Aging","sale_aging"], ["Sale Not Aging","sale_not_aging"],
+        ["stock_fifo2","fifo2"], ["stock_not_fifo2","notfifo2"]
+      ].forEach(f => { html += numRow(f[0], c.before, c.after, f[1]); });
+      html += `</tbody></table>`;
+    });
+  });
+
+  if (skipped.length){
+    html += `<div class="res-section text-danger">ข้ามไป ${skipped.length} รายการ</div>`;
+    skipped.forEach(x => {
+      html += `<div class="res-skip">แถว ${x.rowIndex} — ${escapeHtml(x.why || "")}</div>`;
+    });
+  }
+
+  box.innerHTML = html;
+  resultModal = resultModal || new bootstrap.Modal(document.getElementById("resultModal"));
+  resultModal.show();
+}
+
+
+function pctRow(label, before, after, pb, pa){
+  const b = before || { sale:0, notfifo2:0 };
+  const a = after  || { sale:0, notfifo2:0 };
+  return `<tr>
+      <td>${label}</td>
+      <td>${a.sale}${b.sale !== a.sale ? ` <s class="text-muted">${b.sale}</s>` : ``}</td>
+      <td>${a.notfifo2}${b.notfifo2 !== a.notfifo2 ? ` <s class="text-muted">${b.notfifo2}</s>` : ``}</td>
+      <td>${(pb || 0).toFixed(2)}%</td>
+      <td><b>${(pa || 0).toFixed(2)}%</b></td>
+      <td>${deltaTag((pa || 0) - (pb || 0), true)}</td>
+    </tr>`;
+}
+
+function numRow(label, before, after, key){
+  const b = before ? (before[key] || 0) : 0;
+  const a = after  ? (after[key]  || 0) : 0;
+  const changed = b !== a;
+  return `<tr class="${changed ? "res-changed" : ""}">
+      <td>${label}</td><td>${b}</td><td><b>${a}</b></td><td>${deltaTag(a - b, false)}</td>
+    </tr>`;
+}
+
+/** ลดลง = ดี (เขียว) เพิ่มขึ้น = แดง */
+function deltaTag(diff, isPct){
+  if (!diff) return `<span class="delta zero">—</span>`;
+  const sign = diff > 0 ? "+" : "";
+  const txt  = isPct ? sign + diff.toFixed(2) + "%" : sign + diff;
+  return `<span class="delta ${diff < 0 ? "down" : "up"}">${txt}</span>`;
 }
 
 // ==========================================================
