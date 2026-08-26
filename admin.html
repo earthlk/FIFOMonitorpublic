@@ -544,7 +544,7 @@ table.sn-table{ width:100%; border-collapse:collapse; }
       </div>
       <div class="stat-row">
         <div class="stat"><b id="statPending">0</b><span>รอตรวจ</span></div>
-        <div class="stat"><b id="statApproved">0</b><span>อนุมัติ</span></div>
+        <div class="stat"><b id="statApproved">0</b><span>ลบแล้ว</span></div>
         <div class="stat"><b id="statRejected">0</b><span>ปฏิเสธ</span></div>
         <div class="stat"><b id="statTotal">0</b><span>ทั้งหมด</span></div>
       </div>
@@ -558,7 +558,7 @@ table.sn-table{ width:100%; border-collapse:collapse; }
 
     <div class="filter-bar" id="filterBar">
       <button class="chip active" data-filter="pending"  onclick="setFilter('pending', this)">รอตรวจ</button>
-      <button class="chip" data-filter="approved" onclick="setFilter('approved', this)">อนุมัติแล้ว</button>
+      <button class="chip" data-filter="approved" onclick="setFilter('approved', this)">ลบแล้ว</button>
       <button class="chip" data-filter="rejected" onclick="setFilter('rejected', this)">ปฏิเสธ</button>
       <button class="chip" data-filter="all"      onclick="setFilter('all', this)">ทั้งหมด</button>
       <button class="chip" data-filter="unreported" onclick="setFilter('unreported', this)">ยังไม่ Report</button>
@@ -608,7 +608,7 @@ table.sn-table{ width:100%; border-collapse:collapse; }
         <div id="confirmSN" class="text-muted mb-3" style="font-size:14px; word-break:break-all;"></div>
 
         <div id="approveWarn" class="approve-warn" style="display:none;">
-          ⚠️ การอนุมัติจะ <b>ลบ SN ออกจากระบบถาวร</b><br>
+          ⚠️ การลบจะ <b>ลบ SN ออกจากระบบถาวร</b><br>
           <span>ลบจาก SN Lite / SN File / SN Return แล้วคำนวณ FIFO ใหม่ ย้อนกลับไม่ได้
           (มีบันทึกไว้ในชีต SN_Deleted)</span>
         </div>
@@ -644,7 +644,7 @@ table.sn-table{ width:100%; border-collapse:collapse; }
   <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
     <div class="modal-content" style="border-radius:18px;">
       <div class="modal-body p-4">
-        <div class="fw-bold mb-3" style="font-size:20px;">✅ ผลการอนุมัติ</div>
+        <div class="fw-bold mb-3" style="font-size:20px;">✅ ผลการลบ SN และคำนวนใหม่</div>
         <div id="resultBody"></div>
         <button class="btn btn-primary w-100 fw-bold mt-3" data-bs-dismiss="modal">ปิด</button>
       </div>
@@ -766,13 +766,13 @@ async function loadReports(){
 // ==========================================================
 function normalizeStatus(raw){
   const s = String(raw || "").trim().toLowerCase();
-  if (s === "approved" || s === "approve" || s === "อนุมัติ") return "approved";
+  if (s === "approved" || s === "approve" || s === "ลบ") return "approved";
   if (s === "rejected" || s === "reject" || s === "ปฏิเสธ")  return "rejected";
   return "pending";
 }
-const STATUS_LABEL = { pending:"รอตรวจ", approved:"อนุมัติแล้ว", rejected:"ปฏิเสธ" };
+const STATUS_LABEL = { pending:"รอตรวจ", approved:"ลบแล้ว", rejected:"ปฏิเสธ" };
 
-// รายงานระดับ Code อนุมัติไม่ได้ เพราะไม่รู้ว่าจะลบ SN ตัวไหน
+// รายงานระดับ Code ลบแล้วไม่ได้ เพราะไม่รู้ว่าจะลบ SN ตัวไหน
 function isCodeLevel(r){ return String(r.type || "SN").toUpperCase() === "CODE"; }
 function isApprovable(r){ return normalizeStatus(r.status) === "pending" && !isCodeLevel(r); }
 
@@ -867,7 +867,7 @@ function renderDateOverview(){
           <div class="ov-date">📅 ${escapeHtml(d.date)}</div>
           <div class="ov-row">
             <div class="ov-pending"><b>${d.pending}</b>รอตรวจ</div>
-            <div class="ov-appr"><b>${d.approved}</b>อนุมัติ</div>
+            <div class="ov-appr"><b>${d.approved}</b>ลบแล้ว</div>
             <div class="ov-rej"><b>${d.rejected}</b>ปฏิเสธ</div>
             <div><b>${d.total}</b>ทั้งหมด</div>
           </div>
@@ -1232,10 +1232,10 @@ function buildDetail(g){
                style="width:18px;height:18px;">
         เลือกทั้งหมดที่รอตรวจ (${pendingItems.length})
       </label>
-      ${codeLevelPending.length ? `<span class="code-level-warn">⚠️ มีรายงานระดับ Code ${codeLevelPending.length} รายการ ที่อนุมัติไม่ได้</span>` : ``}
+      ${codeLevelPending.length ? `<span class="code-level-warn">⚠️ มีรายงานระดับ Code ${codeLevelPending.length} รายการ ที่ลบไม่ได้</span>` : ``}
       ${checkedHere ? `
         <span class="ms-auto">เลือกไว้ ${checkedHere}</span>
-        <button class="btn btn-success btn-sm" onclick="askBulk('Approved')">✅ อนุมัติที่เลือก</button>
+        <button class="btn btn-success btn-sm" onclick="askBulk('Approved')">✅ ลบ SN ที่เลือก</button>
         <button class="btn btn-danger btn-sm"  onclick="askBulk('Rejected')">❌ ปฏิเสธที่เลือก</button>
       ` : ``}
     </div>` : "";
@@ -1247,7 +1247,7 @@ function buildDetail(g){
       <div class="detail-sub">📅 ${escapeHtml(g.date)} · ${
         g.items.length
           ? `SN ที่ถูก Report ${g.items.length} รายการ · รอตรวจ ${pendingItems.length}`
-          : `ยังไม่ถูก Report — เลือก SN ด้านล่างได้ แต่ต้องมีรายงานรอตรวจถึงจะลบได้`
+          : `ยังไม่ถูก Report — เลือก SN ด้านล่างได้`
       }</div>
       ${bulkBar}
     </div>
@@ -1622,10 +1622,10 @@ function buildRow(r){
   if (!isPending){
     act = `<span class="text-muted" style="font-size:13px;">${escapeHtml(fmtDateTime(r.approvedAt))}</span>`;
   } else if (codeLevel){
-    act = `<div class="blocked-note">อนุมัติไม่ได้<br><small>ไม่ระบุ SN</small></div>
+    act = `<div class="blocked-note">ลบไม่ได้<br><small>ไม่ระบุ SN</small></div>
            <button class="btn btn-danger btn-sm mt-1" onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.code)}')">❌ <span class="d-lg-none">ปฏิเสธ</span></button>`;
   } else {
-    act = `<button class="btn btn-success btn-sm" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ <span class="d-lg-none">อนุมัติ</span></button>
+    act = `<button class="btn btn-success btn-sm" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ <span class="d-lg-none">ลบ</span></button>
            <button class="btn btn-danger btn-sm"  onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌ <span class="d-lg-none">ปฏิเสธ</span></button>`;
   }
 
@@ -1696,7 +1696,7 @@ function openConfirm(rowIndexes, status, label, extras, manual){
   const n = rowIndexes.length;
 
   document.getElementById("confirmTitle").innerText = isApprove
-    ? (extraCount ? `ลบ ${extraCount} SN ที่เลือก?` : `อนุมัติ ${n} รายการ?`)
+    ? (extraCount ? `ลบ ${extraCount} SN ที่เลือก?` : `ลบ ${n} รายการ?`)
     : `ปฏิเสธ ${n} รายการ?`;
   document.getElementById("confirmSN").innerText = label;
   document.getElementById("adminComment").value = "";
@@ -1706,7 +1706,7 @@ function openConfirm(rowIndexes, status, label, extras, manual){
 
   const btn = document.getElementById("confirmBtn");
   btn.className = "btn flex-fill fw-bold " + (isApprove ? "btn-success" : "btn-danger");
-  btn.innerText = isApprove ? "ยืนยันอนุมัติ" : "ยืนยันปฏิเสธ";
+  btn.innerText = isApprove ? "ยืนยันลบ" : "ยืนยันปฏิเสธ";
   btn.disabled = false;
 
   confirmModal = confirmModal || new bootstrap.Modal(document.getElementById("confirmModal"));
@@ -1774,7 +1774,7 @@ function hideBusy(){
 }
 
 
-/* ---------- อนุมัติ = ลบ SN + คำนวณใหม่ ยิงครั้งเดียวทั้งชุด ---------- */
+/* ---------- ลบ SN + คำนวณใหม่ ยิงครั้งเดียวทั้งชุด ---------- */
 async function runApprove(rowIndexes, comment, btn, extras, manual){
   extras = extras || [];
   manual = manual || [];
@@ -1801,7 +1801,7 @@ async function runApprove(rowIndexes, comment, btn, extras, manual){
     const skippedRows = new Set((res.skipped || []).map(x => x.rowIndex));
     const now = new Date().toISOString();
 
-    // ใช้รายการที่ GAS อนุมัติจริง — รวมรายงานที่ถูกอนุมัติอัตโนมัติเพราะ SN ตรงกัน
+    // ใช้รายการที่ GAS ลบ จริง — รวมรายงานที่ถูกลบอัตโนมัติเพราะ SN ตรงกัน
     const touched = (res && res.approvedRows && res.approvedRows.length)
       ? res.approvedRows
       : rowIndexes.concat(extras.map(e => e.rowIndex));
@@ -1825,8 +1825,8 @@ async function runApprove(rowIndexes, comment, btn, extras, manual){
   } catch (err){
     hideBusy();
     btn.disabled = false;
-    btn.innerText = "ยืนยันอนุมัติ";
-    showToast("อนุมัติไม่สำเร็จ: " + err.message, "warn");
+    btn.innerText = "ยืนยันลบ";
+    showToast("ลบไม่สำเร็จ: " + err.message, "warn");
   }
 }
 
@@ -1863,7 +1863,7 @@ async function runReject(rowIndexes, comment, btn){
 }
 
 
-/* ---------- สรุปผลหลังอนุมัติ ---------- */
+/* ---------- สรุปผลหลังลบ ---------- */
 function showApproveResult(res){
   const box = document.getElementById("resultBody");
   if (!box) return;
@@ -1874,7 +1874,7 @@ function showApproveResult(res){
 
   let html = `<div class="res-head">
       <div class="res-big">${res.approved || 0}</div>
-      <div>รายการที่อนุมัติ · ลบ SN ทั้งหมด <b>${totalSN}</b> ตัว</div>
+      <div>รายการที่ลบ · ลบ SN ทั้งหมด <b>${totalSN}</b> ตัว</div>
     </div>`;
 
   days.forEach(d => {
