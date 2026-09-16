@@ -1296,6 +1296,107 @@ body{background:#eef2ff;font-family:system-ui}
   pointer-events: none;
 }
 
+/* ===== ประวัติการลบ ===== */
+#delHistModal .modal-body{ font-size:18px; }
+.dh-item{
+  border:1px solid #e2e8f0; border-left:5px solid #4f46e5;
+  border-radius:12px; padding:12px 16px; margin-bottom:10px; cursor:pointer;
+}
+.dh-item:active{ background:#f8fafc; }
+.dh-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-weight:800; font-size:20px; }
+.dh-cnt{ background:#dc2626; color:#fff; border-radius:999px; padding:2px 12px; font-size:16px; }
+.dh-meta{ color:#64748b; font-size:16px; margin-top:4px; }
+.dh-codes{ color:#4f46e5; font-size:15px; margin-top:4px; word-break:break-all; }
+.dh-back{
+  background:#eef2ff; color:#4f46e5; border:none; border-radius:12px;
+  padding:8px 18px; font-weight:800; font-size:18px; margin-bottom:12px;
+}
+
+/* ===== KPI ในประวัติการลบ ===== */
+.kpi-box{
+  background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+  border:2px solid #c7d2fe; border-radius:14px;
+  padding:14px 16px; margin-bottom:16px;
+}
+.kpi-title{ font-weight:800; font-size:19px; color:#1e3a8a; margin-bottom:10px; }
+.kpi-table{ width:100%; border-collapse:collapse; font-size:16px; background:#fff; border-radius:10px; overflow:hidden; }
+.kpi-table th{
+  background:#1e3a8a; color:#fff; font-size:14px; font-weight:800;
+  padding:8px 10px; text-align:left; white-space:nowrap;
+}
+.kpi-table td{ padding:8px 10px; border-bottom:1px solid #eef2ff; white-space:nowrap; }
+.kpi-table s{ color:#94a3b8; font-size:14px; }
+.kpi-down{ background:#dcfce7; color:#14532d; border-radius:8px; padding:2px 10px; font-weight:800; font-size:15px; }
+.kpi-up  { background:#fee2e2; color:#991b1b; border-radius:8px; padding:2px 10px; font-weight:800; font-size:15px; }
+.kpi-flat{ color:#94a3b8; font-weight:800; }
+
+.dh-months{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.dh-month-chip{
+  border:2px solid #c7d2fe; background:#fff; color:#1e3a8a;
+  border-radius:12px; padding:8px 16px; font-size:18px; font-weight:800; cursor:pointer;
+}
+.dh-month-chip.active{
+  background:linear-gradient(135deg,#2563eb,#4f46e5); border-color:transparent; color:#fff;
+}
+.dhm-cnt{ background:rgba(0,0,0,.08); border-radius:999px; padding:1px 9px; font-size:15px; }
+.dh-month-chip.active .dhm-cnt{ background:rgba(255,255,255,.25); }
+
+.dh-month{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  background:linear-gradient(135deg,#1e3a8a,#2563eb); color:#fff;
+  border-radius:12px; padding:10px 16px; margin:16px 0 10px;
+  font-weight:800; font-size:19px;
+}
+.dh-month:first-child{ margin-top:0; }
+.dh-month-sum{ margin-left:auto; font-weight:500; font-size:15px; opacity:.9; }
+
+.dh-pct{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+  background:#f8fafc; border-radius:10px; padding:6px 12px; margin-top:7px;
+  font-size:17px; font-weight:800;
+}
+.dh-pct-label{ font-size:14px; color:#64748b; font-weight:600; }
+.dh-pct-before{ color:#94a3b8; text-decoration:line-through; }
+.dh-pct-arrow{ color:#94a3b8; }
+.dh-pct-after{ color:#1e3a8a; font-size:19px; }
+
+.dh-sub{ font-weight:800; font-size:19px; margin:14px 0 8px; color:#475569; }
+.dh-code{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  background:#e0e7ff; color:#1e3a8a; border-radius:12px;
+  padding:12px 16px; margin-bottom:6px; font-weight:800; font-size:19px;
+  cursor:pointer; user-select:none;
+}
+.dh-code:active{ filter:brightness(.96); }
+.dh-code-sub{ font-weight:500; font-size:15px; color:#4338ca; }
+.dh-code-arrow{ margin-left:auto; font-size:18px; }
+.dh-code-body{ padding-left:6px; margin-bottom:10px; }
+
+/* ===== SN ที่ถูกลบไปแล้ว ===== */
+#deletedBox{ margin-top:14px; }
+.del-head{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  font-weight:800; font-size:20px; color:#64748b;
+  padding:12px 16px; background:#f1f5f9; border-radius:12px; margin-bottom:8px;
+  cursor:pointer; user-select:none; border:2px solid #e2e8f0;
+}
+.del-head:active{ background:#e2e8f0; }
+.del-arrow{ font-size:18px; color:#2563eb; white-space:nowrap; }
+.del-group{ margin-bottom:14px; }
+.del-group-head{
+  background:#e2e8f0; color:#475569; font-weight:800; font-size:20px;
+  border-radius:10px; padding:10px 14px; margin-bottom:6px;
+}
+.del-group-sub{ font-size:16px; font-weight:500; color:#64748b; margin-top:3px; }
+
+.del-row{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:#f8fafc; border:1px solid #e2e8f0; border-left:5px solid #94a3b8;
+  border-radius:10px; padding:10px 14px; margin-bottom:6px;
+}
+.del-sn{ font-weight:800; font-size:20px; color:#94a3b8; text-decoration:line-through; }
+.del-meta{ font-size:16px; color:#64748b; }
+
 /* ===== เลือก SN เพื่อ Report (Swipe ซ้าย) ===== */
 .sn-row, .rc-header{ cursor:pointer; }
 
@@ -1536,6 +1637,7 @@ body{background:#eef2ff;font-family:system-ui}
         <div id="pcProblemList"></div>
       </div>
       <button class="btn btn-outline-primary w-100 mt-3" onclick="openUploadModal()">⬆️ Upload FIFO Data</button>
+      <button class="btn btn-outline-secondary w-100 mt-2" onclick="openDeleteHistory()">📜 ประวัติการลบ SN</button>
     </div>
 
     <div class="pc-main">
@@ -1645,6 +1747,8 @@ body{background:#eef2ff;font-family:system-ui}
           <thead class="table-light"><tr><th>SN</th><th>Age</th><th>Status</th></tr></thead>
           <tbody id="snTable"></tbody>
         </table>
+
+        <div id="deletedBox"></div>
 	<!-- Swipe to Report -->
 	<div class="mt-3 px-2" id="reportSection">
 	  <div class="fw-bold mb-2" style="font-size:18px;">📢 แจ้งปัญหา</div>
@@ -1700,6 +1804,20 @@ body{background:#eef2ff;font-family:system-ui}
 
       <div class="d-grid gap-3 mt-3">
         <button id="snSearchBtn" class="btn-unified" disabled onclick="confirmSearchSN()">🔍 ค้นหา</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="delHistModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:22px;">
+      <div class="modal-body p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <div class="fw-bold" style="font-size:24px;">📜 ประวัติการลบ SN</div>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div id="delHistBody"></div>
       </div>
     </div>
   </div>
@@ -1774,14 +1892,68 @@ body{background:#eef2ff;font-family:system-ui}
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw9FUQVEOripWQc7x2l7wmL1krMRsh5M_ouW5LGLJonBOXW62H4J850YvPUigJfrFnl/exec";
 
 // 🚀 2. แกนกลาง Fetch API
+
+/** แปล response ที่ไม่ใช่ JSON ให้รู้ว่าติดตรงไหน */
+function explainBadResponse(text, bodySize){
+  const t = String(text || "").trim();
+  const mb = bodySize ? (bodySize / 1048576).toFixed(2) : null;
+
+  // ได้ผลลัพธ์ของ doGet กลับมา = request กลายเป็น GET
+  if (/FIFO Monitor API/i.test(t)) {
+    // ส่งก้อนใหญ่แล้วโดนตีกลับ = เกินขนาดที่ GAS รับได้
+    if (bodySize && bodySize > 3 * 1048576) {
+      return `ข้อมูลที่ส่งใหญ่เกินไป (${mb} MB)\n\n`
+           + "Google Apps Script รับ POST ได้จำกัด พอเกินจะตีกลับเป็น GET\n"
+           + "ลองแบ่งไฟล์ให้เล็กลง หรือลดขนาด chunk";
+    }
+    return "เซิร์ฟเวอร์รับเป็น GET แทน POST\n\n"
+         + "มักเกิดจาก Deployment ตั้งค่าไม่ถูก ให้เช็ค\n"
+         + "1. Deploy > Manage deployments > Web app\n"
+         + "2. Execute as = Me\n"
+         + "3. Who has access = Anyone\n"
+         + "4. กด Deploy เป็น New version แล้วใช้ URL ล่าสุด";
+  }
+
+  if (/timeout|exceeded maximum execution|too long/i.test(t)) {
+    return "เซิร์ฟเวอร์ใช้เวลานานเกินไป (timeout) ลองแคบช่วงข้อมูลลง";
+  }
+
+  if (/^\s*</.test(t)) {
+    return "เซิร์ฟเวอร์ส่งหน้า HTML กลับมาแทน JSON\n"
+         + "อาจเป็นหน้า login หรือ error ของ Google — เช็คสิทธิ์การเข้าถึง Web app";
+  }
+
+  return "เซิร์ฟเวอร์ตอบกลับมาไม่ใช่ JSON: " + t.slice(0, 120);
+}
+
 async function callGAS(actionName, payloadData = {}) {
   try {
+    const body = JSON.stringify({ action: actionName, data: payloadData });
+    const mb = (body.length / 1048576).toFixed(2);
+    if (body.length > 1048576) console.log(`[callGAS] ${actionName} · ส่ง ${mb} MB`);
+
     const response = await fetch(GAS_API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: actionName, data: payloadData })
+      body: body
     });
-    const result = await response.json();
+    // GAS ที่ timeout จะส่ง HTML error page กลับมา ไม่ใช่ JSON
+    const text = await response.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      // พิมพ์ของจริงที่ได้กลับมาลง Console — เป็นข้อมูลชิ้นเดียวที่บอกสาเหตุได้
+      console.error(`[callGAS] ${actionName} ตอบกลับไม่ใช่ JSON`, {
+        httpStatus: response.status,
+        redirected: response.redirected,
+        finalUrl: response.url,
+        contentType: response.headers.get("content-type"),
+        sentBytes: body.length,
+        bodyPreview: String(text || "").slice(0, 1500)
+      });
+      throw new Error(`[${actionName}] ` + explainBadResponse(text, body.length));
+    }
     if (result.status === "error") throw new Error(result.message);
     return result.data;
   } catch (error) {
@@ -1900,6 +2072,7 @@ function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notf
     // เรียก init swipe report ด้วย SN ที่เปิดอยู่
     const currentDate = getCurrentDate();
     initSwipeReport(null, code, zone, currentDate);
+    loadDeletedSN(code, currentDate);
   }, 200);
 }
 
@@ -2360,6 +2533,317 @@ function calcRCDate(barDateStr, age){
   const mm = String(d.getMonth()+1).padStart(2,'0');
   const dd = String(d.getDate()).padStart(2,'0');
   return `${dd}/${mm}/${yyyy}`;
+}
+
+/* ==========================================================
+   🗑️ SN ที่ถูกลบไปแล้วของ Code นี้
+   ========================================================== */
+const deletedSNCache = {};
+let delHistModal = null;
+let delHistCache = [];
+let delHistMonths = [];
+let delHistMonth = "";
+
+/* ==========================================================
+   📜 ประวัติการลบ SN
+   ========================================================== */
+function openDeleteHistory(){ loadDeleteHistory(""); }
+
+/** โหลดทีละเดือน — ดึงทุกเดือนพร้อมกันช้าเพราะ ReportJSON ก้อนใหญ่ */
+async function loadDeleteHistory(month){
+  delHistModal = delHistModal || new bootstrap.Modal(document.getElementById("delHistModal"));
+  const box = document.getElementById("delHistBody");
+  box.innerHTML = `<div class="text-center text-muted py-4">⏳ กำลังโหลด...</div>`;
+  delHistModal.show();
+
+  try {
+    const res = await callGAS("getDeleteHistory", { month: month, limit: 200 }) || {};
+    delHistMonths = res.months || [];
+    delHistCache  = res.items  || [];
+    delHistMonth  = res.month  || month || "";
+  } catch (err){
+    box.innerHTML = `<div class="text-center text-danger py-4">โหลดไม่สำเร็จ: ${err.message}</div>`;
+    return;
+  }
+
+  renderDeleteHistoryList();
+}
+
+function renderDeleteHistoryList(){
+  const box = document.getElementById("delHistBody");
+
+  if (!delHistMonths.length){
+    box.innerHTML = `<div class="text-center text-muted py-4">ยังไม่เคยลบ SN</div>`;
+    return;
+  }
+
+  let html = `<div class="dh-months">` + delHistMonths.map(m => `
+      <button class="dh-month-chip ${m.month === delHistMonth ? "active" : ""}"
+              onclick="loadDeleteHistory('${m.month}')">
+        ${monthLabel(m.month)} <span class="dhm-cnt">${m.count}</span>
+      </button>`).join("") + `</div>`;
+
+  const cur = delHistMonths.find(m => m.month === delHistMonth);
+  if (cur){
+    html += `<div class="dh-month">
+        <span>🗓️ ${monthLabel(cur.month)}</span>
+        <span class="dh-month-sum">${cur.count} ครั้ง · ลบ ${cur.deletedSN} SN</span>
+      </div>`;
+  }
+
+  html += delHistCache.length
+    ? delHistCache.map((b, i) => historyCardHTML(b, i)).join("")
+    : `<div class="text-center text-muted py-4">เดือนนี้ไม่มีการลบ</div>`;
+
+  box.innerHTML = html;
+}
+
+function monthLabel(m){
+  const TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
+              "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  const p = String(m).split("-");
+  if (p.length < 2) return m;
+  const idx = Number(p[1]) - 1;
+  return (TH[idx] || p[1]) + " " + p[0];
+}
+
+/** แถบ % ก่อน→หลัง บนการ์ด */
+function pctBadge(report){
+  if (!report || !report.total) return "";
+  const pb = Number(report.total.pctBefore) || 0;
+  const pa = Number(report.total.pctAfter)  || 0;
+  const d  = pa - pb;
+
+  const tag = !d ? `<span class="kpi-flat">—</span>`
+    : d < 0 ? `<span class="kpi-down">▼ ${Math.abs(d).toFixed(2)}%</span>`
+            : `<span class="kpi-up">▲ ${d.toFixed(2)}%</span>`;
+
+  return `<div class="dh-pct">
+      <span class="dh-pct-label">% NotFIFO</span>
+      <span class="dh-pct-before">${pb.toFixed(2)}%</span>
+      <span class="dh-pct-arrow">→</span>
+      <span class="dh-pct-after">${pa.toFixed(2)}%</span>
+      ${tag}
+    </div>`;
+}
+
+function historyCardHTML(b, i){
+  return `<div class="dh-item" onclick="openBatchDetail(${i})">
+      <div class="dh-top">
+        <span>📅 ${b.date}</span>
+        <span class="dh-cnt">ลบ ${b.deletedSN} SN</span>
+        ${b.zones ? `<span class="badge badge-zone text-white">${b.zones}</span>` : ``}
+      </div>
+      ${pctBadge(b.report)}
+      <div class="dh-meta">🕐 ${b.deletedAt}${b.adminComment ? ` · 💬 ${b.adminComment}` : ``}</div>
+      <div class="dh-codes">${b.codes || ""}</div>
+    </div>`;
+}
+
+/** เปิดดูว่าครั้งนั้นลบ SN อะไรไปบ้าง + ผลต่อ KPI */
+async function openBatchDetail(i){
+  const b = delHistCache[i];
+  if (!b) return;
+
+  const box = document.getElementById("delHistBody");
+
+  // วาดหัวเรื่อง + KPI ทันที — ข้อมูลอยู่ในมือแล้วตั้งแต่ตอนโหลดรายการ
+  // ไม่ต้องรอ SN โหลดเสร็จ ผู้ใช้จะได้เห็นผลลัพธ์ก่อน
+  box.innerHTML = `<button class="dh-back" onclick="renderDeleteHistoryList()">← กลับ</button>
+    <div class="dh-top mb-1">📅 ${b.date} <span class="dh-cnt">ลบ ${b.deletedSN} SN</span></div>
+    <div class="dh-meta mb-3">🕐 ${b.deletedAt}${b.adminComment ? ` · 💬 ${b.adminComment}` : ``}</div>`
+    + buildKPIBlock(b.report)
+    + `<div id="dhSNBox">
+         <div class="dh-sub">🗑️ SN ที่ลบ</div>
+         <div class="text-muted" style="font-size:17px;">⏳ กำลังโหลดรายการ...</div>
+       </div>`;
+
+  const snBox = document.getElementById("dhSNBox");
+
+  let rows = [];
+  try {
+    rows = await callGAS("getDeletedSNs", { batchId: b.batchId, date: b.date }) || [];
+  } catch (err){
+    if (snBox) snBox.innerHTML = `<div class="dh-sub">🗑️ SN ที่ลบ</div>
+      <div class="text-danger" style="font-size:17px;">โหลดไม่สำเร็จ: ${err.message}</div>`;
+    return;
+  }
+
+  // ผู้ใช้อาจกดกลับไปหน้ารายการระหว่างรอ
+  if (!document.getElementById("dhSNBox")) return;
+
+  const mine = rows.filter(r => !r.batchId || !b.batchId || r.batchId === b.batchId);
+  document.getElementById("dhSNBox").innerHTML = buildBatchCodeBlocks(mine);
+}
+
+
+/** ตาราง % NotFIFO ก่อน/หลัง — ผลลัพธ์จากงานที่ทีมทำ */
+function buildKPIBlock(report){
+  if (!report || !report.total) return "";
+
+  const pct = v => (Number(v) || 0).toFixed(2) + "%";
+  const arrow = d => {
+    if (!d) return `<span class="kpi-flat">—</span>`;
+    return d < 0
+      ? `<span class="kpi-down">▼ ${Math.abs(d).toFixed(2)}%</span>`
+      : `<span class="kpi-up">▲ ${d.toFixed(2)}%</span>`;
+  };
+
+  const row = (label, before, after, pb, pa) => {
+    const b = before || { sale:0, notfifo2:0 };
+    const a = after  || { sale:0, notfifo2:0 };
+    return `<tr>
+        <td>${label}</td>
+        <td>${a.sale}</td>
+        <td>${a.notfifo2}${b.notfifo2 !== a.notfifo2 ? ` <s>${b.notfifo2}</s>` : ``}</td>
+        <td>${pct(pb)}</td>
+        <td><b>${pct(pa)}</b></td>
+        <td>${arrow((pa || 0) - (pb || 0))}</td>
+      </tr>`;
+  };
+
+  let html = `<div class="kpi-box">
+      <div class="kpi-title">📊 ผล % NotFIFO (NotFIFO ÷ Sale)</div>
+      <table class="kpi-table">
+        <thead><tr>
+          <th>ขอบเขต</th><th>Sale</th><th>NotFIFO</th><th>ก่อน</th><th>หลัง</th><th>ผล</th>
+        </tr></thead><tbody>`;
+
+  html += row("🌍 ทั้งวัน", report.total.before, report.total.after,
+              report.total.pctBefore, report.total.pctAfter);
+
+  (report.zones || []).forEach(z => {
+    html += row("📍 Zone " + z.zone, z.before, z.after, z.pctBefore, z.pctAfter);
+  });
+
+  return html + `</tbody></table></div>`;
+}
+
+
+/** รายการ SN แยกตาม Code — พับไว้ก่อน กดเปิดทีละ Code */
+function buildBatchCodeBlocks(list){
+  const byCode = {};
+  list.forEach(r => { (byCode[r.code] = byCode[r.code] || []).push(r); });
+
+  const codes = Object.keys(byCode).sort();
+  if (!codes.length) return `<div class="text-muted py-3">ไม่พบรายการ SN ของครั้งนี้</div>`;
+
+  let html = `<div class="dh-sub">🗑️ SN ที่ลบ · ${codes.length} Code (แตะเพื่อดู)</div>`;
+
+  codes.forEach((code, ci) => {
+    const items = byCode[code];
+    const saleCount = items.filter(d =>
+      String(d.status || "").trim().toUpperCase() === "SALE").length;
+
+    const groups = {};
+    items.forEach(d => { const rc = d.rc || "ไม่ระบุ RC"; (groups[rc] = groups[rc] || []).push(d); });
+    const ordered = Object.entries(groups).sort((a, b2) =>
+      (Number(b2[1][0].age) || 0) - (Number(a[1][0].age) || 0));
+
+    html += `<div class="dh-code" onclick="toggleBatchCode(${ci})">
+        <span>🏷️ ${code}</span>
+        <span class="dh-code-sub">${items.length} SN · ${ordered.length} RC · SALE ${saleCount}</span>
+        <span class="dh-code-arrow" id="bcArrow${ci}">▾</span>
+      </div>
+      <div class="dh-code-body" id="bcBody${ci}" style="display:none;">`;
+
+    ordered.forEach(([rc, sub]) => {
+      const sc = sub.filter(d => String(d.status || "").trim().toUpperCase() === "SALE").length;
+      html += `<div class="del-group">
+          <div class="del-group-head">
+            📦 ${rc} (${sub.length} SN)
+            <div class="del-group-sub">อายุ: ${sub[0].age} วัน | SALE: ${sc}</div>
+          </div>
+          ${sub.map(d => `
+            <div class="del-row">
+              <span class="del-sn">${d.sn}</span>
+              <span class="del-meta">${d.age} วัน · ${d.status || "-"}</span>
+              <span class="del-meta">📌 ${d.reason || "-"}</span>
+            </div>`).join("")}
+        </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  return html;
+}
+
+function toggleBatchCode(i){
+  const body = document.getElementById("bcBody" + i);
+  const ar   = document.getElementById("bcArrow" + i);
+  if (!body) return;
+  const open = body.style.display !== "none";
+  body.style.display = open ? "none" : "block";
+  if (ar) ar.innerText = open ? "▾" : "▴";
+}
+
+async function loadDeletedSN(code, date){
+  const box = document.getElementById("deletedBox");
+  if (!box) return;
+  box.innerHTML = "";
+  if (!code || !date) return;
+
+  // ดึงทั้งวันครั้งเดียวแล้วกรอง Code ฝั่งนี้
+  // ถ้าส่ง code ไปด้วย GAS ต้องไล่ทั้งชีตใหม่ทุกครั้งที่เปิด Code — ต้นเหตุที่โหลดช้า
+  if (!deletedSNCache[date]){
+    try {
+      deletedSNCache[date] = await callGAS("getDeletedSNs", { date: date }) || [];
+    } catch (e){ return; }
+  }
+
+  // ผู้ใช้อาจปิด modal หรือเปิด Code อื่นระหว่างรอ
+  if (swipeCurrentCode !== code) return;
+
+  const target = String(code).replace(/\s+/g, "").toUpperCase();
+  const list = deletedSNCache[date].filter(d =>
+    String(d.code).replace(/\s+/g, "").toUpperCase() === target);
+  if (!list.length) return;
+
+  // จัดกลุ่มตาม RC เรียงอายุมาก → น้อย แบบเดียวกับตาราง SN ด้านบน
+  const groups = {};
+  list.forEach(d => {
+    const rc = d.rc || "ไม่ระบุ RC";
+    (groups[rc] = groups[rc] || []).push(d);
+  });
+
+  const ordered = Object.entries(groups).sort((a, b) =>
+    (Number(b[1][0].age) || 0) - (Number(a[1][0].age) || 0));
+
+  box.innerHTML = `
+    <div class="del-head" onclick="toggleDeletedList()">
+      <span>🗑️ ถูกลบไปแล้ว ${list.length} SN · ${ordered.length} RC</span>
+      <span class="del-arrow" id="delArrow">▾ แสดง</span>
+    </div>
+    <div id="deletedList" style="display:none;">`
+    + ordered.map(([rc, items]) => {
+        const saleCount = items.filter(d =>
+          String(d.status || "").trim().toUpperCase() === "SALE").length;
+
+        return `<div class="del-group">
+            <div class="del-group-head">
+              📦 ${rc} (${items.length} SN)
+              <div class="del-group-sub">อายุ: ${items[0].age} วัน | SALE: ${saleCount}</div>
+            </div>
+            ${items.map(d => `
+              <div class="del-row">
+                <span class="del-sn">${d.sn}</span>
+                <span class="del-meta">${d.age} วัน · ${d.status || "-"}</span>
+                <span class="del-meta">📌 ${d.reason || "-"}</span>
+                <span class="del-meta">🕐 ${d.deletedAt || ""}</span>
+              </div>`).join("")}
+          </div>`;
+      }).join("")
+    + `</div>`;
+}
+
+function toggleDeletedList(){
+  const el = document.getElementById("deletedList");
+  const ar = document.getElementById("delArrow");
+  if (!el) return;
+  const open = el.style.display !== "none";
+  el.style.display = open ? "none" : "block";
+  if (ar) ar.innerText = open ? "▾ แสดง" : "▴ ซ่อน";
 }
 
 function renderSNGroupByRC(){
@@ -3096,21 +3580,79 @@ async function startBulkUpload() {
     updateProgress(45, "3/3 กำลังประมวลผล CSV...");
     await runGoogleScript("step3_PrepareSheet", targetSS);
     const allRows = parseCSVAndMapColumnsFast(csvText);
-    const CHUNK_SIZE = 100000; 
-    const totalChunks = Math.ceil(allRows.length / CHUNK_SIZE);
+    // ยิงให้น้อยครั้งที่สุด — ของเดิมส่งทีเดียว 100,000 แถวและใช้ได้มาตลอด
+    // แต่ละ request มีโอกาสพลาดอยู่แล้ว ยิ่งยิงหลายครั้งยิ่งเจอบ่อย
+    // เพดาน 6 MB ไว้กันเคส CSV ใหญ่ผิดปกติเท่านั้น
+    const chunks = buildChunksBySize(allRows, 6 * 1024 * 1024);
 
-    for (let i = 0; i < totalChunks; i++) {
-      const start = i * CHUNK_SIZE; const end = start + CHUNK_SIZE;
-      const chunk = allRows.slice(start, end);
-      const jsonString = JSON.stringify(chunk);
-      const currentProgress = 45 + Math.round(((i + 1) / totalChunks) * 55);
-      updateProgress(currentProgress, `3/3 กำลังบันทึก CSV (${i+1}/${totalChunks})...`);
-      await runGoogleScript("step3_AppendChunk", jsonString, targetSS);
+    for (let i = 0; i < chunks.length; i++) {
+      const currentProgress = 45 + Math.round(((i + 1) / chunks.length) * 55);
+      updateProgress(currentProgress, `3/3 กำลังบันทึก CSV (${i+1}/${chunks.length})...`);
+      await appendChunkWithRetry(chunks[i], targetSS);
+      if (i < chunks.length - 1) await sleep(500);
     }
     await runGoogleScript("step4_SummarizeFinal", targetSS, reportDate);
     updateProgress(100, "เสร็จสิ้น!");
     setTimeout(showSuccessView, 600);
   } catch (err) { alert("เกิดข้อผิดพลาด: " + err); toggleLoading(false); }
+}
+
+/**
+ * แบ่งข้อมูลเป็นก้อนตามขนาด byte
+ * GAS รับ POST ได้จำกัด ก้อนใหญ่เกินจะถูกตีกลับเป็นหน้า HTML
+ */
+function buildChunksBySize(rows, maxBytes) {
+  const chunks = [];
+  let cur = [], curSize = 2;
+
+  for (let i = 0; i < rows.length; i++) {
+    const size = JSON.stringify(rows[i]).length + 1;
+    if (cur.length && curSize + size > maxBytes) {
+      chunks.push(cur);
+      cur = []; curSize = 2;
+    }
+    cur.push(rows[i]);
+    curSize += size;
+  }
+  if (cur.length) chunks.push(cur);
+  return chunks;
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/**
+ * ส่งก้อนเดียว — ลองซ้ำก้อนเดิมก่อน ค่อยผ่าครึ่งเป็นทางสุดท้าย
+ *
+ * ที่พังบ้างผ่านบ้างทั้งที่ขนาดเท่ากัน แปลว่าเป็น transient error
+ * (rate limit / Sheets API ช้า / instance ไม่ว่าง) ไม่ใช่ขีดจำกัดขนาด
+ * ลองซ้ำก้อนเดิมถูกกว่าผ่าครึ่งซึ่งเพิ่มจำนวน request เป็น 2 เท่า
+ */
+async function appendChunkWithRetry(rows, targetSS, depth = 0) {
+  const DELAYS = [1500, 4000, 9000];
+
+  for (let attempt = 0; attempt <= DELAYS.length; attempt++) {
+    try {
+      await runGoogleScript("step3_AppendChunk", JSON.stringify(rows), targetSS);
+      if (attempt) console.log(`[upload] ก้อน ${rows.length} แถว ผ่านในครั้งที่ ${attempt + 1}`);
+      return;
+    } catch (err) {
+      if (attempt < DELAYS.length) {
+        console.warn(`[upload] ก้อน ${rows.length} แถว พลาดครั้งที่ ${attempt + 1}`
+                   + ` · รอ ${DELAYS[attempt]}ms แล้วลองใหม่ · ${err.message.split("\n")[0]}`);
+        await sleep(DELAYS[attempt]);
+        continue;
+      }
+
+      // ลองซ้ำจนครบแล้วยังไม่ผ่าน ค่อยผ่าครึ่ง
+      if (rows.length <= 200 || depth >= 3) throw err;
+
+      console.warn(`[upload] ลองซ้ำครบแล้วยังไม่ผ่าน — ผ่า ${rows.length} แถวเป็น 2 ก้อน`);
+      const mid = Math.floor(rows.length / 2);
+      await appendChunkWithRetry(rows.slice(0, mid), targetSS, depth + 1);
+      await appendChunkWithRetry(rows.slice(mid), targetSS, depth + 1);
+      return;
+    }
+  }
 }
 
 function parseCSVAndMapColumnsFast(csvText) {
@@ -3851,6 +4393,7 @@ async function submitReport(reason, note) {
       const detail = [rcCount ? `${rcCount} RC` : "", snCount ? `${snCount} SN` : ""]
                        .filter(Boolean).join(" + ");
       showReportResult(`ส่ง Report สำเร็จ ${detail} (${n} แถว) — รอ Admin ตรวจสอบ`, false);
+      Object.keys(deletedSNCache).forEach(k => delete deletedSNCache[k]);
       clearSNSelect();
     } else {
       showReportResult(`ส่ง Report ระดับ Code ${swipeCurrentCode} (ไม่ระบุ SN) สำเร็จ — รอ Admin ตรวจสอบ`, false);

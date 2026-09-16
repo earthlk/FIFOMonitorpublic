@@ -307,6 +307,71 @@ button, input, select, textarea{ font-size:16px; }
   background:#eef2ff; color:var(--secondary); border-radius:6px;
   padding:2px 9px; font-size:12px; font-weight:700;
 }
+.hist-months{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.month-chip{
+  border:1.5px solid #cbd5e1; background:#fff; color:var(--ink);
+  border-radius:10px; padding:6px 14px; font-size:14px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; gap:7px;
+}
+.month-chip:hover{ border-color:var(--primary); }
+.month-chip.active{
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  border-color:transparent; color:#fff;
+}
+.mc-cnt{ background:rgba(0,0,0,.08); border-radius:999px; padding:0 8px; font-size:12px; }
+.month-chip.active .mc-cnt{ background:rgba(255,255,255,.25); }
+
+.hist-month{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#fff;
+  border-radius:10px; padding:8px 14px; margin:14px 0 8px;
+  font-weight:800; font-size:15px;
+}
+.hist-month:first-child{ margin-top:0; }
+.hist-month-sum{ margin-left:auto; font-weight:500; font-size:13px; opacity:.9; }
+
+.hist-pct{
+  display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+  background:#f8fafc; border-radius:8px; padding:5px 10px; margin-top:6px; font-size:14px;
+}
+.hist-pct .hp-label{ font-size:12px; color:var(--muted); font-weight:600; }
+.hist-pct s{ color:#94a3b8; }
+.hist-pct b{ color:var(--primary); font-size:15px; }
+.hp-arrow{ color:#94a3b8; }
+
+.bc-head{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  background:#e0e7ff; color:var(--secondary); border-radius:10px;
+  padding:9px 14px; margin:8px 0 6px; font-weight:800; font-size:14px; cursor:pointer;
+}
+.bc-head:hover{ filter:brightness(.97); }
+.bc-sub{ font-weight:500; font-size:12px; }
+.bc-arrow{ margin-left:auto; }
+
+.hist-item{
+  border:1px solid var(--line); border-left:4px solid var(--secondary);
+  border-radius:10px; padding:11px 14px; margin-bottom:8px; cursor:pointer;
+  transition:.15s;
+}
+.hist-item:hover{ background:#f8fafc; transform:translateY(-1px); }
+.hist-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-weight:800; font-size:15px; }
+.hist-sn{ background:var(--danger); color:#fff; border-radius:999px; padding:1px 10px; font-size:12px; }
+.hist-meta{ color:var(--muted); font-size:13px; margin-top:4px; }
+.hist-codes{ color:var(--secondary); font-size:12px; margin-top:4px; word-break:break-all; }
+
+.del-box{ border-top:8px solid #f1f5f9; padding:16px 18px 30px; }
+.del-head{ font-weight:800; font-size:16px; margin-bottom:10px; }
+.sn-chip.deleted{
+  background:#f1f5f9; border-color:#cbd5e1; color:#94a3b8;
+  text-decoration:line-through; cursor:default;
+}
+.sn-chip.deleted.was-sale{ background:#fef6e0; border-color:#e5cf9b; color:#a98b52; }
+
+.del-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.del-sum{ margin-left:auto; font-weight:600; font-size:13px; color:var(--muted); }
+.rc-block-del{ border-left-color:#94a3b8; background:#fbfcfd; }
+.rc-flag.del{ background:#94a3b8; }
+
 .res-sub{ font-weight:800; font-size:13px; margin:12px 0 5px; color:var(--secondary); }
 .res-table{
   width:100%; border-collapse:collapse; margin-bottom:8px; font-size:13px;
@@ -540,11 +605,14 @@ table.sn-table{ width:100%; border-collapse:collapse; }
     <div class="wrap">
       <div class="d-flex align-items-center justify-content-between gap-3">
         <h1>📋 SN Report</h1>
-        <button class="btn btn-light btn-sm fw-bold" onclick="loadReports()">🔄 โหลดใหม่</button>
+        <div class="d-flex gap-2">
+          <button class="btn btn-light btn-sm fw-bold" onclick="openHistory()">📜 ประวัติการลบ</button>
+          <button class="btn btn-light btn-sm fw-bold" onclick="loadReports()">🔄 โหลดใหม่</button>
+        </div>
       </div>
       <div class="stat-row">
         <div class="stat"><b id="statPending">0</b><span>รอตรวจ</span></div>
-        <div class="stat"><b id="statApproved">0</b><span>ลบแล้ว</span></div>
+        <div class="stat"><b id="statApproved">0</b><span>อนุมัติ</span></div>
         <div class="stat"><b id="statRejected">0</b><span>ปฏิเสธ</span></div>
         <div class="stat"><b id="statTotal">0</b><span>ทั้งหมด</span></div>
       </div>
@@ -558,7 +626,7 @@ table.sn-table{ width:100%; border-collapse:collapse; }
 
     <div class="filter-bar" id="filterBar">
       <button class="chip active" data-filter="pending"  onclick="setFilter('pending', this)">รอตรวจ</button>
-      <button class="chip" data-filter="approved" onclick="setFilter('approved', this)">ลบแล้ว</button>
+      <button class="chip" data-filter="approved" onclick="setFilter('approved', this)">อนุมัติแล้ว</button>
       <button class="chip" data-filter="rejected" onclick="setFilter('rejected', this)">ปฏิเสธ</button>
       <button class="chip" data-filter="all"      onclick="setFilter('all', this)">ทั้งหมด</button>
       <button class="chip" data-filter="unreported" onclick="setFilter('unreported', this)">ยังไม่ Report</button>
@@ -608,7 +676,7 @@ table.sn-table{ width:100%; border-collapse:collapse; }
         <div id="confirmSN" class="text-muted mb-3" style="font-size:14px; word-break:break-all;"></div>
 
         <div id="approveWarn" class="approve-warn" style="display:none;">
-          ⚠️ การลบจะ <b>ลบ SN ออกจากระบบถาวร</b><br>
+          ⚠️ การอนุมัติจะ <b>ลบ SN ออกจากระบบถาวร</b><br>
           <span>ลบจาก SN Lite / SN File / SN Return แล้วคำนวณ FIFO ใหม่ ย้อนกลับไม่ได้
           (มีบันทึกไว้ในชีต SN_Deleted)</span>
         </div>
@@ -639,12 +707,25 @@ table.sn-table{ width:100%; border-collapse:collapse; }
   </div>
 </div>
 
+<!-- ==================== HISTORY MODAL ==================== -->
+<div class="modal fade" id="historyModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:18px;">
+      <div class="modal-body p-4">
+        <div class="fw-bold mb-3" style="font-size:20px;">📜 ประวัติการลบ SN</div>
+        <div id="historyBody"></div>
+        <button class="btn btn-light w-100 fw-bold mt-3" data-bs-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== RESULT MODAL ==================== -->
 <div class="modal fade" id="resultModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
     <div class="modal-content" style="border-radius:18px;">
       <div class="modal-body p-4">
-        <div class="fw-bold mb-3" style="font-size:20px;">✅ ผลการลบ SN และคำนวนใหม่</div>
+        <div id="resultTitle" class="fw-bold mb-3" style="font-size:20px;">✅ ผลการอนุมัติ</div>
         <div id="resultBody"></div>
         <button class="btn btn-primary w-100 fw-bold mt-3" data-bs-dismiss="modal">ปิด</button>
       </div>
@@ -661,13 +742,48 @@ table.sn-table{ width:100%; border-collapse:collapse; }
 // ==========================================================
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw9FUQVEOripWQc7x2l7wmL1krMRsh5M_ouW5LGLJonBOXW62H4J850YvPUigJfrFnl/exec";
 
+
+/** แปล response ที่ไม่ใช่ JSON ให้รู้ว่าติดตรงไหน */
+function explainBadResponse(text){
+  const t = String(text || "").trim();
+
+  // ได้ผลลัพธ์ของ doGet กลับมา = request กลายเป็น GET
+  if (/FIFO Monitor API/i.test(t)) {
+    return "เซิร์ฟเวอร์รับเป็น GET แทน POST\n\n"
+         + "มักเกิดจาก Deployment ตั้งค่าไม่ถูก ให้เช็ค\n"
+         + "1. Deploy > Manage deployments > Web app\n"
+         + "2. Execute as = Me\n"
+         + "3. Who has access = Anyone\n"
+         + "4. กด Deploy เป็น New version แล้วใช้ URL ล่าสุด";
+  }
+
+  if (/timeout|exceeded maximum execution|too long/i.test(t)) {
+    return "เซิร์ฟเวอร์ใช้เวลานานเกินไป (timeout) ลองแคบช่วงข้อมูลลง";
+  }
+
+  if (/^\s*</.test(t)) {
+    return "เซิร์ฟเวอร์ส่งหน้า HTML กลับมาแทน JSON\n"
+         + "อาจเป็นหน้า login หรือ error ของ Google — เช็คสิทธิ์การเข้าถึง Web app";
+  }
+
+  return "เซิร์ฟเวอร์ตอบกลับมาไม่ใช่ JSON: " + t.slice(0, 120);
+}
+
 async function callGAS(actionName, payloadData = {}) {
   const response = await fetch(GAS_API_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({ action: actionName, data: payloadData })
   });
-  const result = await response.json();
+  // GAS ที่ timeout จะส่ง HTML error page กลับมา ไม่ใช่ JSON
+  // ถ้าเรียก response.json() ตรงๆ จะได้ error ว่า Unexpected token < ซึ่งอ่านไม่รู้เรื่อง
+  const text = await response.text();
+  let result;
+  try {
+    result = JSON.parse(text);
+  } catch (e) {
+    throw new Error(explainBadResponse(text));
+  }
   if (result.status === "error") throw new Error(result.message);
   return result.data;
 }
@@ -766,13 +882,13 @@ async function loadReports(){
 // ==========================================================
 function normalizeStatus(raw){
   const s = String(raw || "").trim().toLowerCase();
-  if (s === "approved" || s === "approve" || s === "ลบ") return "approved";
+  if (s === "approved" || s === "approve" || s === "อนุมัติ") return "approved";
   if (s === "rejected" || s === "reject" || s === "ปฏิเสธ")  return "rejected";
   return "pending";
 }
-const STATUS_LABEL = { pending:"รอตรวจ", approved:"ลบแล้ว", rejected:"ปฏิเสธ" };
+const STATUS_LABEL = { pending:"รอตรวจ", approved:"อนุมัติแล้ว", rejected:"ปฏิเสธ" };
 
-// รายงานระดับ Code ลบแล้วไม่ได้ เพราะไม่รู้ว่าจะลบ SN ตัวไหน
+// รายงานระดับ Code อนุมัติไม่ได้ เพราะไม่รู้ว่าจะลบ SN ตัวไหน
 function isCodeLevel(r){ return String(r.type || "SN").toUpperCase() === "CODE"; }
 function isApprovable(r){ return normalizeStatus(r.status) === "pending" && !isCodeLevel(r); }
 
@@ -867,7 +983,7 @@ function renderDateOverview(){
           <div class="ov-date">📅 ${escapeHtml(d.date)}</div>
           <div class="ov-row">
             <div class="ov-pending"><b>${d.pending}</b>รอตรวจ</div>
-            <div class="ov-appr"><b>${d.approved}</b>ลบแล้ว</div>
+            <div class="ov-appr"><b>${d.approved}</b>อนุมัติ</div>
             <div class="ov-rej"><b>${d.rejected}</b>ปฏิเสธ</div>
             <div><b>${d.total}</b>ทั้งหมด</div>
           </div>
@@ -1217,6 +1333,7 @@ function paintDetail(g){
   if (!el) return;
   el.innerHTML = buildDetail(g);
   loadAllSN(g);
+  loadDeletedSN(g);
 }
 
 function buildDetail(g){
@@ -1232,10 +1349,10 @@ function buildDetail(g){
                style="width:18px;height:18px;">
         เลือกทั้งหมดที่รอตรวจ (${pendingItems.length})
       </label>
-      ${codeLevelPending.length ? `<span class="code-level-warn">⚠️ มีรายงานระดับ Code ${codeLevelPending.length} รายการ ที่ลบไม่ได้</span>` : ``}
+      ${codeLevelPending.length ? `<span class="code-level-warn">⚠️ มีรายงานระดับ Code ${codeLevelPending.length} รายการ ที่อนุมัติไม่ได้</span>` : ``}
       ${checkedHere ? `
         <span class="ms-auto">เลือกไว้ ${checkedHere}</span>
-        <button class="btn btn-success btn-sm" onclick="askBulk('Approved')">✅ ลบ SN ที่เลือก</button>
+        <button class="btn btn-success btn-sm" onclick="askBulk('Approved')">✅ อนุมัติที่เลือก</button>
         <button class="btn btn-danger btn-sm"  onclick="askBulk('Rejected')">❌ ปฏิเสธที่เลือก</button>
       ` : ``}
     </div>` : "";
@@ -1247,7 +1364,7 @@ function buildDetail(g){
       <div class="detail-sub">📅 ${escapeHtml(g.date)} · ${
         g.items.length
           ? `SN ที่ถูก Report ${g.items.length} รายการ · รอตรวจ ${pendingItems.length}`
-          : `ยังไม่ถูก Report — เลือก SN ด้านล่างได้`
+          : `ยังไม่ถูก Report — เลือก SN ด้านล่างได้ แต่ต้องมีรายงานรอตรวจถึงจะลบได้`
       }</div>
       ${bulkBar}
     </div>
@@ -1260,6 +1377,8 @@ function buildDetail(g){
         </tr></thead>
         <tbody>${g.items.map(buildRow).join("")}</tbody>
       </table>
+
+      <div class="del-box" id="deletedBox"></div>
 
       <div class="all-sn-box" id="allSNBox">
         <div class="all-sn-head">
@@ -1622,10 +1741,10 @@ function buildRow(r){
   if (!isPending){
     act = `<span class="text-muted" style="font-size:13px;">${escapeHtml(fmtDateTime(r.approvedAt))}</span>`;
   } else if (codeLevel){
-    act = `<div class="blocked-note">ลบไม่ได้<br><small>ไม่ระบุ SN</small></div>
+    act = `<div class="blocked-note">อนุมัติไม่ได้<br><small>ไม่ระบุ SN</small></div>
            <button class="btn btn-danger btn-sm mt-1" onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.code)}')">❌ <span class="d-lg-none">ปฏิเสธ</span></button>`;
   } else {
-    act = `<button class="btn btn-success btn-sm" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ <span class="d-lg-none">ลบ</span></button>
+    act = `<button class="btn btn-success btn-sm" onclick="askSingle(${r.rowIndex},'Approved','${escapeAttr(r.sn)}')">✅ <span class="d-lg-none">อนุมัติ</span></button>
            <button class="btn btn-danger btn-sm"  onclick="askSingle(${r.rowIndex},'Rejected','${escapeAttr(r.sn)}')">❌ <span class="d-lg-none">ปฏิเสธ</span></button>`;
   }
 
@@ -1696,7 +1815,7 @@ function openConfirm(rowIndexes, status, label, extras, manual){
   const n = rowIndexes.length;
 
   document.getElementById("confirmTitle").innerText = isApprove
-    ? (extraCount ? `ลบ ${extraCount} SN ที่เลือก?` : `ลบ ${n} รายการ?`)
+    ? (extraCount ? `ลบ ${extraCount} SN ที่เลือก?` : `อนุมัติ ${n} รายการ?`)
     : `ปฏิเสธ ${n} รายการ?`;
   document.getElementById("confirmSN").innerText = label;
   document.getElementById("adminComment").value = "";
@@ -1706,7 +1825,7 @@ function openConfirm(rowIndexes, status, label, extras, manual){
 
   const btn = document.getElementById("confirmBtn");
   btn.className = "btn flex-fill fw-bold " + (isApprove ? "btn-success" : "btn-danger");
-  btn.innerText = isApprove ? "ยืนยันลบ" : "ยืนยันปฏิเสธ";
+  btn.innerText = isApprove ? "ยืนยันอนุมัติ" : "ยืนยันปฏิเสธ";
   btn.disabled = false;
 
   confirmModal = confirmModal || new bootstrap.Modal(document.getElementById("confirmModal"));
@@ -1774,7 +1893,7 @@ function hideBusy(){
 }
 
 
-/* ---------- ลบ SN + คำนวณใหม่ ยิงครั้งเดียวทั้งชุด ---------- */
+/* ---------- อนุมัติ = ลบ SN + คำนวณใหม่ ยิงครั้งเดียวทั้งชุด ---------- */
 async function runApprove(rowIndexes, comment, btn, extras, manual){
   extras = extras || [];
   manual = manual || [];
@@ -1801,7 +1920,7 @@ async function runApprove(rowIndexes, comment, btn, extras, manual){
     const skippedRows = new Set((res.skipped || []).map(x => x.rowIndex));
     const now = new Date().toISOString();
 
-    // ใช้รายการที่ GAS ลบ จริง — รวมรายงานที่ถูกลบอัตโนมัติเพราะ SN ตรงกัน
+    // ใช้รายการที่ GAS อนุมัติจริง — รวมรายงานที่ถูกอนุมัติอัตโนมัติเพราะ SN ตรงกัน
     const touched = (res && res.approvedRows && res.approvedRows.length)
       ? res.approvedRows
       : rowIndexes.concat(extras.map(e => e.rowIndex));
@@ -1815,6 +1934,7 @@ async function runApprove(rowIndexes, comment, btn, extras, manual){
 
     // ข้อมูล SN เปลี่ยนแล้ว ต้องดึงใหม่ ไม่งั้นตารางล่างยังโชว์ของเก่า
     Object.keys(zoneSNCache).forEach(k => delete zoneSNCache[k]);
+    Object.keys(deletedCache).forEach(k => delete deletedCache[k]);
     extraSelection.clear();
 
     hideBusy();
@@ -1825,8 +1945,8 @@ async function runApprove(rowIndexes, comment, btn, extras, manual){
   } catch (err){
     hideBusy();
     btn.disabled = false;
-    btn.innerText = "ยืนยันลบ";
-    showToast("ลบไม่สำเร็จ: " + err.message, "warn");
+    btn.innerText = "ยืนยันอนุมัติ";
+    showToast("อนุมัติไม่สำเร็จ: " + err.message, "warn");
   }
 }
 
@@ -1863,8 +1983,281 @@ async function runReject(rowIndexes, comment, btn){
 }
 
 
-/* ---------- สรุปผลหลังลบ ---------- */
-function showApproveResult(res){
+/* ---------- สรุปผลหลังอนุมัติ ---------- */
+/* ==========================================================
+   📜 ประวัติการลบ
+   ========================================================== */
+let historyModal = null;
+let historyCache = [];      // รายการของเดือนที่เปิดอยู่
+let historyMonths = [];     // สรุปทุกเดือน (เบา ไม่มี ReportJSON)
+let historyMonth = "";
+
+function openHistory(){ loadHistory(""); }
+
+/** โหลดทีละเดือน — ReportJSON เป็นก้อนใหญ่ ดึงทุกเดือนพร้อมกันจะช้ามาก */
+async function loadHistory(month){
+  historyModal = historyModal || new bootstrap.Modal(document.getElementById("historyModal"));
+  const box = document.getElementById("historyBody");
+  box.innerHTML = `<div class="state-box"><span class="icon">⏳</span>กำลังโหลด...</div>`;
+  historyModal.show();
+
+  try {
+    const res = await callGAS("getDeleteHistory", { month: month, limit: 200 }) || {};
+    historyMonths = res.months || [];
+    historyCache  = res.items  || [];
+    historyMonth  = res.month  || month || "";
+  } catch (err){
+    box.innerHTML = `<div class="state-box"><span class="icon">⚠️</span>
+        โหลดไม่สำเร็จ — ${escapeHtml(err.message)}</div>`;
+    return;
+  }
+
+  if (!historyMonths.length){
+    box.innerHTML = `<div class="state-box"><span class="icon">📭</span>ยังไม่เคยลบ SN</div>`;
+    return;
+  }
+
+  renderHistoryList();
+}
+
+
+function renderHistoryList(){
+  const box = document.getElementById("historyBody");
+
+  // ปุ่มเลือกเดือน
+  let html = `<div class="hist-months">` + historyMonths.map(m => `
+      <button class="month-chip ${m.month === historyMonth ? "active" : ""}"
+              onclick="loadHistory('${m.month}')">
+        ${monthLabel(m.month)}
+        <span class="mc-cnt">${m.count}</span>
+      </button>`).join("") + `</div>`;
+
+  const cur = historyMonths.find(m => m.month === historyMonth);
+  if (cur){
+    html += `<div class="hist-month">
+        <span>🗓️ ${monthLabel(cur.month)}</span>
+        <span class="hist-month-sum">${cur.count} ครั้ง · ลบ ${cur.deletedSN} SN</span>
+      </div>`;
+  }
+
+  html += historyCache.length
+    ? historyCache.map((b, i) => `
+        <div class="hist-item" onclick="showHistoryReport(${i})">
+          <div class="hist-top">
+            <span>📅 ${escapeHtml(b.date)}</span>
+            <span class="hist-sn">ลบ ${b.deletedSN} SN</span>
+            ${b.zones ? `<span class="zone-tag">${escapeHtml(b.zones)}</span>` : ``}
+          </div>
+          ${pctBadge(b.report)}
+          <div class="hist-meta">🕐 ${escapeHtml(b.deletedAt)}${
+            b.adminComment ? ` · 💬 ${escapeHtml(b.adminComment)}` : ``}</div>
+          <div class="hist-codes">${escapeHtml(b.codes || "")}</div>
+        </div>`).join("")
+    : `<div class="state-box"><span class="icon">📭</span>เดือนนี้ไม่มีการลบ</div>`;
+
+  box.innerHTML = html;
+}
+
+function monthLabel(m){
+  const TH = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.",
+              "ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  const p = String(m).split("-");
+  if (p.length < 2) return m;
+  return (TH[Number(p[1]) - 1] || p[1]) + " " + p[0];
+}
+
+/** % ก่อน→หลัง บนการ์ด */
+function pctBadge(report){
+  if (!report || !report.total) return "";
+  const pb = Number(report.total.pctBefore) || 0;
+  const pa = Number(report.total.pctAfter)  || 0;
+  const d  = pa - pb;
+
+  return `<div class="hist-pct">
+      <span class="hp-label">% NotFIFO</span>
+      <s>${pb.toFixed(2)}%</s>
+      <span class="hp-arrow">→</span>
+      <b>${pa.toFixed(2)}%</b>
+      ${deltaTag(d, true)}
+    </div>`;
+}
+
+/** เปิดรายงานของครั้งนั้น — ใช้ตัววาดเดียวกับตอนลบเสร็จ */
+async function showHistoryReport(i){
+  const b = historyCache[i];
+  if (!b) return;
+
+  showApproveResult({
+    approved: b.deletedSN,
+    byDate: b.report ? [{
+      date: b.date,
+      deletedSN: b.deletedSN,
+      codes: b.codes ? b.codes.split(/,\s*/) : [],
+      fifoFileRows: 0,
+      report: b.report
+    }] : [],
+    skipped: []
+  }, `📜 รายงานการลบ · ${b.deletedAt}`);
+
+  // ต่อท้ายด้วยรายการ SN ที่ลบครั้งนั้น — พับไว้ทีละ Code
+  const box = document.getElementById("resultBody");
+  const holder = document.createElement("div");
+  holder.innerHTML = `<div class="res-section">🗑️ SN ที่ลบครั้งนี้</div>
+    <div class="text-muted" style="font-size:13px;">⏳ กำลังโหลด...</div>`;
+  box.appendChild(holder);
+
+  let rows = [];
+  try {
+    rows = await callGAS("getDeletedSNs", { batchId: b.batchId, date: b.date }) || [];
+  } catch (err){
+    holder.innerHTML = `<div class="res-section">🗑️ SN ที่ลบครั้งนี้</div>
+      <div class="res-skip">โหลดไม่สำเร็จ — ${escapeHtml(err.message)}</div>`;
+    return;
+  }
+
+  const mine = rows.filter(r => !r.batchId || !b.batchId || r.batchId === b.batchId);
+  holder.innerHTML = `<div class="res-section">🗑️ SN ที่ลบครั้งนี้ (${mine.length} SN)</div>`
+                   + buildBatchCodeBlocks(mine);
+}
+
+
+/** รายการ SN แยกตาม Code พับไว้ก่อน — ลบเยอะจะได้ไม่ต้องเลื่อนยาว */
+function buildBatchCodeBlocks(list){
+  const byCode = {};
+  list.forEach(r => { (byCode[r.code] = byCode[r.code] || []).push(r); });
+
+  const codes = Object.keys(byCode).sort();
+  if (!codes.length) return `<div class="res-skip">ไม่พบรายการ SN ของครั้งนี้</div>`;
+
+  return codes.map((code, ci) => {
+    const items = byCode[code];
+    const saleCount = items.filter(d =>
+      String(d.status || "").trim().toUpperCase() === "SALE").length;
+
+    const groups = {};
+    items.forEach(d => { const rc = d.rc || "ไม่ระบุ RC"; (groups[rc] = groups[rc] || []).push(d); });
+    const ordered = Object.entries(groups).sort((a, b2) =>
+      (Number(b2[1][0].age) || 0) - (Number(a[1][0].age) || 0));
+
+    return `<div class="bc-head" onclick="toggleBatchCode(${ci})">
+        <span>🏷️ ${escapeHtml(code)}</span>
+        <span class="bc-sub">${items.length} SN · ${ordered.length} RC · SALE ${saleCount}</span>
+        <span class="bc-arrow" id="bcArrow${ci}">▾</span>
+      </div>
+      <div id="bcBody${ci}" style="display:none;">`
+      + ordered.map(([rc, sub]) => {
+          const sc = sub.filter(d =>
+            String(d.status || "").trim().toUpperCase() === "SALE").length;
+          return `<div class="rc-block rc-block-del">
+              <div class="rc-block-head">
+                <span>📦 ${escapeHtml(rc)}</span>
+                <span class="rc-age">อายุ ${escapeHtml(sub[0].age)} วัน · ${sub.length} SN${
+                  sc ? ` · SALE ${sc}` : ``}</span>
+              </div>
+              <div class="sn-chips">${sub.map(d => `
+                <span class="sn-chip deleted ${
+                  String(d.status || "").trim().toUpperCase() === "SALE" ? "was-sale" : ""}"
+                  title="${escapeHtml(d.reason || "-")}">
+                  ${escapeHtml(d.sn)}
+                  <i class="sn-chip-meta">${escapeHtml(d.status || "")}</i>
+                </span>`).join("")}</div>
+            </div>`;
+        }).join("")
+      + `</div>`;
+  }).join("");
+}
+
+function toggleBatchCode(i){
+  const body = document.getElementById("bcBody" + i);
+  const ar   = document.getElementById("bcArrow" + i);
+  if (!body) return;
+  const open = body.style.display !== "none";
+  body.style.display = open ? "none" : "block";
+  if (ar) ar.innerText = open ? "▾" : "▴";
+}
+
+
+/* ==========================================================
+   🗑️ SN ที่ถูกลบไปแล้ว (แสดงในหน้า Code)
+   ========================================================== */
+const deletedCache = {};   // "วันที่|Code" -> [rows]
+
+async function loadDeletedSN(g){
+  const box = document.getElementById("deletedBox");
+  if (!box || !g) return;
+
+  // ดึงทั้งวันครั้งเดียวแล้วกรอง Code ฝั่งนี้
+  // ถ้าส่ง code ไปด้วย GAS ต้องไล่ทั้งชีตทุกครั้งที่เปิด Code ใหม่ ช้ามาก
+  const key = g.date;
+
+  if (!deletedCache[key]){
+    box.innerHTML = `<div class="del-head">🗑️ SN ที่ถูกลบไปแล้ว</div>
+      <div class="all-sn-state">⏳ กำลังตรวจสอบ...</div>`;
+    try {
+      deletedCache[key] = await callGAS("getDeletedSNs", { date: g.date }) || [];
+    } catch (e){
+      box.innerHTML = "";
+      return;
+    }
+    if (!currentGroup() || currentGroup().key !== g.key) return;
+  }
+
+  const target = cleanCode(g.code);
+  const list = deletedCache[key].filter(d => cleanCode(d.code) === target);
+  if (!list.length){ box.innerHTML = ""; return; }
+
+  renderDeletedSN(list);
+}
+
+
+/** วาดแบบเดียวกับ "SN ทั้งหมด" — แยกกลุ่ม RC บอกอายุและจำนวน */
+function renderDeletedSN(list){
+  const box = document.getElementById("deletedBox");
+  if (!box) return;
+
+  const groups = new Map();
+  list.forEach(d => {
+    const rc = d.rc || "ไม่ระบุ RC";
+    if (!groups.has(rc)) groups.set(rc, []);
+    groups.get(rc).push(d);
+  });
+
+  // เรียงอายุมาก → น้อย เหมือนฝั่ง SN ทั้งหมด
+  const ordered = [...groups.entries()].sort((a, b) =>
+    (Number(b[1][0].age) || 0) - (Number(a[1][0].age) || 0));
+
+  let html = `<div class="del-head">
+      <span>🗑️ SN ที่ถูกลบไปแล้ว</span>
+      <span class="del-sum">${list.length} SN · ${ordered.length} RC</span>
+    </div>`;
+
+  ordered.forEach(([rc, items]) => {
+    const saleCount = items.filter(d =>
+      String(d.status || "").trim().toUpperCase() === "SALE").length;
+
+    html += `<div class="rc-block rc-block-del">
+        <div class="rc-block-head">
+          <span>📦 ${escapeHtml(rc)}</span>
+          <span class="rc-age">อายุ ${escapeHtml(items[0].age)} วัน · ${items.length} SN${
+            saleCount ? ` · SALE ${saleCount}` : ``}</span>
+          <span class="rc-flag del">ลบแล้ว</span>
+        </div>
+        <div class="sn-chips">${items.map(d => {
+          const sale = String(d.status || "").trim().toUpperCase() === "SALE";
+          return `<span class="sn-chip deleted ${sale ? "was-sale" : ""}"
+              title="${escapeHtml((d.reason || "-") + " · ลบเมื่อ " + (d.deletedAt || ""))}">
+              ${escapeHtml(d.sn)}
+              <i class="sn-chip-meta">${escapeHtml(d.status || "")}</i>
+            </span>`;
+        }).join("")}</div>
+      </div>`;
+  });
+
+  box.innerHTML = html;
+}
+
+
+function showApproveResult(res, customTitle){
   const box = document.getElementById("resultBody");
   if (!box) return;
 
@@ -1872,9 +2265,12 @@ function showApproveResult(res){
   const skipped = res.skipped || [];
   const totalSN = days.reduce((a, d) => a + (d.deletedSN || 0), 0);
 
+  const titleEl = document.getElementById("resultTitle");
+  if (titleEl) titleEl.innerText = customTitle || "✅ ผลการอนุมัติ";
+
   let html = `<div class="res-head">
-      <div class="res-big">${res.approved || 0}</div>
-      <div>รายการที่ลบ · ลบ SN ทั้งหมด <b>${totalSN}</b> ตัว</div>
+      <div class="res-big">${totalSN}</div>
+      <div>SN ที่ถูกลบ${customTitle ? `` : ` · อนุมัติ <b>${res.approved || 0}</b> รายการ`}</div>
     </div>`;
 
   days.forEach(d => {
