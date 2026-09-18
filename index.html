@@ -12,6 +12,13 @@
 <style>
 #mobileLayout,#pcLayout{display:none;}
 
+/* ป้องกันเครื่องที่ตั้ง Text scaling / Display size ไว้ ทำให้สเกลเพี้ยน */
+html{
+  -webkit-text-size-adjust:100%;
+  -moz-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+
 :root{
   --primary:#2563eb;
   --secondary:#4f46e5;
@@ -23,7 +30,7 @@
 
 body{
   background:var(--bg);
-  font-size:30px;
+  font-size:clamp(17px, 4.4vw, 30px);
   line-height:1.5;
 }
 
@@ -32,8 +39,8 @@ body *{
 }
 
 button,input{
-  min-height:52px;
-  font-size:30px;
+  min-height:clamp(42px, 12vw, 52px);
+  font-size:clamp(17px, 4.4vw, 30px);
 }
 
 /* ===== App Root ===== */
@@ -42,15 +49,32 @@ button,input{
   overflow-x:hidden;
 }
 
+/* หัวการ์ดมือถือ (ชื่อหน้า + ตัวกรอง) ให้ตกบรรทัดได้บนจอแคบ */
+#mobileLayout .card .d-flex.justify-content-between{
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+#mobileLayout .filter-bar{
+  flex:1 1 auto;
+  min-width:0;
+  justify-content:center;
+}
+
+#mobileLayout .title-toggle{
+  flex:1 1 auto;
+  max-width:100%;
+}
+
 /* ===== Text ===== */
 .code{
-  font-size:30px;
+  font-size:clamp(18px, 4.8vw, 30px);
   font-weight:900;
   color:#111;
 }
 
 .name{
-  font-size:28px;
+  font-size:clamp(15px, 4vw, 28px);
   color:#444;
   margin-bottom:6px;
 }
@@ -60,13 +84,13 @@ button,input{
   display:flex;
   justify-content:space-between;
   margin-top:14px;
-  font-size:40px;
+  font-size:clamp(20px, 5.2vw, 40px);
   font-weight:600;
 }
 
 /* ===== Table ===== */
 .table{
-  font-size:26px;
+  font-size:clamp(15px, 3.8vw, 26px);
 }
 
 .table td,.table th{
@@ -183,8 +207,8 @@ button,input{
 
 .prefix-btn{
   border-radius:14px;
-  padding:14px 28px;
-  font-size:22px;
+  padding:clamp(10px, 3vw, 14px) clamp(16px, 5vw, 28px);
+  font-size:clamp(15px, 3.8vw, 22px);
   border:none;
   background:#e0e7ff;
   color:var(--primary);
@@ -222,16 +246,16 @@ button,input{
 }
 
 .sn-card-header .code{
-  font-size:30px;
+  font-size:clamp(18px, 4.8vw, 30px);
 }
 
 .sn-card-header .name{
-  font-size:22px;
+  font-size:clamp(15px, 3.8vw, 22px);
   color:#e0e7ff;
 }
 
 .sn-card-header .badges span{
-  font-size:22px;
+  font-size:clamp(14px, 3.6vw, 22px);
   margin-right:8px;
   margin-top:6px;
 }
@@ -249,10 +273,12 @@ button,input{
     margin:0;
     width:100vw;
     height:100vh;
+    height:100dvh;
     max-width:none;
   }
   .modal-content{
     height:100vh;
+    height:100dvh;
     border-radius:0;
   }
 }
@@ -282,6 +308,7 @@ button,input{
   margin:0;
   width:100vw;
   height:100vh;
+  height:100dvh;
   transform:translateX(100%);
   transition:transform .35s ease;
 }
@@ -292,11 +319,12 @@ button,input{
 
 .app-modal .modal-content{
   height:100vh;
+  height:100dvh;
   border-radius:0;
 }
 
 .app-back-btn{
-  font-size:28px;
+  font-size:clamp(20px, 5vw, 28px);
   color:var(--primary,#0d6efd);
   font-weight:700;
   text-decoration:none;
@@ -365,7 +393,7 @@ button,input{
 .search-input{
   width:100%;
   padding:18px 18px 18px 56px;
-  font-size:26px;
+  font-size:clamp(16px, 4vw, 26px);
   border-radius:18px;
   border:2px solid #c7d2fe;
   background:#ffffff;
@@ -396,9 +424,9 @@ button,input{
   padding:6px 14px;
   box-shadow:0 4px 10px rgba(0,0,0,.12);
   cursor:pointer;
-  font-size:36px;
+  font-size:clamp(16px, 4vw, 36px);
   font-weight:700;
-  gap:14px;
+  gap:clamp(6px, 2vw, 14px);
   border:none;
   color:#111;
   transition:.25s;
@@ -437,7 +465,7 @@ button,input{
   border:none;
   background:#eef2ff;
   color:#2563eb;
-  font-size:26px;
+  font-size:clamp(16px, 4.4vw, 26px);
   font-weight:900;
   cursor:pointer;
   transition:.25s;
@@ -478,7 +506,7 @@ button,input{
 
 .date-input{
   width:100%;
-  font-size:32px;
+  font-size:clamp(18px, 4.8vw, 32px);
   padding:14px 16px;
   border-radius:14px;
   border:2px solid #c7d2fe;
@@ -496,7 +524,7 @@ button,input{
 .btn-unified{
   width:100%;
   padding:18px 0;
-  font-size:32px;
+  font-size:clamp(18px, 4.6vw, 32px);
   font-weight:800;
   border-radius:20px;
   border:none;
@@ -509,7 +537,7 @@ button,input{
 .btn-unified2{
   width:100%;
   padding:18px 0;
-  font-size:32px;
+  font-size:clamp(18px, 4.6vw, 32px);
   font-weight:800;
   border-radius:20px;
   border:none;
@@ -560,9 +588,9 @@ button,input{
 }
 
 .sn-side-btn{
-  min-width:90px;
-  height:56px;
-  font-size:22px;
+  min-width:clamp(74px, 20vw, 90px);
+  height:clamp(48px, 13vw, 56px);
+  font-size:clamp(16px, 4vw, 22px);
   font-weight:700;
   border-radius:16px;
   border:none;
@@ -577,15 +605,15 @@ button,input{
 }
 
 .big-input{
-  height:72px;
-  font-size:34px;
+  height:clamp(52px, 14vw, 72px);
+  font-size:clamp(18px, 4.8vw, 34px);
   border-radius:26px;
 }
 
 .big-btn{
-  height:72px;
-  min-width:120px;
-  font-size:34px;
+  height:clamp(52px, 14vw, 72px);
+  min-width:clamp(88px, 24vw, 120px);
+  font-size:clamp(18px, 4.8vw, 34px);
   font-weight:800;
   border-radius:26px;
   border:none;
@@ -624,7 +652,7 @@ button,input{
 .btn-barcodescan{
   width:100%;
   padding:18px 0;
-  font-size:32px;
+  font-size:clamp(18px, 4.6vw, 32px);
   font-weight:800;
   border-radius:20px;
   border:none;
@@ -699,7 +727,7 @@ button,input{
   padding:6px 12px;
   box-shadow:0 4px 10px rgba(0,0,0,.12);
   cursor:pointer;
-  font-size:36px;
+  font-size:clamp(16px, 4vw, 36px);
   font-weight:700;
   gap:10px;
   border:1.5px solid #e0e7ff;
@@ -1790,7 +1818,7 @@ body{background:#eef2ff;font-family:system-ui}
         <div class="app-modal-title">🔍 ค้นหา SN</div>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <input id="snInput" class="form-control text-center mb-4" style="font-size:30px;height:80px;border-radius:22px;" placeholder="กรอก SN 10 หลัก" inputmode="numeric" maxlength="10" oninput="onSNInputChange(this)">
+      <input id="snInput" class="form-control text-center mb-4" style="font-size:clamp(18px,5vw,30px);height:clamp(58px,16vw,80px);border-radius:22px;" placeholder="กรอก SN 10 หลัก" inputmode="numeric" maxlength="10" oninput="onSNInputChange(this)">
       
       <button class="btn-barcodescan" onclick="startBarcodeScan()">📷 สแกน Barcode</button>
       <input type="file" id="fallbackCamera" accept="image/*" capture="environment" class="d-none" onchange="handleFallbackImage(event)">
@@ -2158,6 +2186,13 @@ async function runGoogleScript(funcName, ...args) {
   return await callGAS(funcName, payload);
 }
 
+/** วันที่แบบ YYYY-MM-DD ตามเวลาเครื่อง — toISOString() แปลงเป็น UTC
+ *  ทำให้ก่อน 07:00 น. ตามเวลาไทย ได้วันที่ถอยไป 1 วัน */
+function toISODateLocal(d){
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+
 function esc(v){
   return String(v||'').replace(/'/g,"\\'");
 }
@@ -2171,7 +2206,7 @@ function formatDateDMY(dateStr){
 function setModalDateDefault(){
   const d = new Date();
   d.setDate(d.getDate()-1);
-  const iso = d.toISOString().slice(0,10);
+  const iso = toISODateLocal(d);
   const modal = document.getElementById("modalDate");
   if(modal){
     modal.value = iso;
@@ -2183,8 +2218,10 @@ window.addEventListener("load", detectDeviceLayout);
 window.addEventListener("resize", detectDeviceLayout);
 
 function isMobileDevice(){
-  const ua = navigator.userAgent.toLowerCase();
-  return /android|iphone|ipad|ipod/i.test(ua);
+  const ua = navigator.userAgent;
+  if(/android|iphone|ipad|ipod/i.test(ua)) return true;
+  // iPadOS 13+ รายงานตัวเองเป็น Macintosh ต้องดู touch point ประกอบ
+  return /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
 }
 
 function detectDeviceLayout(){
@@ -2270,7 +2307,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 function initDate(){
   const d = new Date();
   d.setDate(d.getDate()-1);
-  const iso = d.toISOString().slice(0,10); 
+  const iso = toISODateLocal(d); 
 
   const bar = document.getElementById("barDate");
   const modalDate = document.getElementById("modalDate");
