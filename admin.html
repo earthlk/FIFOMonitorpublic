@@ -1404,6 +1404,31 @@ let extraSelection = new Map();
 let searchQuery = "";             // ค้นหา Code / RC (ใส่หลายตัวได้)
 let searchTerms = [];             // คำค้นที่แตกแล้ว
 let workDate = null;            // วันที่ทำงาน — null = หน้าภาพรวมทุกวัน
+/**
+ * ล้างแคชของหน้า index.html (IndexedDB โดเมนเดียวกัน) เฉพาะวันที่ที่เพิ่งลบ SN
+ * เครื่องนี้เปิด index.html ครั้งหน้าจะได้ข้อมูลใหม่ทันที
+ * (เครื่องอื่นจะอัปเดตเองเมื่อแคชเก่าเกิน 30 นาที)
+ */
+function invalidateIndexCache(dates){
+  dates = (dates || []).filter(Boolean);
+  if (!dates.length || !window.indexedDB) return;
+  try {
+    const req = indexedDB.open("fifo-monitor-cache");
+    req.onsuccess = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains("meta") || !db.objectStoreNames.contains("data")) { db.close(); return; }
+      const tx = db.transaction(["data", "meta"], "readwrite");
+      const keys = [];
+      dates.forEach(d => ALL_ZONES.forEach(z => keys.push(d + "|" + z)));
+      keys.forEach(k => { tx.objectStore("data").delete(k); tx.objectStore("meta").delete(k); });
+      tx.oncomplete = () => db.close();
+    };
+    // ยังไม่เคยมีฐานข้อมูล = ไม่มีอะไรให้ล้าง → ยกเลิก ไม่สร้างฐานเปล่าทิ้งไว้
+    req.onupgradeneeded = () => { try { req.transaction.abort(); } catch (e) {} };
+    req.onerror = (ev) => { if (ev && ev.preventDefault) ev.preventDefault(); };
+  } catch (e) {}
+}
+
 const ALL_ZONES = ["A","B","C","D","E","J","N","R","S","T","U"];
 
 function cleanCode(c){ return String(c || "").replace(/\s+/g, "").toUpperCase(); }
@@ -1934,6 +1959,7 @@ async function runApprove(rowIndexes, comment, btn, extras, manual){
 
     // ข้อมูล SN เปลี่ยนแล้ว ต้องดึงใหม่ ไม่งั้นตารางล่างยังโชว์ของเก่า
     Object.keys(zoneSNCache).forEach(k => delete zoneSNCache[k]);
+    invalidateIndexCache((res && res.byDate || []).map(d => d.date));
     Object.keys(deletedCache).forEach(k => delete deletedCache[k]);
     extraSelection.clear();
 

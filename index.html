@@ -2122,20 +2122,13 @@ async function onDateOrZoneChange() {
   const apiPrefix = currentPrefix.charAt(0);
   if (!needReloadFIFO(date, apiPrefix)) { applyFilterSort(); return; }
 
-  showSkeleton();
-  showLoading("กำลังโหลดข้อมูลโซน " + apiPrefix + " ...");
-  setProgress(50);
-  
   try {
-    const result = await callGAS("getZoneDataMerged", { date: date, mainzone: apiPrefix });
-    fifoRawCache = result.fifo || [];
-    fifoViewList = result.fifo || [];
-    snIndexMap = result.sn || {};
-    fifoCacheState.date = date;
-    fifoCacheState.zone = apiPrefix;
-    applyFilterSort();
-    setProgress(100);
-  } catch(e) { showToast(e.message || "โหลดข้อมูลไม่สำเร็จ", "warn"); } finally { hideLoading(); }
+    const shown = await loadZoneView(date, apiPrefix, {
+      show: () => { showSkeleton(); showLoading("กำลังโหลดข้อมูลโซน " + apiPrefix + " ..."); setProgress(50); },
+      hide: hideLoading
+    });
+    if (shown) applyFilterSort();
+  } catch(e) { showToast(e.message || "โหลดข้อมูลไม่สำเร็จ", "warn"); }
 }
 
 async function searchSNInSheet(sn) {
@@ -2164,13 +2157,12 @@ async function moveToZoneAndSearchCode(zone, code) {
   if(barZone) barZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${displayZone} <span class="filter-icon">▾</span>`;
   if(pcbarZone) pcbarZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${displayZone} <span class="filter-icon">▾</span>`;
 
-  showSkeleton(); showLoading("ย้ายไปโซน " + displayZone + " ...");
   try {
-    const result = await callGAS("getZoneDataMerged", { date: date, mainzone: apiPrefix });
-    fifoRawCache = result.fifo || [];
-    fifoViewList = result.fifo || [];
-    snIndexMap = result.sn || {};
-    fifoCacheState.date = date; fifoCacheState.zone = apiPrefix;
+    const shown = await loadZoneView(date, apiPrefix, {
+      show: () => { showSkeleton(); showLoading("ย้ายไปโซน " + displayZone + " ..."); },
+      hide: hideLoading
+    });
+    if (!shown) return;
 
     setSearchBoxes(code);      // ใส่ทั้งช่องมือถือและ PC
     applyFilterSort();
@@ -2179,7 +2171,7 @@ async function moveToZoneAndSearchCode(zone, code) {
     renderZoneRule(currentPrefix);
     showToast("ย้ายไป Zone " + displayZone + " แล้ว", "ok");
     warnIfCodeHidden(code);    // บอกเหตุผลถ้า Code ไม่โผล่ในรายการ
-  } catch(e) { showToast("เกิดข้อผิดพลาด", "warn"); } finally { hideLoading(); }
+  } catch(e) { showToast("เกิดข้อผิดพลาด", "warn"); }
 }
 
 // ==========================================================
@@ -2271,6 +2263,7 @@ let sortMode='notfifo';
 //   ZONE_GROUP_STRICT : NotFIFO > 3  หรือ Repeat > 1 วัน
 const ZONE_GROUP_LOOSE  = ["A","B","C","E","J"];
 const ZONE_GROUP_STRICT = ["D","N","R","S","T","U"];
+const ZONES_MAIN = ["A","B","C","D","E","J","N","R","S","T","U"];   // ต้องมีชีต "<Zone> SN Lite"
 
 let currentPrefix='A';
 let snRenderIndex = 0;
@@ -2296,6 +2289,320 @@ function needReloadFIFO(date, apiPrefix){
     fifoCacheState.date !== date ||
     fifoCacheState.zone !== apiPrefix
   );
+}
+
+// ==========================================================
+// 💾 Zone Data Cache — หน่วยความจำ + IndexedDB
+//   • โหลดโซนที่เลือกก่อน แล้วค่อยทยอยโหลดโซนที่เหลือของวันเดียวกันเบื้องหลัง
+//   • เก็บลง IndexedDB ปิดเว็บแล้วเปิดใหม่ก็ยังใช้ได้
+//   • เก็บย้อนหลังไม่เกิน KEEP_DAYS วัน และรวมไม่เกิน MAX_BYTES
+//   • ข้อมูลเก่ากว่า FRESH_MS → แสดงจากแคชทันที แล้วเช็คกับเซิร์ฟเวอร์เบื้องหลัง
+//   ดูสถานะใน Console:  await zcStats()     ล้างทั้งหมด:  await zcClear()
+// ==========================================================
+const ZC = {
+  DB_NAME        : "fifo-monitor-cache",
+  MAX_BYTES      : 200 * 1048576,     // รวมไม่เกิน ~200 MB
+  KEEP_DAYS      : 7,                 // เก็บย้อนหลัง 7 วันนับจากวันนี้
+  FRESH_MS       : 30 * 60 * 1000,    // ใหม่กว่า 30 นาที ใช้เลยไม่ต้องเช็ค
+  PREFETCH_SKIP_MS: 6 * 3600 * 1000,  // preload ข้ามโซนที่แคชไว้ไม่เกิน 6 ชม.
+  PREFETCH_CONC  : 2,                 // preload พร้อมกันทีละ 2 โซน
+  MEM_MAX        : 24                 // เก็บในหน่วยความจำได้กี่ชุด (วัน|โซน)
+};
+
+const zcMem      = new Map();   // "วันที่|โซน" -> { data:{fifo,sn}, ts, sig }
+const zcInflight = new Map();   // "วันที่|โซน" -> Promise  กันยิงซ้ำ
+let zcDbPromise  = null;
+let zcPrefetchGen = 0;
+let zcPrefetchDateCur = null;
+let zoneViewReq = 0;
+
+const zcKey = (date, zone) => date + "|" + zone;
+
+function zcSig(s){
+  // hash สั้นๆ ไว้เทียบว่าข้อมูลเปลี่ยนไหม
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return s.length + ":" + (h >>> 0).toString(36);
+}
+
+function zcShiftDate(iso, days){
+  const p = iso.split("-").map(Number);
+  const d = new Date(p[0], p[1] - 1, p[2], 12);
+  d.setDate(d.getDate() + days);
+  return toISODateLocal(d);
+}
+
+function zcMemSet(key, entry){
+  zcMem.delete(key);
+  zcMem.set(key, entry);
+  while (zcMem.size > ZC.MEM_MAX) zcMem.delete(zcMem.keys().next().value);
+}
+
+/* ---------- IndexedDB ---------- */
+function zcDb(){
+  if (zcDbPromise) return zcDbPromise;
+
+  const open = (version) => new Promise(resolve => {
+    try {
+      if (!window.indexedDB) return resolve(null);
+      const req = version ? indexedDB.open(ZC.DB_NAME, version) : indexedDB.open(ZC.DB_NAME);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains("data")) db.createObjectStore("data");
+        if (!db.objectStoreNames.contains("meta")) db.createObjectStore("meta", { keyPath: "key" });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = () => resolve(null);
+      req.onblocked = () => resolve(null);
+    } catch (e) { resolve(null); }
+  });
+
+  zcDbPromise = (async () => {
+    let db = await open();
+    // ฐานมีอยู่แต่ store ไม่ครบ → เปิดเวอร์ชันถัดไปเพื่อสร้างให้ครบ
+    if (db && !(db.objectStoreNames.contains("data") && db.objectStoreNames.contains("meta"))) {
+      const v = db.version + 1;
+      db.close();
+      db = await open(v);
+    }
+    if (db) db.onversionchange = () => { db.close(); zcDbPromise = null; };
+    return db;
+  })();
+  return zcDbPromise;
+}
+
+function zcReq(r){
+  return new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+}
+
+function zcTxDone(tx){
+  return new Promise((res, rej) => {
+    tx.oncomplete = () => res();
+    tx.onerror = tx.onabort = () => rej(tx.error);
+  });
+}
+
+async function zcIdbRead(key){
+  const db = await zcDb(); if (!db) return null;
+  try {
+    const tx = db.transaction(["data", "meta"], "readonly");
+    const [json, meta] = await Promise.all([
+      zcReq(tx.objectStore("data").get(key)),
+      zcReq(tx.objectStore("meta").get(key))
+    ]);
+    return (json && meta) ? { json, meta } : null;
+  } catch (e) { return null; }
+}
+
+async function zcIdbMeta(key){
+  const db = await zcDb(); if (!db) return null;
+  try { return await zcReq(db.transaction("meta").objectStore("meta").get(key)) || null; }
+  catch (e) { return null; }
+}
+
+async function zcIdbSave(key, date, zone, json, entry){
+  const db = await zcDb(); if (!db) return;
+  const meta = { key, date, zone, ts: entry.ts, sig: entry.sig, bytes: json.length, lastUsed: Date.now() };
+  try {
+    const tx = db.transaction(["data", "meta"], "readwrite");
+    tx.objectStore("data").put(json, key);
+    tx.objectStore("meta").put(meta);
+    await zcTxDone(tx);
+  } catch (e) {
+    console.warn("[cache] บันทึกไม่สำเร็จ (พื้นที่อาจเต็ม)", e);
+  }
+  zcEvict();
+}
+
+async function zcTouch(key){
+  const db = await zcDb(); if (!db) return;
+  try {
+    const tx = db.transaction("meta", "readwrite");
+    const st = tx.objectStore("meta");
+    const m = await zcReq(st.get(key));
+    if (m) { m.lastUsed = Date.now(); st.put(m); }
+  } catch (e) {}
+}
+
+async function zcDeleteKeys(keys){
+  keys.forEach(k => zcMem.delete(k));
+  const db = await zcDb(); if (!db || !keys.length) return;
+  try {
+    const tx = db.transaction(["data", "meta"], "readwrite");
+    keys.forEach(k => { tx.objectStore("data").delete(k); tx.objectStore("meta").delete(k); });
+    await zcTxDone(tx);
+  } catch (e) {}
+}
+
+/** ลบวันที่เก่าเกิน KEEP_DAYS แล้วถ้ายังเกิน MAX_BYTES ลบตัวที่ไม่ได้ใช้นานสุดก่อน */
+let zcEvictTimer = null;
+function zcEvict(){
+  clearTimeout(zcEvictTimer);
+  zcEvictTimer = setTimeout(async () => {
+    const db = await zcDb(); if (!db) return;
+    let metas = [];
+    try { metas = await zcReq(db.transaction("meta").objectStore("meta").getAll()) || []; }
+    catch (e) { return; }
+
+    const cutoff  = zcShiftDate(toISODateLocal(new Date()), -ZC.KEEP_DAYS);
+    const viewing = fifoCacheState.date;          // วันที่กำลังดูอยู่ ห้ามลบ
+    const drop = new Set(metas.filter(m => m.date < cutoff && m.date !== viewing).map(m => m.key));
+
+    let total = metas.filter(m => !drop.has(m.key)).reduce((s, m) => s + (m.bytes || 0), 0);
+    if (total > ZC.MAX_BYTES) {
+      metas.filter(m => !drop.has(m.key) && m.date !== viewing)
+        .sort((a, b) => a.lastUsed - b.lastUsed)
+        .forEach(m => { if (total > ZC.MAX_BYTES) { drop.add(m.key); total -= m.bytes || 0; } });
+    }
+    if (drop.size) await zcDeleteKeys([...drop]);
+  }, 500);
+}
+
+/* ---------- อ่าน / ดึงข้อมูล ---------- */
+
+/** หาในแคช (หน่วยความจำ → IndexedDB) ไม่เจอคืน null */
+async function zcGet(date, zone){
+  const key = zcKey(date, zone);
+  const m = zcMem.get(key);
+  if (m) { zcMemSet(key, m); return m; }
+
+  const rec = await zcIdbRead(key);
+  if (!rec) return null;
+  try {
+    const entry = { data: JSON.parse(rec.json), ts: rec.meta.ts, sig: rec.meta.sig };
+    zcMemSet(key, entry);
+    zcTouch(key);
+    return entry;
+  } catch (e) { return null; }
+}
+
+/** อายุของแคช (ms) ไม่มีคืน Infinity */
+async function zcAge(date, zone){
+  const key = zcKey(date, zone);
+  const m = zcMem.get(key);
+  if (m) return Date.now() - m.ts;
+  const meta = await zcIdbMeta(key);
+  return meta ? Date.now() - meta.ts : Infinity;
+}
+
+/** ดึงจากเซิร์ฟเวอร์เสมอ แล้วเก็บลงแคช — ถ้ากำลังดึงโซนนี้อยู่ใช้ตัวเดิม */
+function zcFetch(date, zone){
+  const key = zcKey(date, zone);
+  if (zcInflight.has(key)) return zcInflight.get(key);
+
+  const p = (async () => {
+    const res  = await callGAS("getZoneDataMerged", { date: date, mainzone: zone });
+    const data = { fifo: (res && res.fifo) || [], sn: (res && res.sn) || {} };
+    const json = JSON.stringify(data);
+    const entry = { data, ts: Date.now(), sig: zcSig(json) };
+    zcMemSet(key, entry);
+    zcIdbSave(key, date, zone, json, entry);
+    return entry;
+  })();
+
+  zcInflight.set(key, p);
+  const clear = () => zcInflight.delete(key);
+  p.then(clear, clear);
+  return p;
+}
+
+/** แคชเก่าเกิน FRESH_MS → ดึงใหม่เบื้องหลัง ถ้าเปลี่ยนและยังดูโซนนี้อยู่ค่อยวาดใหม่ */
+async function zcRevalidate(date, zone, oldSig){
+  try {
+    const fresh = await zcFetch(date, zone);
+    if (fresh.sig === oldSig) return;
+    if (fifoCacheState.date !== date || fifoCacheState.zone !== zone) return;
+    applyZoneData(date, zone, fresh.data);
+    applyFilterSort();
+    pcApplyFilter();
+    showToast("อัปเดตข้อมูลล่าสุดแล้ว", "info");
+  } catch (e) { /* ใช้ข้อมูลในแคชต่อไป */ }
+}
+
+/** ทยอยโหลดโซนที่เหลือของวันที่นี้เบื้องหลัง */
+function zcPrefetchDate(date){
+  if (zcPrefetchDateCur === date) return;       // กำลังทำของวันนี้อยู่แล้ว
+  zcPrefetchDateCur = date;
+  const gen   = ++zcPrefetchGen;                // เปลี่ยนวันที่ → รอบเก่าหยุด
+  const queue = ZONES_MAIN.slice();
+
+  const worker = async () => {
+    while (queue.length && gen === zcPrefetchGen) {
+      const zone = queue.shift();
+      try {
+        if (await zcAge(date, zone) < ZC.PREFETCH_SKIP_MS) continue;
+        if (gen !== zcPrefetchGen) return;
+        await zcFetch(date, zone);
+      } catch (e) {
+        console.warn(`[cache] preload ${date} โซน ${zone} ไม่สำเร็จ`, e);
+      }
+    }
+  };
+
+  const workers = [];
+  for (let i = 0; i < ZC.PREFETCH_CONC; i++) workers.push(worker());
+  Promise.all(workers).then(() => {
+    if (gen === zcPrefetchGen) zcPrefetchDateCur = null;   // เสร็จแล้ว รอบหน้าเช็คใหม่ได้
+  });
+}
+
+/** ตั้งข้อมูลโซนที่จะแสดง */
+function applyZoneData(date, zone, data){
+  fifoRawCache = data.fifo;
+  fifoViewList = data.fifo;
+  snIndexMap   = data.sn;
+  fifoCacheState.date = date;
+  fifoCacheState.zone = zone;
+  snGroupedByCode = null;
+  snRCGroupCache  = null;
+}
+
+/**
+ * โหลดโซนมาแสดง — มีในแคชใช้เลย ไม่มีค่อยโชว์ loading แล้วดึง
+ * ui = { show, hide }  คืน true ถ้าได้แสดงผล (false = ผู้ใช้สลับไปที่อื่นแล้ว)
+ */
+async function loadZoneView(date, zone, ui){
+  const req = ++zoneViewReq;
+  let entry = await zcGet(date, zone);
+  let fromCache = !!entry;
+
+  if (!entry) {
+    ui.show && ui.show();
+    try { entry = await zcFetch(date, zone); }
+    finally { if (req === zoneViewReq && ui.hide) ui.hide(); }
+  } else if (ui.hide) {
+    ui.hide();   // เผื่อ loading ของคำขอก่อนหน้ายังค้าง
+  }
+
+  if (req !== zoneViewReq) return false;
+  applyZoneData(date, zone, entry.data);
+
+  if (fromCache && Date.now() - entry.ts > ZC.FRESH_MS) zcRevalidate(date, zone, entry.sig);
+  zcPrefetchDate(date);
+  return true;
+}
+
+/* ---------- เครื่องมือ Console ---------- */
+async function zcStats(){
+  const db = await zcDb();
+  const metas = db ? await zcReq(db.transaction("meta").objectStore("meta").getAll()).catch(() => []) : [];
+  const byDate = {};
+  metas.forEach(m => {
+    const d = byDate[m.date] = byDate[m.date] || { zones: [], mb: 0 };
+    d.zones.push(m.zone); d.mb += (m.bytes || 0) / 1048576;
+  });
+  Object.values(byDate).forEach(d => { d.zones.sort(); d.mb = +d.mb.toFixed(2); });
+  const totalMB = +(metas.reduce((s, m) => s + (m.bytes || 0), 0) / 1048576).toFixed(2);
+  return { totalMB, limitMB: ZC.MAX_BYTES / 1048576, memEntries: zcMem.size, byDate };
+}
+
+async function zcClear(){
+  const db = await zcDb();
+  zcMem.clear();
+  if (!db) return;
+  const tx = db.transaction(["data", "meta"], "readwrite");
+  tx.objectStore("data").clear(); tx.objectStore("meta").clear();
+  await zcTxDone(tx);
 }
 
 let startY=0;
@@ -3018,7 +3325,14 @@ function searchSNController(sn){
 function searchSNInCache(sn){
   const key = normalizeSN(sn);
   if(!key) return null;
-  return snIndexMap[key] || null;
+  if (snIndexMap[key]) return snIndexMap[key];
+
+  // ไม่อยู่โซนนี้ → ดูโซนอื่นของวันเดียวกันที่แคชไว้แล้ว ไม่ต้องถามเซิร์ฟเวอร์
+  const prefix = fifoCacheState.date + "|";
+  for (const [k, e] of zcMem) {
+    if (k.indexOf(prefix) === 0 && e.data.sn[key]) return e.data.sn[key];
+  }
+  return null;
 }
 
 function setSearchBoxes(code){
@@ -3308,19 +3622,13 @@ async function pcOnDateOrZoneChange(){
   const apiPrefix = currentPrefix.charAt(0);
   if(!needReloadFIFO(date, apiPrefix)){ pcApplyFilter(); return; }
 
-  pcShowLoading("กำลังโหลดข้อมูลโซน " + apiPrefix + " ...");
-  pcSetProgress(50);
-
   try {
-    const result = await callGAS("getZoneDataMerged", { date: date, mainzone: apiPrefix });
-    fifoRawCache = result.fifo || [];
-    fifoViewList = result.fifo || [];
-    snIndexMap = result.sn || {};
-    fifoCacheState.date = date;
-    fifoCacheState.zone = apiPrefix;
-    pcApplyFilter();
-    pcSetProgress(100);
-  } catch (e) { showToast(e.message || "โหลดข้อมูลไม่สำเร็จ", "warn"); } finally { pcHideLoading(); }
+    const shown = await loadZoneView(date, apiPrefix, {
+      show: () => { pcShowLoading("กำลังโหลดข้อมูลโซน " + apiPrefix + " ..."); pcSetProgress(50); },
+      hide: pcHideLoading
+    });
+    if (shown) pcApplyFilter();
+  } catch (e) { showToast(e.message || "โหลดข้อมูลไม่สำเร็จ", "warn"); }
 }
 
 function pcApplyFilter() {
