@@ -455,8 +455,13 @@ button,input{
 
 .zone-grid{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(4,1fr);
   gap:12px;
+}
+/* D Big / D NB แยกเป็นแถวของตัวเอง กว้างคนละครึ่ง */
+.zone-btn.zone-btn-sub{
+  grid-column:span 2;
+  font-size:16px;
 }
 
 .zone-btn{
@@ -1725,8 +1730,13 @@ body{background:#eef2ff;font-family:system-ui}
           <button class="zone-btn" onclick="pickZone('D',this)">D</button>
           <button class="zone-btn" onclick="pickZone('E',this)">E</button>
           <button class="zone-btn" onclick="pickZone('J',this)">J</button>
-          <button class="zone-btn" onclick="pickZone('D Big',this)" style="font-size: 16px;">D Big</button>
-          <button class="zone-btn" onclick="pickZone('D NB',this)" style="font-size: 16px;">D NB</button>
+          <button class="zone-btn" onclick="pickZone('N',this)">N</button>
+          <button class="zone-btn" onclick="pickZone('R',this)">R</button>
+          <button class="zone-btn" onclick="pickZone('S',this)">S</button>
+          <button class="zone-btn" onclick="pickZone('T',this)">T</button>
+          <button class="zone-btn" onclick="pickZone('U',this)">U</button>
+          <button class="zone-btn zone-btn-sub" onclick="pickZone('D Big',this)">D Big</button>
+          <button class="zone-btn zone-btn-sub" onclick="pickZone('D NB',this)">D NB</button>
         </div>
       </div>
       <div class="modal-footer"><button class="btn-unified" onclick="applyUnifiedFilter()">✔ ตกลง</button></div>
@@ -2256,6 +2266,12 @@ let snCache=[];
 let snIndexMap = {};
 
 let sortMode='notfifo';
+// เกณฑ์แจ้งเตือนตาม Zone
+//   ZONE_GROUP_LOOSE  : NotFIFO > 10 หรือ Repeat > 1 วัน
+//   ZONE_GROUP_STRICT : NotFIFO > 3  หรือ Repeat > 1 วัน
+const ZONE_GROUP_LOOSE  = ["A","B","C","E","J"];
+const ZONE_GROUP_STRICT = ["D","N","R","S","T","U"];
+
 let currentPrefix='A';
 let snRenderIndex = 0;
 let snRCGroupCache = null;
@@ -3272,8 +3288,8 @@ function getUrgentClass(zone, notfifo, repeatDays){
   repeatDays = Number(repeatDays) || 0;
   const z = String(zone||'').charAt(0).toUpperCase();
 
-  const group1 = ["A","B","C","E","J"];
-  const group2 = ["D","R","S","T","U"];
+  const group1 = ZONE_GROUP_LOOSE;
+  const group2 = ZONE_GROUP_STRICT;
 
   if(group1.includes(z)){
     if(notfifo > 10 || repeatDays > 1) return "card-warning";
@@ -3447,7 +3463,7 @@ function pcHideLoading(){ const box = document.getElementById("pcLoading"); if(b
 function renderZoneRule(zone){
   const z = String(zone).charAt(0);
   let html = "";
-  if(["A","B","C","E","J"].includes(z)){
+  if(ZONE_GROUP_LOOSE.includes(z)){
     html = `<div>• NotFIFO &gt; 10</div><div>• Repeat &gt; 1 วัน</div>`;
   }else{
     html = `<div>• NotFIFO &gt; 3</div><div>• Repeat &gt; 1 วัน</div>`;
