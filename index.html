@@ -2711,11 +2711,14 @@ function setSort(mode){
 }
 
 function getSearchKeyword(){
+  // อ่านเฉพาะช่องที่มองเห็นอยู่ — เดิมถ้าช่องมือถือว่าง จะไปอ่านช่อง PC ที่ซ่อนอยู่
+  // ซึ่งยังค้างค่า Code จากการค้น SN / ย้ายโซน ทำให้การ์ดถูกกรองหายโดยไม่รู้ตัว
   const m = document.getElementById("searchInput");
-  if(m && m.value) return m.value.toLowerCase();
   const p = document.getElementById("pcSearch");
-  if(p && p.value) return p.value.toLowerCase();
-  return "";
+  const visible = el => el && el.offsetParent !== null;
+  if (visible(m)) return m.value.toLowerCase();
+  if (visible(p)) return p.value.toLowerCase();
+  return m ? m.value.toLowerCase() : "";
 }
 
 function applyFilterSort(){
