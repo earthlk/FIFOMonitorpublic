@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin — SN Report</title>
 
+<script>
+(function(){
+  var mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  function apply(){ document.documentElement.setAttribute("data-bs-theme", mq && mq.matches ? "dark" : "light"); }
+  apply();
+  if (mq) { try { mq.addEventListener("change", apply); } catch (e) { mq.addListener && mq.addListener(apply); } }
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
@@ -579,6 +589,207 @@ table.sn-table{ width:100%; border-collapse:collapse; }
 .toast-msg.ok  { background:var(--success); }
 .toast-msg.warn{ background:var(--danger); }
 
+
+/* =====================================================================
+   🎨 Redesign — ให้หน้าตาเข้าชุดกับ index.html (สี/ฟอนต์/การ์ดเดียวกัน)
+   ใช้ token --v-* ชุดเดียวกับ index · รองรับ Dark mode (data-bs-theme)
+   ===================================================================== */
+:root{
+  --v-bg:#f3f4f6; --v-card:#ffffff; --v-line:#e3e5e8; --v-text:#14171c; --v-text2:#4a5059; --v-muted:#6b7280;
+  --v-chip:#f1f3f5; --v-accent:#2a78d6; --v-accentSoft:#e8f1fc;
+  --v-warn:#b45309; --v-warnSoft:#fff4e6; --v-warnLine:#f59e52;
+  --v-bad:#c62828; --v-badSoft:#fdecec; --v-badLine:#f5c2c2; --v-badSolid:#c62828;
+  --v-ok:#15803d; --v-okSoft:#e7f6ec; --v-okLine:#a7dcb7;
+  --v-saleSoft:#fff1e3; --v-saleLine:#f8cfa1; --v-saleText:#9a4a07;
+  --v-shadow:0 1px 2px rgba(16,24,40,.05);
+  /* map ตัวแปรเดิมของ admin → ชุดใหม่ */
+  --primary:var(--v-accent); --secondary:var(--v-accent);
+  --danger:var(--v-badSolid); --success:var(--v-ok); --warning:#d97706;
+  --bg:var(--v-bg); --ink:var(--v-text); --muted:var(--v-muted); --line:var(--v-line);
+}
+[data-bs-theme="dark"]{
+  --v-bg:#0f0f0f; --v-card:#1a1a19; --v-line:#2f2f2c; --v-text:#f0efec; --v-text2:#c3c2b7; --v-muted:#8f8e88;
+  --v-chip:#232321; --v-accent:#3987e5; --v-accentSoft:#1d2a3a;
+  --v-warn:#fdba74; --v-warnSoft:#2b1a0b; --v-warnLine:#c2600f;
+  --v-bad:#f87171; --v-badSoft:#3a1416; --v-badLine:#6b2226; --v-badSolid:#dc2626;
+  --v-ok:#4ade80; --v-okSoft:#10261a; --v-okLine:#24573a;
+  --v-saleSoft:#33220f; --v-saleLine:#6b4210; --v-saleText:#fdba74;
+  --v-shadow:none;
+  --success:#16a34a; --warning:#d97706;
+}
+
+body{ font-family:'IBM Plex Sans Thai', system-ui, sans-serif; background:var(--v-bg); color:var(--v-text); }
+button, input, select, textarea{ font-family:inherit; }
+.code, .col-sn, .sn-chip, .rc-tag, .stat b, .ov-row b, .res-big, .side-count, .date-chip .cnt, .hist-sn{
+  font-family:'IBM Plex Mono', ui-monospace, monospace;
+}
+.text-muted{ color:var(--v-muted) !important; }
+
+/* ---------- ปุ่ม Bootstrap ให้เป็นโทนเดียวกับ index ---------- */
+.btn{ border-radius:10px; }
+.btn-primary{ --bs-btn-bg:var(--v-accent); --bs-btn-border-color:var(--v-accent); --bs-btn-hover-bg:var(--v-accent); --bs-btn-hover-border-color:var(--v-accent); --bs-btn-active-bg:var(--v-accent); --bs-btn-disabled-bg:var(--v-accent); --bs-btn-disabled-border-color:var(--v-accent); }
+.btn-primary:hover{ filter:brightness(.94); }
+.btn-outline-primary{ --bs-btn-color:var(--v-accent); --bs-btn-border-color:var(--v-accent); --bs-btn-hover-bg:var(--v-accent); --bs-btn-hover-border-color:var(--v-accent); --bs-btn-active-bg:var(--v-accent); }
+.btn-light{ --bs-btn-bg:var(--v-chip); --bs-btn-border-color:var(--v-line); --bs-btn-color:var(--v-text); --bs-btn-hover-bg:var(--v-line); --bs-btn-hover-border-color:var(--v-line); --bs-btn-hover-color:var(--v-text); --bs-btn-active-bg:var(--v-line); --bs-btn-active-color:var(--v-text); }
+.btn-outline-secondary{ --bs-btn-color:var(--v-text2); --bs-btn-border-color:var(--v-line); --bs-btn-hover-bg:var(--v-chip); --bs-btn-hover-color:var(--v-text); --bs-btn-hover-border-color:var(--v-line); }
+.form-control{ background:var(--v-card); border-color:var(--v-line); color:var(--v-text); border-radius:10px; }
+.form-control:focus{ border-color:var(--v-accent); box-shadow:0 0 0 3px var(--v-accentSoft); background:var(--v-card); color:var(--v-text); }
+.text-primary{ color:var(--v-accent) !important; }
+.progress{ background:var(--v-chip); }
+.progress-bar{ background-color:var(--v-accent); }
+
+/* ---------- Login ---------- */
+.login-card{ background:var(--v-card); border:1px solid var(--v-line); border-radius:16px; box-shadow:var(--v-shadow); }
+
+/* ---------- Top bar: การ์ดสีพื้น แทน gradient ---------- */
+.topbar{ background:var(--v-card); color:var(--v-text); border-bottom:1px solid var(--v-line); box-shadow:none; }
+.topbar h1{ font-weight:700; letter-spacing:-.01em; }
+.topbar .btn-light{ font-weight:600 !important; }
+.stat{ background:var(--v-chip); border:1px solid var(--v-line); border-radius:12px; }
+.stat b{ font-weight:600; }
+.stat span{ color:var(--v-muted); opacity:1; font-weight:600; }
+.stat:nth-child(1) b{ color:var(--v-warn); }
+.stat:nth-child(2) b{ color:var(--v-ok); }
+.stat:nth-child(3) b{ color:var(--v-bad); }
+.stat:nth-child(4) b{ color:var(--v-text); }
+
+/* ---------- Chips (filter / วันที่ / เดือน) ---------- */
+.chip, .date-chip, .month-chip{ border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-weight:600; }
+.chip:hover, .date-chip:hover, .month-chip:hover{ border-color:var(--v-accent); color:var(--v-accent); }
+.chip.active, .date-chip.active, .month-chip.active,
+.chip.active:hover, .date-chip.active:hover, .month-chip.active:hover{ background:var(--v-accent); border-color:var(--v-accent); color:#fff; }
+.date-chip{ color:var(--v-text); border-radius:10px; }
+.date-chip .cnt{ background:var(--v-warnSoft); color:var(--v-warn); border:1px solid var(--v-warnLine); }
+.date-chip .cnt.done{ background:var(--v-chip); color:var(--v-muted); border-color:var(--v-line); }
+.date-chip.active .cnt{ background:rgba(255,255,255,.22); color:#fff; border-color:transparent; }
+.date-chip.more{ background:var(--v-accentSoft); border-color:var(--v-accent); color:var(--v-accent); }
+.date-chip.back{ background:var(--v-chip); }
+#dateBar input[type=date]{ border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text); border-radius:10px; }
+.mc-cnt{ background:var(--v-chip); }
+[data-bs-theme="dark"] #dateBar input[type=date]{ color-scheme:dark; }
+
+/* ---------- Overview cards ---------- */
+.ov-card{ background:var(--v-card); border:1px solid var(--v-line); border-left:4px solid var(--v-line); border-radius:14px; box-shadow:var(--v-shadow); }
+.ov-card:hover{ box-shadow:0 6px 16px rgba(16,24,40,.08); border-color:var(--v-accent); }
+.ov-card.has-pending{ border-left-color:var(--v-warnLine); }
+.ov-date, .ov-title{ font-weight:700; }
+.ov-pending b{ color:var(--v-warn); } .ov-appr b{ color:var(--v-ok); } .ov-rej b{ color:var(--v-bad); }
+
+#globalExtraBar{ background:var(--v-accentSoft); color:var(--v-accent); border:1px solid var(--v-accent); box-shadow:none; }
+#globalExtraBar .ge-codes{ color:var(--v-text2); opacity:1; }
+
+/* ---------- Sidebar / Code list ---------- */
+.side-split{ background:var(--v-chip); color:var(--v-text2); border-top-color:var(--v-line); }
+.side-item{ background:var(--v-card); border:1px solid var(--v-line); box-shadow:var(--v-shadow); color:var(--v-text); }
+.side-item .code{ font-weight:600; }
+.side-item .chev{ color:var(--v-muted); }
+.side-count{ background:var(--v-chip); color:var(--v-muted); border:1px solid var(--v-line); }
+.side-count.has-pending{ background:var(--v-warnSoft); color:var(--v-warn); border-color:var(--v-warnLine); }
+.side-count.none{ background:transparent; border-color:transparent; color:var(--v-muted); }
+.side-date{ background:var(--v-accentSoft); color:var(--v-accent); border:1px solid var(--v-line); }
+.zone-tag, .rc-tag, .res-codes span{ background:var(--v-accentSoft); color:var(--v-accent); }
+
+/* ---------- Detail ---------- */
+.detail-head{ background:var(--v-card); border-bottom-color:var(--v-line); }
+.detail-head h2{ font-weight:700; }
+.detail-sub, .detail-name{ color:var(--v-muted); }
+.bulk-bar{ background:var(--v-accentSoft); color:var(--v-text); border:1px solid var(--v-line); }
+.all-sn-box, .del-box{ border-top:8px solid var(--v-bg); }
+
+.rc-block{ background:var(--v-card); border-color:var(--v-line); border-left-color:var(--v-line); }
+.rc-block-hit{ border-left-color:var(--v-badSolid); background:var(--v-badSoft); }
+.rc-block-del{ border-left-color:var(--v-muted); background:var(--v-chip); }
+.rc-flag{ background:var(--v-badSolid); }
+.rc-flag.partial{ background:var(--warning); }
+.rc-flag.del{ background:var(--v-muted); }
+.rc-pick{ background:var(--v-card); border-color:var(--v-accent); color:var(--v-accent); }
+.rc-pick.on{ background:var(--v-accent); color:#fff; }
+
+.sn-chip{ background:var(--v-chip); border-color:var(--v-line); color:var(--v-text2); }
+.sn-chip.hit{ background:var(--v-badSoft); border-color:var(--v-badLine); color:var(--v-bad); }
+.sn-chip.hit.st-approved, .sn-chip.is-sale.hit.st-approved{ background:var(--v-okSoft); border-color:var(--v-okLine); color:var(--v-ok); }
+.sn-chip.hit.st-rejected, .sn-chip.is-sale.hit.st-rejected{ background:var(--v-chip); border-color:var(--v-line); color:var(--v-muted); }
+.sn-chip.is-sale{ background:var(--v-saleSoft); border-color:var(--v-saleLine); color:var(--v-saleText); }
+.sn-chip.is-sale.hit{ background:var(--v-badSoft); border-color:var(--v-badLine); color:var(--v-bad); }
+.sn-chip.sel, .sn-chip.is-sale.sel, .sn-chip.hit.sel{ background:var(--v-accent) !important; border-color:var(--v-accent) !important; color:#fff !important; }
+.sn-chip.deleted{ background:var(--v-chip); border-color:var(--v-line); color:var(--v-muted); }
+.sn-chip.deleted.was-sale{ background:var(--v-saleSoft); border-color:var(--v-saleLine); color:var(--v-saleText); opacity:.6; }
+
+.extra-bar{ background:var(--v-accentSoft); border:1px solid var(--v-accent); color:var(--v-text); }
+.whole-code-note, .code-level-warn{ background:var(--v-warnSoft); border-color:var(--v-warnLine); color:var(--v-warn); }
+.approve-warn, .res-skip{ background:var(--v-badSoft); border-color:var(--v-badLine); color:var(--v-bad); }
+.blocked-note{ background:var(--v-chip); color:var(--v-muted); border-color:var(--v-line); }
+.search-hit{ background:var(--v-warnSoft); color:var(--v-warn); }
+.rc-block-match{ box-shadow:0 0 0 3px var(--v-warnLine); }
+
+/* badges */
+.badge-status{ font-weight:600; border:1px solid transparent; }
+.badge-pending { background:var(--v-warnSoft); color:var(--v-warn); border-color:var(--v-warnLine); }
+.badge-approved{ background:var(--v-okSoft); color:var(--v-ok); border-color:var(--v-okLine); }
+.badge-rejected{ background:var(--v-badSoft); color:var(--v-bad); border-color:var(--v-badLine); }
+.type-tag{ font-weight:700; }
+.type-sn{ background:#0369a1; } .type-rc{ background:#6d28d9; } .type-code{ background:#c2410c; }
+
+/* ---------- SN table ---------- */
+.sn-table{ color:var(--v-text); }
+.sn-table .col-note{ color:var(--v-muted); }
+@media (max-width: 991.98px){
+  .sn-table tr{ background:var(--v-card); border-color:var(--v-line); border-left-color:var(--v-line); box-shadow:var(--v-shadow); }
+  .sn-table tr.st-pending { border-left-color:var(--v-warnLine); }
+  .sn-table tr.st-approved{ border-left-color:var(--v-ok); }
+  .sn-table tr.st-rejected{ border-left-color:var(--v-badSolid); }
+  .sn-table tr.is-selected{ background:var(--v-accentSoft); }
+  .sn-table td::before{ color:var(--v-muted); }
+}
+@media (min-width: 992px){
+  .sidebar, .detail{ background:var(--v-card); border:1px solid var(--v-line); box-shadow:var(--v-shadow); }
+  .sidebar-title{ background:var(--v-card); border-bottom-color:var(--v-line); font-weight:700; }
+  .side-item{ background:none; border:0; border-left:3px solid transparent; box-shadow:none; }
+  .side-item:hover{ background:var(--v-chip); }
+  .side-item.active{ background:var(--v-accentSoft); border-left-color:var(--v-accent); }
+  .side-item.active .code{ color:var(--v-accent); }
+  .side-date{ background:none; border:0; color:var(--v-muted); }
+  .sn-table th{ background:var(--v-chip); color:var(--v-muted); border-bottom-color:var(--v-line); }
+  .sn-table td{ border-bottom-color:var(--v-line); }
+  .sn-table tbody tr:hover{ background:var(--v-chip); }
+  .sn-table tr.is-selected{ background:var(--v-accentSoft); }
+}
+
+/* ---------- Modals ---------- */
+.modal-content{ background:var(--v-card); color:var(--v-text); border:1px solid var(--v-line); border-radius:16px !important; }
+#detailModal .modal-content{ border-radius:0 !important; border:0; }
+#detailModal .modal-header{ background:var(--v-card) !important; color:var(--v-text) !important; border-bottom:1px solid var(--v-line); }
+#detailModal .modal-header .btn{ color:var(--v-accent) !important; }
+#detailModal .modal-body{ background:var(--v-bg); }
+.busy-box{ background:var(--v-card); color:var(--v-text); border:1px solid var(--v-line); border-radius:16px; }
+.res-head{ background:var(--v-okSoft); color:var(--v-ok); border:1px solid var(--v-okLine); }
+.res-day{ border-color:var(--v-line); border-left-color:var(--v-accent); }
+.res-sub{ color:var(--v-accent); }
+.res-table th{ background:var(--v-chip); color:var(--v-muted); border-bottom-color:var(--v-line); }
+.res-table td{ border-bottom-color:var(--v-line); }
+.res-table tr.res-changed td{ background:var(--v-warnSoft); }
+.delta.down{ background:var(--v-okSoft); color:var(--v-ok); }
+.delta.up{ background:var(--v-badSoft); color:var(--v-bad); }
+.delta.zero{ background:var(--v-chip); color:var(--v-muted); }
+
+.hist-month{ background:var(--v-chip); color:var(--v-text); border:1px solid var(--v-line); }
+.hist-month-sum{ color:var(--v-muted); opacity:1; }
+.hist-pct{ background:var(--v-chip); }
+.hist-pct b{ color:var(--v-accent); }
+.hist-pct s, .hp-arrow{ color:var(--v-muted); }
+.bc-head{ background:var(--v-accentSoft); color:var(--v-accent); }
+.hist-item{ background:var(--v-card); border-color:var(--v-line); border-left-color:var(--v-accent); }
+.hist-item:hover{ background:var(--v-chip); }
+.hist-sn{ background:var(--v-badSolid); }
+.hist-codes{ color:var(--v-accent); }
+
+/* ---------- Toast ---------- */
+.toast-msg{ background:#14171c; border-radius:12px; }
+[data-bs-theme="dark"] .toast-msg{ background:#f0efec; color:#14171c; }
+.toast-msg.ok{ background:var(--v-ok); color:#fff; }
+.toast-msg.warn{ background:var(--v-badSolid); color:#fff; }
+[data-bs-theme="dark"] .toast-msg.ok{ background:#15803d; }
+
 @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
 </style>
 </head>
@@ -659,8 +870,8 @@ table.sn-table{ width:100%; border-collapse:collapse; }
 <div class="modal fade" id="detailModal" tabindex="-1">
   <div class="modal-dialog modal-fullscreen">
     <div class="modal-content">
-      <div class="modal-header py-2" style="background:linear-gradient(135deg,var(--primary),var(--secondary)); color:#fff;">
-        <button class="btn btn-sm text-white fw-bold px-0" data-bs-dismiss="modal">← กลับ</button>
+      <div class="modal-header py-2">
+        <button class="btn btn-sm fw-bold px-0" data-bs-dismiss="modal">← กลับ</button>
       </div>
       <div class="modal-body" id="detailModalBody"></div>
     </div>
