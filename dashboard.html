@@ -1,0 +1,1302 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FIFO Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f4f5f7; --card:#ffffff; --soft:#f8f9fa; --text:#16181d; --text2:#52514e; --muted:#7c7b76; --line:#e4e4df;
+  --primary:#2a78d6; --primary-soft:#eaf2fc;
+  --series:#2a78d6; --total:#eb6834; --compare:#a9a8a1; --grid:#ecebe6; --axis:#c3c2b7;
+  --bad:#d03b3b; --good:#0b7a0b; --heat:208,59,59;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0f0f0f; --card:#1a1a19; --soft:#222220; --text:#f0efec; --text2:#c3c2b7; --muted:#8f8e88; --line:#2f2f2c;
+    --primary:#3987e5; --primary-soft:#1d2a3a;
+    --series:#3987e5; --total:#f07a45; --compare:#6b6a65; --grid:#2a2a28; --axis:#3a3a37;
+    --bad:#e66767; --good:#2fbf2f; --heat:230,103,103;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f0f0f; --card:#1a1a19; --soft:#222220; --text:#f0efec; --text2:#c3c2b7; --muted:#8f8e88; --line:#2f2f2c;
+  --primary:#3987e5; --primary-soft:#1d2a3a;
+  --series:#3987e5; --total:#f07a45; --compare:#6b6a65; --grid:#2a2a28; --axis:#3a3a37;
+  --bad:#e66767; --good:#2fbf2f; --heat:230,103,103;
+}
+*{box-sizing:border-box}
+html{text-size-adjust:100%;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Sarabun,system-ui,sans-serif;font-size:20px}
+.hidden{display:none!important}
+.muted{color:var(--muted);font-size:18px}
+
+.top{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:10px;padding:8px 16px}
+.brand{display:flex;align-items:center;gap:10px;flex:none}
+.brand h1{font-size:27px;margin:0;white-space:nowrap}
+/* โหมดฝังใน iframe (dashboard.html?embed=1): ซ่อนหัวเรื่อง ลดขอบ เพราะ index.html มีหัวอยู่แล้ว */
+.embed .brand h1{display:none}
+.embed .bar{padding:6px 12px}
+.embed .filters{padding:0 12px 8px}
+.embed .layout{padding:10px 12px}
+#btnFull{display:none}
+/* ปุ่มสลับกลับหน้ารายการ (โชว์เฉพาะตอนฝังใน index.html) แทนหัวเรื่อง "FIFO Dashboard" */
+.backapp{display:none;align-items:center;gap:10px;min-height:56px;padding:5px 10px;border-radius:12px;border:1px solid var(--line);background:var(--soft);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.backapp .t{display:flex;flex-direction:column;line-height:1.15}
+.backapp small{font-size:15px;color:var(--muted);letter-spacing:.04em}
+.backapp b{font-size:24px}
+.backapp .o{display:flex;align-items:center;gap:4px;height:28px;padding:0 8px;border-radius:8px;background:var(--primary);color:#fff;font-size:16px;font-weight:600;white-space:nowrap}
+.embed .backapp{display:flex}
+/* แถบ "เปิดหน้า Not FIFO" — โผล่เมื่อกดจุด/แท่งในกราฟ (เฉพาะตอนฝังใน index.html) */
+.gobar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:none;align-items:center;gap:12px;
+  padding:10px 12px 10px 18px;border-radius:14px;background:var(--card);border:1px solid var(--line);box-shadow:0 12px 32px rgba(0,0,0,.22);font-size:18px;white-space:nowrap}
+.embed .gobar.show{display:flex}
+.gobar b{color:var(--primary)}
+.gobar .go{border:0;border-radius:10px;background:var(--primary);color:#fff;font:inherit;font-weight:700;padding:8px 16px;cursor:pointer}
+.gobar .x{border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text2);font:inherit;padding:6px 12px;cursor:pointer}
+.embed #btnFull{display:inline-block}
+.sum{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top:not(.collapsed) .brand{margin-right:auto}
+.top:not(.collapsed) .sum{display:none}
+.filters{display:flex;flex-direction:column;gap:8px;padding:0 16px 10px}
+.top.collapsed .filters{display:none}
+.frow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+.tabs,.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tabs button,.seg button{border:0;background:var(--card);padding:6px 14px;font:inherit;cursor:pointer;color:var(--text)}
+.tabs button+button,.seg button+button{border-left:1px solid var(--line)}
+.tabs button.active,.seg button.active{background:var(--primary);color:#fff}
+.range{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.range input,.range select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--card)}
+.pair{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-ghost{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer;white-space:nowrap}
+
+.zones{gap:6px 8px}
+.zhead{display:inline-flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap}
+.zhead label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.zhead input,.zrow input{width:16px;height:16px;accent-color:var(--primary);margin:0}
+.iconbtn{border:1px solid var(--line);background:var(--card);color:var(--primary);border-radius:6px;width:26px;height:26px;
+  font:inherit;font-size:19px;line-height:1;cursor:pointer;padding:0}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.zrow{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:2px 10px 2px 8px;
+  cursor:pointer;background:var(--card);white-space:nowrap;font-size:19px;color:var(--muted);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.zrow .dot{opacity:.35}
+.zrow:has(input:checked){border-color:var(--c);color:var(--text);font-weight:600;background:color-mix(in srgb,var(--c) 12%,var(--card))}
+.zrow:has(input:checked) .dot{opacity:1}
+.zrow:hover{border-color:var(--c)}
+.zrow input.sr{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.zp{color:var(--muted);font-size:16px;font-weight:400;font-variant-numeric:tabular-nums;margin-left:2px}
+.only{border:1px solid var(--line);background:var(--card);color:var(--primary);font:inherit;font-size:15px;font-weight:600;
+  padding:0 6px;border-radius:999px;cursor:pointer;display:none;line-height:16px;margin-left:2px}
+.zrow:hover .only{display:inline-block}
+.more{position:relative}
+.more summary{list-style:none;cursor:pointer;border:1px dashed var(--line);border-radius:999px;padding:3px 12px;color:var(--muted);font-size:19px;white-space:nowrap}
+.more summary::-webkit-details-marker{display:none}
+.more summary::after{content:" ▾"}
+.more[open] summary::after{content:" ▴"}
+.pop{position:absolute;z-index:30;top:calc(100% + 6px);left:0;background:var(--card);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 6px 20px rgba(0,0,0,.12);padding:8px;display:flex;flex-direction:column;gap:6px;min-width:180px}
+.status{padding:8px 16px;font-size:19px}
+.status.err{background:#fdecea;color:#b3261e}
+.status:empty{display:none}
+
+.layout{padding:16px}
+.content{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.card h2{font-size:23px;margin:0 0 10px;font-weight:600}
+.card-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px}
+.card-head h2{margin:0}
+.card-head select{font:inherit;padding:4px 8px;border:1px solid var(--line);border-radius:6px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi .d{font-size:18px;margin-top:2px;color:var(--muted)}
+.up{color:var(--bad)} .down{color:var(--good)}
+.sub{color:var(--muted);font-size:18px;margin:-6px 0 10px}
+.keys{display:flex;gap:14px;align-items:center;color:var(--muted);font-size:18px;flex-wrap:wrap}
+.key{display:inline-flex;align-items:center;gap:6px}
+.key i{display:inline-block;width:16px;height:2px;border-radius:2px}
+.k1{background:linear-gradient(90deg,#2a78d6,#eb6834,#1baf7a)} .k2{background:var(--compare)}
+.tgl{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.tgl input{accent-color:var(--primary);margin:0}
+#cardSub{scroll-margin-top:72px}
+.view button{padding:4px 12px;font-size:19px}
+.cmp{display:grid;grid-template-columns:minmax(320px,1fr) 2fr;gap:20px;align-items:start}
+.cmp-t{font-weight:600;font-size:19px;margin-bottom:6px}
+/* กันกราฟไม่ยอมหดตอนหมุนจอ: ลูกของ grid ต้อง min-width:0 ให้ Chart.js ย่อตามได้ */
+.cmp>*,.mini,.chart-box,.rank-box,.mini-c{min-width:0}
+.chart-box canvas,.rank-box canvas,.mini-c canvas{max-width:100%}
+.rank-box{position:relative}
+.cmp-line{height:400px}
+.pick{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.pick button{border:1px solid var(--line);background:var(--card);color:var(--text2);border-radius:999px;padding:1px 10px;
+  font:inherit;font-size:18px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.pick button i{width:12px;height:3px;border-radius:2px;background:var(--c,var(--series));opacity:.45}
+.pick button.on{border-color:var(--c,var(--series));box-shadow:inset 0 0 0 1px var(--c,var(--series));color:var(--text);font-weight:600}
+.pick button.on i{opacity:1}
+.pick .go{margin-left:auto;border-color:transparent;color:var(--primary)}
+.minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.mini{border:1px solid var(--line);border-radius:10px;padding:10px 12px 6px;cursor:pointer;background:var(--card);transition:border-color .15s}
+.mini:hover{border-color:var(--primary)}
+.mini-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.mini-n{font-weight:700}
+.mini-v{font-size:27px;font-weight:700}
+.mini-d{font-size:16px;color:var(--muted);min-height:16px;text-align:right}
+.mini-c{position:relative;height:110px;margin-top:2px}
+.mini-x{display:flex;justify-content:space-between;color:var(--muted);font-size:15px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi .k{color:var(--muted);font-size:18px}
+.kpi .v{font-size:32px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi.main .v{color:var(--text);font-size:40px}
+
+.chart-box{position:relative;height:430px}
+.tbl-wrap{overflow-x:auto;margin-top:12px;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:separate;border-spacing:0;font-size:18px;font-variant-numeric:tabular-nums;width:max-content;min-width:100%}
+th,td{padding:6px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+thead th{background:var(--primary-soft);font-weight:600;cursor:pointer;position:sticky;top:0}
+th:first-child,td:first-child{position:sticky;left:0;z-index:2;text-align:left;background:var(--card);font-weight:600;border-right:1px solid var(--line)}
+thead th:first-child{background:var(--primary-soft);z-index:3;cursor:default}
+td.tot,th.tot{font-weight:700;background:var(--soft);border-left:1px solid var(--line)}
+tfoot td{font-weight:700;background:var(--soft)}
+tfoot td:first-child{background:var(--soft)}
+tr:last-child td{border-bottom:0}
+.hl{box-shadow:inset 0 0 0 999px rgba(127,127,127,.14)}
+td .na{color:var(--muted)}
+.rowlbl{display:flex;align-items:center;gap:6px}
+.empty{color:var(--muted);padding:20px;text-align:center}
+
+@media (max-width:1000px){
+  .layout{padding:12px}
+  .bar{padding:8px 12px}
+  .filters{padding:0 12px 10px}
+  .brand h1{font-size:24px}
+  .brand #updated{display:none}
+  .zrow{padding:2px 6px 2px 7px;gap:4px}
+  .only{display:inline-block}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .kpi .v{font-size:27px}
+  .kpi.main .v{font-size:32px}
+  .minis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .cmp{grid-template-columns:1fr;gap:14px}
+  .cmp-line{height:320px}
+  .pick .go{margin-left:0}
+  .mini{padding:8px 10px 4px}
+  .mini-v{font-size:23px}
+  .mini-c{height:70px}
+  .chart-box{height:260px}
+}
+
+/* จอมือถือ: ไม่ต้องขยายมากเท่าหน้าคอม */
+@media (max-width:700px){
+  body{font-size:16px}
+  .muted,.sub,.keys,.kpi .d,.kpi .k{font-size:13px}
+  .card h2{font-size:18px}
+  .kpi .v{font-size:22px} .kpi.main .v{font-size:28px}
+  .tabs button,.seg button,.btn-ghost,.range input,.range select{font-size:15px}
+  .zrow,.more summary,.pick button,.view button{font-size:14px}
+  .zp{font-size:12px} .only{font-size:11px}
+  table{font-size:13px}
+  .chart-box{height:300px} .cmp-line{height:260px} .mini-c{height:90px}
+  .minis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mini-v{font-size:17px} .mini-d,.mini-x{font-size:11px}
+  .backapp b{font-size:16px} .backapp small{font-size:10px}
+  .backapp{min-height:46px;padding:4px 8px;gap:8px} .backapp .o{font-size:12px;height:24px;padding:0 6px}
+  .bar{gap:6px;padding:6px 10px} .btn-ghost{padding:5px 9px}
+  #btnToggle{font-size:13px}
+  .gobar{font-size:14px;left:12px;right:12px;transform:none;white-space:normal;bottom:12px}
+}
+</style>
+</head>
+<body>
+<div class="gobar" id="gobar" role="status">
+  <span id="goText"></span>
+  <button type="button" class="go" id="goBtn">เปิดหน้า Not FIFO →</button>
+  <button type="button" class="x" id="goX" aria-label="ปิด">✕</button>
+</div>
+
+
+<header class="top" id="top">
+  <div class="bar">
+    <div class="brand"><button type="button" class="backapp" id="btnBackApp" title="กลับหน้ารายการ"><span class="t"><small>FIFO MONITOR</small><b>Dashboard</b></span><span class="o">⇆ <span id="backAppName">Not FIFO</span></span></button><h1>FIFO Dashboard</h1><span id="updated" class="muted"></span></div>
+    <span id="filterSum" class="muted sum"></span>
+    <button class="btn-ghost" id="btnReload" title="อ่านข้อมูลใหม่จากชีต (ข้าม cache)">↻</button>
+    <a class="btn-ghost" id="btnFull" href="dashboard.html" target="_blank" rel="noopener" title="เปิดเต็มหน้าในแท็บใหม่" style="text-decoration:none;color:inherit">↗</a>
+    <button class="btn-ghost" id="btnToggle">▴ ซ่อน</button>
+  </div>
+  <div class="filters">
+    <div class="frow">
+      <div class="tabs">
+        <button data-mode="day" class="active">รายวัน</button>
+        <button data-mode="month">รายเดือน</button>
+      </div>
+      <div class="range" id="rangeDay">
+        <div class="seg" id="presets">
+          <button data-days="7">7 วัน</button>
+          <button data-days="30" class="active">30 วัน</button>
+          <button data-days="90">90 วัน</button>
+        </div>
+        <span class="pair"><input type="date" id="dFrom"> – <input type="date" id="dTo"></span>
+      </div>
+      <div class="range hidden" id="rangeMonth">
+        <div class="seg" id="mPresets">
+          <button data-months="12" class="active">12 เดือน</button>
+          <button data-months="24">24 เดือน</button>
+          <button data-months="36">36 เดือน</button>
+        </div>
+        <span class="pair"><select id="mFrom"></select> – <select id="mTo"></select></span>
+      </div>
+    </div>
+    <div class="frow zones" id="zoneBox">
+      <span class="zhead">
+        <label><input type="checkbox" id="zAll"> Main Zone</label>
+        <button class="iconbtn" id="zDefault" title="กลับค่าเริ่มต้น">↺</button>
+      </span>
+      <div class="chips" id="zoneList"></div>
+      <details class="more" id="zoneMore">
+        <summary id="zoneMoreLbl">โซนอื่นๆ</summary>
+        <div class="pop" id="zoneOther"></div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<div id="status" class="status"></div>
+
+<main class="layout">
+  <section class="content">
+    <div class="kpis" id="kpis"></div>
+
+    <div class="card">
+      <h2 id="tTotal">NotFIFO% รายวัน</h2>
+      <div class="sub" id="sTotal"></div>
+      <div class="chart-box"><canvas id="cTotal"></canvas></div>
+      <div class="tbl-wrap" id="tblSummary"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2 id="tMain">NotFIFO% แยก Main Zone</h2>
+        <div class="seg view" data-sec="main">
+          <button data-v="compare" class="active">เทียบกัน</button><button data-v="cards">แยกการ์ด</button>
+        </div>
+      </div>
+      <div class="v-compare" data-sec="main">
+        <div class="cmp">
+          <div><div class="cmp-t">อันดับ NotFIFO% ทั้งช่วง</div><div class="rank-box" id="rbMain"><canvas id="rMain"></canvas></div></div>
+          <div>
+            <div class="cmp-t">แนวโน้ม · <span class="muted">กดชื่อโซนเพื่อเน้น</span></div>
+            <div class="pick" id="pMain"></div>
+            <div class="chart-box cmp-line"><canvas id="lMain"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="v-cards hidden" data-sec="main">
+        <div class="card-head" style="margin-bottom:6px">
+          <div class="sub" style="margin:0">กดการ์ดเพื่อดู Sub Zone ของโซนนั้น</div>
+          <div class="keys">
+            <span class="key"><i class="k1"></i>โซน</span>
+            <span class="key"><i class="k2"></i>รวมที่เลือก</span>
+            <label class="tgl"><input type="checkbox" id="sharedY" checked> สเกลเดียวกัน</label>
+          </div>
+        </div>
+        <div class="minis" id="mMain"></div>
+      </div>
+      <div class="tbl-wrap" id="tblMain"></div>
+    </div>
+
+    <div class="card" id="cardSub">
+      <div class="card-head">
+        <h2 id="tSub">NotFIFO% แยก Sub Zone</h2>
+        <div class="keys">
+          <select id="subSel"></select>
+          <div class="seg view" data-sec="sub">
+            <button data-v="compare" class="active">เทียบกัน</button><button data-v="cards">แยกการ์ด</button>
+          </div>
+        </div>
+      </div>
+      <div class="v-compare" data-sec="sub">
+        <div class="cmp">
+          <div><div class="cmp-t">อันดับ NotFIFO% ทั้งช่วง</div><div class="rank-box" id="rbSub"><canvas id="rSub"></canvas></div></div>
+          <div>
+            <div class="cmp-t">แนวโน้ม · <span class="muted">กดชื่อ Sub Zone เพื่อเน้น</span></div>
+            <div class="pick" id="pSub"></div>
+            <div class="chart-box cmp-line"><canvas id="lSub"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="v-cards hidden" data-sec="sub">
+        <div class="keys" style="margin-bottom:6px">
+          <span class="key"><i class="k1"></i>Sub Zone</span>
+          <span class="key"><i class="k2"></i>รวมโซน</span>
+        </div>
+        <div class="minis" id="mSub"></div>
+      </div>
+      <div class="tbl-wrap" id="tblSub"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* ================= ตั้งค่า ================= */
+// ใช้ URL เดียวกับที่ index.html เรียก GAS (ผ่าน Cloudflare Worker)
+const API_URL = "https://script.google.com/macros/s/AKfycbw9FUQVEOripWQc7x2l7wmL1krMRsh5M_ouW5LGLJonBOXW62H4J850YvPUigJfrFnl/exec";
+// เปิดด้วย dashboard.html?demo เพื่อดูหน้าตาด้วยข้อมูลจำลอง
+const DEMO = new URLSearchParams(location.search).has("demo");
+// เปิดด้วย dashboard.html?embed=1 เมื่อฝังใน iframe ของ index.html
+const EMBED = new URLSearchParams(location.search).has("embed") || window.self !== window.top;
+if (EMBED) {
+  document.documentElement.classList.add("embed");
+  // ปุ่ม ↗ เปิดหน้าเต็ม โดยคงพารามิเตอร์อื่นไว้ (เช่น ?demo)
+  const q = new URLSearchParams(location.search); q.delete("embed");
+  document.getElementById("btnFull").href = "dashboard.html" + (q.toString() ? "?" + q : "");
+  // ปุ่มสลับ: บอก index.html ให้กลับไปหน้ารายการ / รับชื่อโหมด (Not FIFO / Code Risk) กลับมาแสดง
+  document.getElementById("btnBackApp").onclick = () => window.parent.postMessage({ type: "fifo:toggleView" }, "*");
+  window.addEventListener("message", e => {
+    if (e.data && e.data.type === "fifo:mode") document.getElementById("backAppName").textContent = e.data.name;
+  });
+  window.parent.postMessage({ type: "fifo:ready" }, "*");
+}
+
+/* ---------- กดกราฟ → กลับไปค้นหาที่หน้า Not FIFO ----------
+   วันที่ = จุดที่กดในกราฟรวม (รายเดือน = วันล่าสุดของเดือนนั้น) ถ้าไม่ได้กด ใช้วันสุดท้ายของช่วง
+   Zone / Sub Zone = แท่งหรือเส้นที่กดในกราฟ Main / Sub */
+const GO = { date: null, zone: null, sub: null };
+function goDateOf(b) {
+  if (!b) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(b)) return b;
+  const ds = S.rows.filter(r => String(r.d).startsWith(b)).map(r => r.d).sort();
+  return ds.length ? ds[ds.length - 1] : null;
+}
+function goDefaultDate() {
+  if (S.mode === "day") { const B = buckets(); return B[B.length - 1] || null; }
+  return goDateOf(S.mTo);
+}
+function goShow(part) {
+  if (!EMBED) return;
+  Object.assign(GO, part);
+  const d = GO.date || goDefaultDate();
+  const dmy = d ? d.slice(8, 10) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4) : "–";
+  $("goText").innerHTML = `วันที่ <b>${dmy}</b>` + (GO.zone ? ` · Zone <b>${esc(GO.zone)}</b>` : "") + (GO.sub ? ` · Sub Zone <b>${esc(GO.sub)}</b>` : "");
+  $("gobar").classList.add("show");
+}
+if (EMBED) {
+  const $ = id => document.getElementById(id);
+  $("goBtn").onclick = () => {
+    const d = GO.date || goDefaultDate();
+    window.parent.postMessage({ type: "fifo:goto", date: d, zone: GO.zone, sub: GO.sub }, "*");
+    $("gobar").classList.remove("show");
+  };
+  $("goX").onclick = () => { $("gobar").classList.remove("show"); GO.date = GO.zone = GO.sub = null; };
+}
+
+// เรียกแบบเดียวกับ doPost: { action, data } → { status, data | message }
+async function callApi(action, data) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action, data: data || {} })
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const json = await res.json();
+  if (json.status !== "success") throw new Error(json.message || "GAS error");
+  return json.data;
+}
+
+/* ================= ค่าคงที่ ================= */
+const ZONE_ORDER = ["A","B","C","D Big","D NB","E","J","N","R","S","T","U"];
+/* สีประจำโซน — 8 สีแรกจากชุดสีที่ผ่านการทดสอบตาบอดสี, ที่เหลือเติมให้ครบทุกโซน
+   Sub Zone ใช้สีเดียวกับ Main Zone ของมัน */
+const ZONE_COLOR = {
+  light: { "A":"#2a78d6","B":"#e34948","C":"#f5c000","E":"#008300","J":"#6250d6","R":"#1baf7a","S":"#e87ba4","T":"#eb6834",
+           "U":"#8d6e63","D Big":"#5f7186","D NB":"#0097a7","N":"#9e9d24" },
+  dark:  { "A":"#3987e5","B":"#e66767","C":"#e0b000","E":"#2f9e2f","J":"#9085e9","R":"#199e70","S":"#d55181","T":"#d95926",
+           "U":"#a1887f","D Big":"#8193a8","D NB":"#26b0c0","N":"#b5b43a" }
+};
+const EXTRA = ["#7cb342","#c2185b","#00897b","#f4511e","#5c6bc0","#6d4c41"];
+const isDark = () => {
+  const t = document.documentElement.getAttribute("data-theme");
+  if (t) return t === "dark";
+  try { return matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) { return false; }
+};
+function zoneColor(z) {
+  const m = ZONE_COLOR[isDark() ? "dark" : "light"];
+  if (m[z]) return m[z];
+  const i = Math.max(0, S.allZones.filter(x => !m[x]).indexOf(z));
+  return EXTRA[i % EXTRA.length];
+}
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const STORE_KEY = "fifoDash.v3";
+// โซนที่ติ๊กไว้ตอนเปิดหน้า — โซนอื่นอยู่ใน dropdown "โซนอื่นๆ"
+const DEFAULT_ZONES = ["A","B","C","E","J","N","R","S","T","U"];
+
+const S = { view: { main: "compare", sub: "compare" }, focus: { main: "", sub: "" }, sharedY: true, minis: [], rows: [], mode: "day", days: 30, from: "", to: "", months: 12, mFrom: "", mTo: "", zones: new Set(), allZones: [], subMain: "", hl: null, charts: {} };
+
+/* ================= helpers ================= */
+const $ = id => document.getElementById(id);
+const pct = o => (o && o.sale) ? o.nf / o.sale * 100 : null;
+const fmtPct = v => v == null ? '<span class="na">–</span>' : v.toFixed(2) + "%";
+const fmtNum = v => Math.round(v).toLocaleString("en-US");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const zoneSort = (a, b) => {
+  const ia = ZONE_ORDER.indexOf(a), ib = ZONE_ORDER.indexOf(b);
+  if (ia >= 0 || ib >= 0) return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  return a.localeCompare(b, "en", { numeric: true });
+};
+function addDays(ymd, n) {
+  const d = new Date(ymd + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function label(k) {
+  const p = k.split("-");
+  return S.mode === "day" ? MON[+p[1] - 1] + " " + (+p[2]) : MON[+p[1] - 1] + " " + p[0].slice(2);
+}
+const keyOf = r => S.mode === "day" ? r.d : r.d.slice(0, 7);
+
+function sumBy(rows, keyFn) {
+  const m = new Map();
+  for (const r of rows) {
+    const k = keyFn(r);
+    let o = m.get(k);
+    if (!o) m.set(k, o = { sale: 0, fifo: 0, nf: 0 });
+    o.sale += r.sale; o.fifo += r.fifo; o.nf += r.nf;
+  }
+  return m;
+}
+function total(rows) {
+  const o = { sale: 0, fifo: 0, nf: 0 };
+  for (const r of rows) { o.sale += r.sale; o.fifo += r.fifo; o.nf += r.nf; }
+  return o;
+}
+function setStatus(msg, err) {
+  const el = $("status");
+  el.className = "status" + (err ? " err" : "");
+  el.textContent = msg || "";
+}
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ zones: [...S.zones], days: S.days, months: S.months, mode: S.mode, subMain: S.subMain, view: S.view })); } catch (e) {}
+}
+function restore() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch (e) { return null; }
+}
+
+/* ================= โหลดข้อมูล ================= */
+// force = true → ให้ GAS ข้าม cache แล้วอ่านชีตใหม่ (ปุ่ม ↻)
+async function load(force) {
+  setStatus(force ? "กำลังอ่านข้อมูลใหม่จากชีต…" : "กำลังโหลดข้อมูล…");
+  try {
+    const data = DEMO ? demoData() : await callApi("getDailySummaryChart", { refresh: !!force });
+    if (!data) throw new Error("GAS ไม่ตอบกลับ");
+    S.rows = (data.rows || []).map(r => ({
+      d: String(r[0]), m: String(r[1] || "").trim(), s: String(r[2] || "").trim(),
+      sale: +r[3] || 0, fifo: +r[4] || 0, nf: +r[5] || 0
+    })).filter(r => r.d && r.m);
+
+    if (!S.rows.length) { setStatus("ไม่มีข้อมูลใน DAILY_SUMMARY ช่วง 36 เดือนล่าสุด", true); return; }
+
+    S.allZones = [...new Set(S.rows.map(r => r.m))].sort(zoneSort);
+    const saved = restore();
+    if (saved) {
+      S.mode = saved.mode || "day";
+      S.days = saved.days || 30;
+      S.months = saved.months || 12;
+      if (saved.view) S.view = Object.assign(S.view, saved.view);
+      S.subMain = saved.subMain || "";
+      const z = (saved.zones || []).filter(x => S.allZones.includes(x));
+      S.zones = new Set(z.length ? z : defaultZones());
+    } else {
+      S.zones = new Set(defaultZones());
+    }
+
+    const maxD = S.rows.reduce((a, r) => r.d > a ? r.d : a, "");
+    const minD = S.rows.reduce((a, r) => r.d < a ? r.d : a, maxD);
+    $("dFrom").min = $("dTo").min = minD;
+    $("dFrom").max = $("dTo").max = maxD;
+    applyPreset(S.days || 30, maxD);
+    fillMonthSelects(minD, maxD);
+    applyMonthPreset(S.months || 12);
+
+    $("updated").textContent = "ข้อมูลล่าสุด " + label(maxD).replace(/^(\w+) (\d+)$/, "$2 $1") + " " + maxD.slice(0, 4);
+    setStatus("");
+    syncControls();
+    syncViews();
+    render();
+  } catch (e) {
+    setStatus("โหลดข้อมูลไม่สำเร็จ: " + e.message + " — ตรวจ API_URL และ action getDailySummaryChart ใน GAS", true);
+  }
+}
+
+function applyPreset(days, maxD) {
+  S.days = days;
+  S.to = maxD || S.rows.reduce((a, r) => r.d > a ? r.d : a, "");
+  S.from = addDays(S.to, -(days - 1));
+  $("dFrom").value = S.from;
+  $("dTo").value = S.to;
+}
+
+function defaultZones() {
+  const z = S.allZones.filter(x => DEFAULT_ZONES.includes(x));
+  return z.length ? z : S.allZones;
+}
+function isOther(z) { return !DEFAULT_ZONES.includes(z); }
+
+/* ---- เดือน ---- */
+function addMonths(ym, n) {
+  const d = new Date(Date.UTC(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1));
+  return d.toISOString().slice(0, 7);
+}
+function monthList(a, b) {
+  const out = [];
+  for (let m = a; m <= b; m = addMonths(m, 1)) out.push(m);
+  return out;
+}
+function fillMonthSelects(minD, maxD) {
+  S.monthOpts = monthList(minD.slice(0, 7), maxD.slice(0, 7));
+  const opts = S.monthOpts.map(m => `<option value="${m}">${MON[+m.slice(5) - 1]} ${m.slice(0, 4)}</option>`).join("");
+  $("mFrom").innerHTML = opts;
+  $("mTo").innerHTML = opts;
+}
+function applyMonthPreset(n) {
+  S.months = n;
+  const list = S.monthOpts || [];
+  S.mTo = list[list.length - 1] || "";
+  S.mFrom = list[Math.max(0, list.length - n)] || S.mTo;
+  $("mFrom").value = S.mFrom;
+  $("mTo").value = S.mTo;
+}
+
+/* ================= render ================= */
+function buckets() {
+  if (S.mode === "day") {
+    return [...new Set(S.rows.filter(r => r.d >= S.from && r.d <= S.to).map(r => r.d))].sort();
+  }
+  return monthList(S.mFrom, S.mTo);
+}
+
+function render() {
+  const B = buckets();
+  const Bset = new Set(B);
+  const inRange = S.rows.filter(r => Bset.has(keyOf(r)));
+  const sel = inRange.filter(r => S.zones.has(r.m));
+  const unit = S.mode === "day" ? "รายวัน" : "รายเดือน";
+
+  $("tTotal").textContent = "NotFIFO% " + unit;
+  $("tMain").textContent = "NotFIFO% แยก Main Zone " + unit;
+  $("tSub").textContent = "NotFIFO% แยก Sub Zone " + unit;
+
+  renderZoneList(inRange);
+  const prev = prevRows();
+  const prevSel = prev.filter(r => S.zones.has(r.m));
+  renderKpis(sel, prevSel);
+
+  // ---- รวม ----
+  const byB = sumBy(sel, keyOf);
+  renderTotalChart(B, byB, total(sel));
+  renderSummary(B, byB, total(sel));
+
+  // ---- Main zone ----
+  S.minis.forEach(c => c.destroy()); S.minis = [];
+  const zones = S.allZones.filter(z => S.zones.has(z));
+  const mainCell = sumBy(sel, r => r.m + "|" + keyOf(r));
+  const mainTot = sumBy(sel, r => r.m);
+  if (S.view.main === "cards") renderMinis("mMain", B, zones, mainCell, mainTot, sumBy(prevSel, r => r.m), byB, z => z, "main", zoneColor);
+  else renderCompare("main", B, zones, mainCell, mainTot, total(sel), z => z, zoneColor);
+  $("tblMain").innerHTML = pivot(B, zones, mainCell, mainTot, byB, total(sel), z => z, zoneColor);
+
+  // ---- Sub zone ----
+  const subSel = $("subSel");
+  if (!zones.includes(S.subMain)) S.subMain = zones[0] || "";
+  subSel.innerHTML = zones.map(z => `<option${z === S.subMain ? " selected" : ""}>${esc(z)}</option>`).join("");
+  const subRows = inRange.filter(r => r.m === S.subMain);
+  const subs = [...new Set(subRows.map(r => r.s))].sort((a, b) => a.localeCompare(b, "en", { numeric: true }));
+  const subCell = sumBy(subRows, r => r.s + "|" + keyOf(r));
+  const subTot = sumBy(subRows, r => r.s);
+  // Sub Zone ใน sheet เป็นเลข (0,1,2…) → แสดงเป็น A0, A1 แบบ Looker
+  const subLbl = s => !s ? "(ไม่ระบุ)" : /^\d+$/.test(s) ? S.subMain.charAt(0) + s : s;
+  const subByB = sumBy(subRows, keyOf);
+  if (S.view.sub === "cards") renderMinis("mSub", B, subs, subCell, subTot, sumBy(prev.filter(r => r.m === S.subMain), r => r.s), subByB, subLbl, "sub", () => zoneColor(S.subMain));
+  else renderCompare("sub", B, subs, subCell, subTot, total(subRows), subLbl, () => zoneColor(S.subMain));
+  $("tblSub").innerHTML = subs.length
+    ? pivot(B, subs, subCell, subTot, subByB, total(subRows), subLbl, () => zoneColor(S.subMain))
+    : '<div class="empty">ไม่มีข้อมูล</div>';
+
+  const rng = S.mode === "day"
+    ? (S.days ? S.days + " วัน" : S.from + " – " + S.to)
+    : (S.months ? S.months + " เดือน" : S.mFrom + " – " + S.mTo);
+  $("filterSum").textContent = (S.mode === "day" ? "รายวัน" : "รายเดือน") + " · " + rng + " · " + S.zones.size + " โซน";
+
+  applyHighlight();
+  document.querySelectorAll(".tbl-wrap").forEach(w => w.scrollLeft = w.scrollWidth);
+  save();
+}
+
+function renderZoneList(inRange) {
+  const zt = sumBy(inRange, r => r.m);
+  const row = z => `
+    <label class="zrow" style="--c:${zoneColor(z)}" title="กด = เลือก/เอาออก · only = ดูโซนนี้โซนเดียว">
+      <input type="checkbox" class="sr" value="${esc(z)}"${S.zones.has(z) ? " checked" : ""}>
+      <span class="dot" style="background:${zoneColor(z)}"></span>${esc(z)}
+      <span class="zp">${fmtPct(pct(zt.get(z)))}</span>
+      <button type="button" class="only" title="ดูเฉพาะโซนนี้">only</button>
+    </label>`;
+  const main = S.allZones.filter(z => !isOther(z));
+  const other = S.allZones.filter(isOther);
+  $("zoneList").innerHTML = main.map(row).join("");
+  $("zoneOther").innerHTML = other.map(row).join("");
+  $("zoneMore").classList.toggle("hidden", !other.length);
+  const picked = other.filter(z => S.zones.has(z)).length;
+  $("zoneMoreLbl").textContent = "โซนอื่นๆ (" + other.length + ")" + (picked ? " · เลือก " + picked : "");
+
+  const all = $("zAll");
+  all.checked = S.zones.size === S.allZones.length;
+  all.indeterminate = S.zones.size > 0 && S.zones.size < S.allZones.length;
+}
+
+function renderKpis(sel, prevSel) {
+  const t = total(sel), p = pct(t), pp = pct(total(prevSel));
+  $("kpis").innerHTML = `
+    <div class="kpi main"><div class="k">NotFIFO%</div><div class="v">${p == null ? "–" : p.toFixed(2) + "%"}</div>
+      <div class="d">${deltaHtml(p, pp, "เทียบช่วงก่อนหน้า")}</div></div>
+    <div class="kpi"><div class="k">Sale</div><div class="v">${fmtNum(t.sale)}</div></div>
+    <div class="kpi"><div class="k">FIFO</div><div class="v">${fmtNum(t.fifo)}</div></div>
+    <div class="kpi"><div class="k">NotFIFO</div><div class="v">${fmtNum(t.nf)}</div></div>`;
+}
+
+/** ช่วงก่อนหน้าที่ยาวเท่ากัน — ใช้คำนวณ ▲▼ */
+function prevRows() {
+  if (S.mode === "day") {
+    const len = Math.round((new Date(S.to) - new Date(S.from)) / 864e5) + 1;
+    const a = addDays(S.from, -len), b = addDays(S.from, -1);
+    return S.rows.filter(r => r.d >= a && r.d <= b);
+  }
+  const n = monthList(S.mFrom, S.mTo).length;
+  const a = addMonths(S.mFrom, -n), b = addMonths(S.mFrom, -1);
+  return S.rows.filter(r => { const m = r.d.slice(0, 7); return m >= a && m <= b; });
+}
+/** NotFIFO% ขึ้น = แย่ (แดง ▲), ลง = ดี (เขียว ▼) */
+function deltaHtml(v, pv, suffix) {
+  if (v == null || pv == null) return "";
+  const d = v - pv;
+  if (Math.abs(d) < 0.005) return `= ${suffix || ""}`;
+  return `<span class="${d > 0 ? "up" : "down"}">${d > 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(2)}</span> ${suffix || ""}`;
+}
+
+/* ---- ตาราง Sale / FIFO / NotFIFO / % ---- */
+function renderSummary(B, byB, tot) {
+  const head = `<tr><th>${S.mode === "day" ? "Date" : "Month"}</th>${B.map(b => `<th data-b="${b}">${label(b)}</th>`).join("")}<th class="tot">รวม</th></tr>`;
+  const line = (name, f) => `<tr><td>${name}</td>${B.map(b => `<td data-b="${b}">${f(byB.get(b))}</td>`).join("")}<td class="tot">${f(tot)}</td></tr>`;
+  const n = k => o => o ? fmtNum(o[k]) : '<span class="na">–</span>';
+  $("tblSummary").innerHTML = `<table><thead>${head}</thead><tbody>
+    ${line("Sale", n("sale"))}${line("FIFO", n("fifo"))}${line("NotFIFO", n("nf"))}${line("NotFIFO%", o => fmtPct(pct(o)))}
+  </tbody></table>`;
+}
+
+/* ---- Pivot: แถว = zone, คอลัมน์ = วัน/เดือน ---- */
+function pivot(B, keys, cell, rowTot, colTot, grand, lblOf, colorOf) {
+  const g = pct(grand) || 0;
+  const heat = v => {
+    if (v == null || !g || v <= g) return "";
+    const a = Math.min((v - g) / (2 * g), 1) * 0.45;
+    return ` style="background:rgba(var(--heat),${a.toFixed(2)})"`;
+  };
+  const head = `<tr><th>Zone</th>${B.map(b => `<th data-b="${b}">${label(b)}</th>`).join("")}<th class="tot">รวม</th></tr>`;
+  const body = keys.map(k => `<tr>
+      <td><span class="rowlbl"><span class="dot" style="background:${colorOf ? colorOf(k) : "var(--series)"}"></span>${esc(lblOf(k))}</span></td>
+      ${B.map(b => { const v = pct(cell.get(k + "|" + b)); return `<td data-b="${b}"${heat(v)}>${fmtPct(v)}</td>`; }).join("")}
+      <td class="tot">${fmtPct(pct(rowTot.get(k)))}</td></tr>`).join("");
+  const foot = `<tr><td>รวม</td>${B.map(b => `<td data-b="${b}">${fmtPct(pct(colTot.get(b)))}</td>`).join("")}<td class="tot">${fmtPct(pct(grand))}</td></tr>`;
+  return `<table><thead>${head}</thead><tbody>${body}</tbody><tfoot>${foot}</tfoot></table>`;
+}
+
+/* ================= กราฟ (Chart.js 4.5) ================= */
+const tok = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function rgba(hex, a) {
+  const h = hex.replace("#", "");
+  const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
+}
+const FONT = "Sarabun, system-ui, sans-serif";
+
+function themeDefaults() {
+  Chart.defaults.font.family = FONT;
+  Chart.defaults.font.size = window.innerWidth < 700 ? 13 : 16;
+  Chart.defaults.color = tok("--muted");
+  Chart.defaults.borderColor = tok("--grid");
+  Chart.defaults.animation = false;
+}
+
+/** พื้นใต้เส้นแบบไล่สีจาง ~15% → 0 */
+function areaFill(color) {
+  return ctx => {
+    const { chart } = ctx, a = chart.chartArea;
+    if (!a) return "transparent";
+    const g = chart.ctx.createLinearGradient(0, a.top, 0, a.bottom);
+    g.addColorStop(0, rgba(color, 0.16));
+    g.addColorStop(1, rgba(color, 0));
+    return g;
+  };
+}
+
+/** เส้นแนวตั้งตามเมาส์ */
+const crosshair = {
+  id: "crosshair",
+  beforeDatasetsDraw(chart) {
+    const act = chart.tooltip && chart.tooltip.getActiveElements();
+    if (!act || !act.length) return;
+    const { ctx, chartArea: a } = chart, x = act[0].element.x;
+    ctx.save();
+    ctx.strokeStyle = tok("--axis"); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom); ctx.stroke();
+    ctx.restore();
+  }
+};
+
+/** เส้นค่าเฉลี่ยของช่วง */
+const refLine = {
+  id: "refLine",
+  beforeDatasetsDraw(chart, args, o) {
+    if (!o || o.value == null) return;
+    const { ctx, chartArea: a, scales: { y } } = chart, py = y.getPixelForValue(o.value);
+    if (py < a.top || py > a.bottom) return;
+    ctx.save();
+    ctx.strokeStyle = tok("--compare"); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(a.left, py); ctx.lineTo(a.right, py); ctx.stroke();
+    ctx.font = `600 15px ${FONT}`; ctx.fillStyle = tok("--text2");
+    ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.lineJoin = "round";
+    ctx.strokeStyle = tok("--card"); ctx.lineWidth = 4; ctx.strokeText(o.label, a.left + 6, py - 4);
+    ctx.fillText(o.label, a.left + 6, py - 4);
+    ctx.restore();
+  }
+};
+
+/** ป้ายตัวเลขเฉพาะจุดสำคัญ (ล่าสุด / สูงสุด / ต่ำสุด) — ไม่ใส่ทุกจุด */
+const keyLabels = {
+  id: "keyLabels",
+  afterDatasetsDraw(chart, args, o) {
+    if (!o || !o.points) return;
+    const { ctx, chartArea: a } = chart, meta = chart.getDatasetMeta(0);
+    ctx.save();
+    ctx.font = `600 15px ${FONT}`; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+    const placed = [];
+    o.points.forEach(p => {
+      const el = meta.data[p.i]; if (!el) return;
+      const text = p.text, w = ctx.measureText(text).width;
+      let x = el.x, align = "center";
+      if (x - w / 2 < a.left) { align = "left"; x = Math.max(el.x - 4, a.left); }
+      if (x + w / 2 > a.right) { align = "right"; x = Math.min(el.x + 4, a.right); }
+      const y = p.below ? el.y + 14 : el.y - 14;
+      const L = align === "left" ? x : align === "right" ? x - w : x - w / 2;
+      const r = { l: L - 4, r: L + w + 4, t: y - 9, b: y + 9 };
+      if (placed.some(q => r.l < q.r && r.r > q.l && r.t < q.b && r.b > q.t)) return;
+      placed.push(r);
+      ctx.textAlign = align;
+      ctx.strokeStyle = tok("--card"); ctx.lineWidth = 4; ctx.strokeText(text, x, y);
+      ctx.fillStyle = p.strong ? tok("--text") : tok("--text2"); ctx.fillText(text, x, y);
+      // จุดทึบมีขอบสีพื้น
+      ctx.beginPath(); ctx.arc(el.x, el.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = tok("--total"); ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = tok("--card"); ctx.stroke();
+    });
+    ctx.restore();
+  }
+};
+
+function tooltipStyle() {
+  return {
+    backgroundColor: tok("--card"), borderColor: tok("--line"), borderWidth: 1,
+    titleColor: tok("--text"), bodyColor: tok("--text2"), footerColor: tok("--muted"),
+    titleFont: { size: 16, weight: "700", family: FONT }, bodyFont: { size: 16, family: FONT }, footerFont: { size: 14, family: FONT, weight: "400" },
+    padding: 12, cornerRadius: 8, caretSize: 0, boxWidth: 8, boxHeight: 8, boxPadding: 4, usePointStyle: true
+  };
+}
+
+function draw(id, cfg) {
+  if (S.charts[id]) S.charts[id].destroy();
+  S.charts[id] = new Chart($(id), cfg);
+}
+
+function renderTotalChart(B, byB, tot) {
+  themeDefaults();
+  const data = B.map(b => pct(byB.get(b)));
+  const avg = pct(tot);
+  const series = tok("--total");
+
+  // จุดที่ติดป้าย: ล่าสุด + สูงสุด + ต่ำสุด
+  const idx = data.map((v, i) => v == null ? null : i).filter(i => i != null);
+  const pts = [];
+  if (idx.length) {
+    const last = idx[idx.length - 1];
+    const hi = idx.reduce((a, i) => data[i] > data[a] ? i : a, idx[0]);
+    const lo = idx.reduce((a, i) => data[i] < data[a] ? i : a, idx[0]);
+    pts.push({ i: last, text: data[last].toFixed(2) + "%", strong: true, below: data[last] < avg && last !== hi });
+    if (hi !== last) pts.push({ i: hi, text: "สูงสุด " + data[hi].toFixed(2) + "%" });
+    if (lo !== last && lo !== hi) pts.push({ i: lo, text: "ต่ำสุด " + data[lo].toFixed(2) + "%", below: true });
+    const lbl = i => label(B[i]);
+    $("sTotal").textContent = idx.length > 1
+      ? `เฉลี่ย ${avg.toFixed(2)}% · สูงสุด ${data[hi].toFixed(2)}% (${lbl(hi)}) · ต่ำสุด ${data[lo].toFixed(2)}% (${lbl(lo)})`
+      : "";
+  } else $("sTotal").textContent = "";
+
+  draw("cTotal", {
+    type: "line",
+    data: {
+      labels: B.map(label),
+      datasets: [{
+        label: "NotFIFO%", data,
+        borderColor: series, borderWidth: 2, backgroundColor: areaFill(series), fill: "origin",
+        tension: 0,
+        pointRadius: B.length <= 16 ? 3 : 0, pointBackgroundColor: series, pointBorderColor: tok("--card"), pointBorderWidth: 2,
+        pointHoverRadius: 6, pointHoverBorderWidth: 2, pointHoverBorderColor: tok("--card"), pointHitRadius: 12,
+        borderCapStyle: "round", borderJoinStyle: "round", spanGaps: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 32, right: 12 } },
+      interaction: { mode: "index", intersect: false },
+      onClick: (e, els) => { if (els.length) { const b = B[els[0].index]; S.hl = S.hl === b ? null : b; applyHighlight(true); goShow({ date: S.hl ? goDateOf(S.hl) : null }); } },
+      scales: {
+        y: {
+          beginAtZero: true, grace: "12%", border: { display: false },
+          grid: { color: tok("--grid"), drawTicks: false },
+          ticks: { padding: 8, maxTicksLimit: 6, callback: v => v + "%" }
+        },
+        x: {
+          border: { color: tok("--axis") }, grid: { display: false },
+          ticks: { maxRotation: 0, autoSkip: true, autoSkipPadding: 18, padding: 6 }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        refLine: { value: avg, label: avg == null ? "" : "เฉลี่ย " + avg.toFixed(2) + "%" },
+        keyLabels: { points: pts },
+        tooltip: Object.assign(tooltipStyle(), {
+          displayColors: false,
+          callbacks: {
+            label: c => "NotFIFO% " + (c.parsed.y == null ? "–" : c.parsed.y.toFixed(2) + "%"),
+            footer: items => {
+              const o = byB.get(B[items[0].dataIndex]);
+              return o ? `NotFIFO ${fmtNum(o.nf)} / Sale ${fmtNum(o.sale)}` : "";
+            }
+          }
+        })
+      }
+    },
+    plugins: [crosshair, refLine, keyLabels]
+  });
+}
+
+/**
+ * Small multiples: 1 การ์ด / โซน — เส้นสีหลัก = โซน, เส้นเทา = ค่ารวม (ไว้เทียบ)
+ * ใช้สีเดียวทุกการ์ด จึงไม่ต้องจำสีของแต่ละโซน
+ */
+/**
+ * เทียบหลายโซนในมุมเดียว
+ *  ซ้าย  = แท่งจัดอันดับ NotFIFO% ทั้งช่วง (มากไปน้อย) + เส้นค่ารวม
+ *  ขวา  = เส้นแนวโน้มทุกโซนเป็นสีเทา เน้น 1 โซนเป็นสีหลัก (ค่าเริ่มต้น = โซนที่แย่สุด)
+ */
+function renderCompare(sec, B, keys, cell, rowTot, grand, lblOf, colorOf) {
+  const P = sec === "main" ? "Main" : "Sub";
+  ["r", "l"].forEach(x => { if (S.charts[x + P]) { S.charts[x + P].destroy(); delete S.charts[x + P]; } });
+  if (!keys.length) {
+    $("rb" + P).innerHTML = '<div class="empty">ไม่มีข้อมูล</div>'; $("p" + P).innerHTML = "";
+    return;
+  }
+  if (!$("r" + P)) $("rb" + P).innerHTML = `<canvas id="r${P}"></canvas>`;
+  themeDefaults();
+  const avg = pct(grand);
+  // โซนที่เลือก = สีเต็ม, โซนอื่น = สีเดิมแต่จาง (Sub Zone ทุกตัวใช้สีของ Main Zone)
+  const FADE_BAR = 0.28, FADE_LINE = sec === "sub" ? 0.3 : 0.35;
+
+  // ---- อันดับ ----
+  const ranked = keys.map(k => ({ k, v: pct(rowTot.get(k)), o: rowTot.get(k) }))
+                     .filter(x => x.v != null).sort((a, b) => b.v - a.v);
+  if (!keys.includes(S.focus[sec])) S.focus[sec] = ranked.length ? ranked[0].k : keys[0];
+  const F = S.focus[sec];
+  if (sec === "main") S.subMain = F;      // เลือกโซนในกราฟ Main → กราฟ Sub เปลี่ยนตาม
+  $("rb" + P).style.height = (ranked.length * 40 + 48) + "px";
+
+  const barLabels = {
+    id: "barLabels",
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart, meta = chart.getDatasetMeta(0);
+      ctx.save(); ctx.font = `600 16px ${FONT}`; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+      meta.data.forEach((el, i) => {
+        ctx.fillStyle = ranked[i].k === F ? tok("--text") : tok("--text2");
+        ctx.fillText(ranked[i].v.toFixed(2) + "%", el.x + 6, el.y);
+      });
+      ctx.restore();
+    }
+  };
+  const avgV = {
+    id: "avgV",
+    afterDatasetsDraw(chart) {
+      if (avg == null) return;
+      const { ctx, chartArea: a, scales: { x } } = chart, px = x.getPixelForValue(avg);
+      ctx.save(); ctx.strokeStyle = tok("--text2"); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.stroke();
+      ctx.font = `600 15px ${FONT}`; ctx.fillStyle = tok("--text2"); ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+      ctx.fillText("รวม " + avg.toFixed(2) + "%", px, a.top - 4);
+      ctx.restore();
+    }
+  };
+  const xMax = niceMax(Math.max(...ranked.map(x => x.v), avg || 0) * 1.18);
+  S.charts["r" + P] = new Chart($("r" + P), {
+    type: "bar",
+    data: {
+      labels: ranked.map(x => lblOf(x.k)),
+      datasets: [{
+        data: ranked.map(x => x.v),
+        backgroundColor: ranked.map(x => x.k === F ? colorOf(x.k) : rgba(colorOf(x.k), FADE_BAR)),
+        hoverBackgroundColor: ranked.map(x => colorOf(x.k)),
+        borderRadius: { topRight: 4, bottomRight: 4 }, borderSkipped: "start",
+        barThickness: 22, maxBarThickness: 24
+      }]
+    },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 24, right: 4 } },
+      onClick: (e, els) => { if (els.length) { S.focus[sec] = ranked[els[0].index].k; render(); goPick(sec, S.focus[sec], lblOf); } },
+      onHover: (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; },
+      scales: {
+        x: { beginAtZero: true, max: xMax, border: { display: false }, grid: { color: tok("--grid"), drawTicks: false },
+             ticks: { maxTicksLimit: 5, padding: 4, callback: v => +v.toFixed(2) + "%" } },
+        y: { border: { color: tok("--axis") }, grid: { display: false },
+             ticks: { color: c => ranked[c.index] && ranked[c.index].k === F ? tok("--text") : tok("--text2"),
+                      font: c => ({ family: FONT, size: 17, weight: ranked[c.index] && ranked[c.index].k === F ? "700" : "400" }) } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: Object.assign(tooltipStyle(), { displayColors: false, callbacks: {
+          label: c => "NotFIFO% " + c.parsed.x.toFixed(2) + "%",
+          footer: it => { const o = ranked[it[0].dataIndex].o; return `NotFIFO ${fmtNum(o.nf)} / Sale ${fmtNum(o.sale)}`; } } })
+      }
+    },
+    plugins: [barLabels, avgV]
+  });
+
+  // ---- ปุ่มเลือกโซนที่จะเน้น (ทำหน้าที่เป็น legend) ----
+  $("p" + P).innerHTML = keys.map(k =>
+    `<button type="button" data-k="${esc(k)}" class="${k === F ? "on" : ""}" style="--c:${colorOf(k)}"><i></i>${esc(lblOf(k))}</button>`).join("")
+    + (sec === "main" ? `<button type="button" class="go" data-go="${esc(F)}">ดู Sub Zone ของ ${esc(F)} →</button>` : "");
+
+  // ---- เส้นแนวโน้ม: โซนอื่นเทา / โซนที่เน้นสีหลัก (วาดทีหลังให้อยู่บนสุด) ----
+  const order = keys.filter(k => k !== F).concat([F]);
+  const ds = order.map(k => {
+    const on = k === F;
+    return {
+      label: lblOf(k), _k: k,
+      data: B.map(b => pct(cell.get(k + "|" + b))),
+      borderColor: on ? colorOf(k) : rgba(colorOf(k), FADE_LINE), borderWidth: on ? 3 : 1.5,
+      backgroundColor: on ? areaFill(colorOf(k)) : "transparent", fill: on ? "origin" : false,
+      tension: 0, spanGaps: false,
+      pointRadius: 0, pointHoverRadius: on ? 5 : 3, pointHitRadius: 8,
+      pointHoverBackgroundColor: colorOf(k), pointHoverBorderColor: tok("--card"), pointHoverBorderWidth: 2
+    };
+  });
+  const endLabel = {
+    id: "endLabel",
+    afterDatasetsDraw(chart) {
+      const i = chart.data.datasets.length - 1, meta = chart.getDatasetMeta(i), d = chart.data.datasets[i].data;
+      let j = d.length - 1; while (j >= 0 && d[j] == null) j--;
+      if (j < 0) return;
+      const el = meta.data[j], { ctx, chartArea: a } = chart;
+      const t = `${lblOf(F)} ${d[j].toFixed(2)}%`;
+      ctx.save(); ctx.font = `700 16px ${FONT}`; ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.lineJoin = "round";
+      const x = Math.min(el.x, a.right), y = Math.max(el.y - 8, a.top + 12);
+      ctx.strokeStyle = tok("--card"); ctx.lineWidth = 4; ctx.strokeText(t, x, y);
+      ctx.fillStyle = tok("--text"); ctx.fillText(t, x, y);
+      ctx.beginPath(); ctx.arc(el.x, el.y, 4, 0, Math.PI * 2); ctx.fillStyle = colorOf(F); ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = tok("--card"); ctx.stroke();
+      ctx.restore();
+    }
+  };
+  S.charts["l" + P] = new Chart($("l" + P), {
+    type: "line",
+    data: { labels: B.map(label), datasets: ds },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 16, right: 6 } },
+      interaction: { mode: "index", intersect: false },
+      onClick: (e) => {
+        const near = S.charts["l" + P].getElementsAtEventForMode(e, "nearest", { intersect: false, axis: "xy" }, false);
+        if (near.length) {
+          S.focus[sec] = ds[near[0].datasetIndex]._k; render();
+          goPick(sec, S.focus[sec], lblOf, B[near[0].index]);
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, grace: "10%", border: { display: false }, grid: { color: tok("--grid"), drawTicks: false },
+             ticks: { padding: 8, maxTicksLimit: 6, callback: v => +v.toFixed(2) + "%" } },
+        x: { border: { color: tok("--axis") }, grid: { display: false },
+             ticks: { maxRotation: 0, autoSkip: true, autoSkipPadding: 18, padding: 6 } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: Object.assign(tooltipStyle(), {
+          itemSort: (a, b) => (b.parsed.y ?? -1) - (a.parsed.y ?? -1),
+          callbacks: {
+            label: c => ` ${c.dataset.label}: ${c.parsed.y == null ? "–" : c.parsed.y.toFixed(2) + "%"}`,
+            labelColor: c => { const col = colorOf(c.dataset._k), on = c.dataset._k === F; const v = on ? col : rgba(col, 0.45); return { borderColor: v, backgroundColor: v }; },
+            labelTextColor: c => c.dataset._k === F ? tok("--text") : tok("--text2")
+          }
+        })
+      }
+    },
+    plugins: [crosshair, endLabel]
+  });
+}
+
+/** กดโซนในกราฟ Main/Sub → จำไว้สำหรับแถบ "เปิดหน้า Not FIFO" (กดเส้นได้วันที่ของจุดนั้นด้วย) */
+function goPick(sec, k, lblOf, b) {
+  const part = sec === "main" ? { zone: k, sub: null } : { zone: S.subMain, sub: lblOf(k) };
+  if (b) part.date = goDateOf(b);
+  goShow(part);
+}
+
+/** ปัดค่าสูงสุดขึ้นเป็นเลขกลมๆ (1, 2, 2.5, 5 × 10ⁿ) ให้ป้ายแกนอ่านง่าย */
+function niceMax(v) {
+  if (!v) return 0;
+  const e = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 2, 2.5, 4, 5, 10]) if (v <= m * e) return m * e;
+  return 10 * e;
+}
+
+function renderMinis(boxId, B, keys, cell, rowTot, prevTot, cmpByB, lblOf, kind, colorOf) {
+  const box = $(boxId);
+  if (!keys.length) { box.innerHTML = '<div class="empty">ไม่มีข้อมูล</div>'; return; }
+  themeDefaults();
+  const cmpColor = tok("--compare");
+  const cmp = B.map(b => pct(cmpByB.get(b)));
+  const rows = keys.map(k => B.map(b => pct(cell.get(k + "|" + b))));
+  let yMax = 0;
+  if (S.sharedY) rows.concat([cmp]).forEach(r => r.forEach(v => { if (v != null && v > yMax) yMax = v; }));
+  yMax = niceMax(yMax);
+
+  box.innerHTML = keys.map((k, i) => {
+    const v = pct(rowTot.get(k)), pv = pct(prevTot.get(k));
+    return `<div class="mini" data-k="${esc(k)}" data-kind="${kind}" title="${kind === "main" ? "ดู Sub Zone ของ " + esc(k) : ""}">
+      <div class="mini-h"><span class="mini-n"><span class="dot" style="background:${colorOf(k)};display:inline-block;margin-right:6px"></span>${esc(lblOf(k))}</span><span class="mini-v">${v == null ? "–" : v.toFixed(2) + "%"}</span></div>
+      <div class="mini-d">${deltaHtml(v, pv, "")}</div>
+      <div class="mini-c"><canvas></canvas></div>
+      <div class="mini-x"><span>${B.length ? label(B[0]) : ""}</span><span>${B.length ? label(B[B.length - 1]) : ""}</span></div>
+    </div>`;
+  }).join("");
+
+  box.querySelectorAll(".mini canvas").forEach((cv, i) => {
+    S.minis.push(new Chart(cv, {
+      type: "line",
+      data: {
+        labels: B.map(label),
+        datasets: [
+          { label: lblOf(keys[i]), data: rows[i], borderColor: colorOf(keys[i]), borderWidth: 2, backgroundColor: areaFill(colorOf(keys[i])), fill: "origin",
+            tension: 0, pointRadius: 0, pointHoverRadius: 4,
+            pointHoverBackgroundColor: colorOf(keys[i]), pointHoverBorderColor: tok("--card"), pointHoverBorderWidth: 2, pointHitRadius: 10, spanGaps: false },
+          { label: kind === "main" ? "รวมที่เลือก" : "รวมโซน", data: cmp, borderColor: cmpColor, borderWidth: 1.5, fill: false,
+            tension: 0, pointRadius: 0, pointHoverRadius: 0, spanGaps: false }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 4 } },
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          x: { display: false },
+          y: { beginAtZero: true, max: S.sharedY && yMax ? yMax : undefined, grace: S.sharedY ? 0 : "10%",
+               border: { display: false }, grid: { color: tok("--grid"), drawTicks: false },
+               ticks: { maxTicksLimit: 3, stepSize: S.sharedY && yMax ? yMax / 2 : undefined, padding: 4, font: { size: 13 },
+                        callback: v => +v.toFixed(2) + "%" } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: Object.assign(tooltipStyle(), {
+            padding: 8, titleFont: { size: 15, weight: "700", family: FONT }, bodyFont: { size: 15, family: FONT },
+            callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y == null ? "–" : c.parsed.y.toFixed(2) + "%"}`,
+              labelColor: c => ({ borderColor: c.dataset.borderColor, backgroundColor: c.dataset.borderColor }) }
+          })
+        }
+      },
+      plugins: [crosshair]
+    }));
+  });
+}
+
+/* ---- ไฮไลต์คอลัมน์ (กดจุดบนกราฟ หรือหัวตาราง) ---- */
+function applyHighlight(scroll) {
+  document.querySelectorAll(".hl").forEach(el => el.classList.remove("hl"));
+  if (!S.hl) return;
+  const cells = document.querySelectorAll(`[data-b="${S.hl}"]`);
+  cells.forEach(el => el.classList.add("hl"));
+  if (scroll) {
+    document.querySelectorAll(".tbl-wrap").forEach(w => {
+      const th = w.querySelector(`th[data-b="${S.hl}"]`);
+      if (th) w.scrollLeft = th.offsetLeft - w.clientWidth / 2;
+    });
+  }
+}
+
+/* ================= events ================= */
+function syncControls() {
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("active", b.dataset.mode === S.mode));
+  document.querySelectorAll("#presets button").forEach(b => b.classList.toggle("active", +b.dataset.days === S.days));
+  $("rangeDay").classList.toggle("hidden", S.mode !== "day");
+  $("rangeMonth").classList.toggle("hidden", S.mode !== "month");
+  document.querySelectorAll("#mPresets button").forEach(b => b.classList.toggle("active", +b.dataset.months === S.months));
+}
+
+document.querySelector(".tabs").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  S.mode = b.dataset.mode; S.hl = null; syncControls(); render();
+});
+$("presets").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  applyPreset(+b.dataset.days); S.hl = null; syncControls(); render();
+});
+["dFrom", "dTo"].forEach(id => $(id).addEventListener("change", () => {
+  if (!$("dFrom").value || !$("dTo").value) return;
+  S.from = $("dFrom").value; S.to = $("dTo").value;
+  if (S.from > S.to) [S.from, S.to] = [S.to, S.from];
+  S.days = 0; S.hl = null; syncControls(); render();
+}));
+$("mPresets").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  applyMonthPreset(+b.dataset.months); S.hl = null; syncControls(); render();
+});
+["mFrom", "mTo"].forEach(id => $(id).addEventListener("change", () => {
+  S.mFrom = $("mFrom").value; S.mTo = $("mTo").value;
+  if (S.mFrom > S.mTo) { [S.mFrom, S.mTo] = [S.mTo, S.mFrom]; $("mFrom").value = S.mFrom; $("mTo").value = S.mTo; }
+  S.months = 0; S.hl = null; syncControls(); render();
+}));
+// เลือกโซนเดียว — กดค้าง (มือถือ) หรือดับเบิลคลิก (คอม)
+function onlyZone(z) {
+  S.zones = new Set([z]); S.subMain = z; S.focus.main = z;
+  render();
+}
+(() => {
+  const box = $("zoneBox");
+  let timer = null, fired = false;
+  const zOf = el => { const r = el && el.closest(".zrow"); return r ? r.querySelector("input").value : null; };
+  box.addEventListener("pointerdown", e => {
+    const z = zOf(e.target); if (!z) return;
+    fired = false; clearTimeout(timer);
+    timer = setTimeout(() => { fired = true; try { navigator.vibrate && navigator.vibrate(15); } catch (x) {} onlyZone(z); }, 500);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(t => box.addEventListener(t, () => clearTimeout(timer)));
+  window.addEventListener("scroll", () => clearTimeout(timer), { passive: true });
+  let lastZ = null, lastT = 0;
+  box.addEventListener("click", e => {
+    const z = zOf(e.target); if (!z) return;
+    if (e.target.closest(".only")) { e.preventDefault(); e.stopPropagation(); fired = false; onlyZone(z); return; }
+    if (fired) { e.preventDefault(); e.stopPropagation(); fired = false; return; }   // กดค้างไปแล้ว ไม่ต้องติ๊ก
+    if (e.target.tagName === "INPUT") return;                                        // คลิกที่ label จะยิงซ้ำที่ input
+    const now = Date.now();
+    if (z === lastZ && now - lastT < 350) {                                          // ดับเบิลคลิก (DOM ถูกวาดใหม่ เลยจับเอง)
+      e.preventDefault(); e.stopPropagation(); lastZ = null; onlyZone(z); return;
+    }
+    lastZ = z; lastT = now;
+  }, true);
+  box.addEventListener("contextmenu", e => { if (e.target.closest(".zrow")) e.preventDefault(); });
+})();
+$("zDefault").addEventListener("click", () => { S.zones = new Set(defaultZones()); render(); });
+$("zoneBox").addEventListener("change", e => {
+  if (e.target.type !== "checkbox" || e.target.id === "zAll") return;
+  e.target.checked ? S.zones.add(e.target.value) : S.zones.delete(e.target.value);
+  render();
+});
+$("zAll").addEventListener("change", e => {
+  S.zones = new Set(e.target.checked ? S.allZones : []);
+  render();
+});
+$("subSel").addEventListener("change", e => { S.subMain = e.target.value; S.focus.main = e.target.value; render(); });
+$("sharedY").addEventListener("change", e => { S.sharedY = e.target.checked; render(); });
+// สลับมุมมอง เทียบกัน / แยกการ์ด
+document.querySelectorAll(".seg.view").forEach(seg => seg.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  S.view[seg.dataset.sec] = b.dataset.v; syncViews(); render();
+}));
+function syncViews() {
+  ["main", "sub"].forEach(sec => {
+    const v = S.view[sec];
+    document.querySelectorAll(`.seg.view[data-sec="${sec}"] button`).forEach(b => b.classList.toggle("active", b.dataset.v === v));
+    document.querySelector(`.v-compare[data-sec="${sec}"]`).classList.toggle("hidden", v !== "compare");
+    document.querySelector(`.v-cards[data-sec="${sec}"]`).classList.toggle("hidden", v !== "cards");
+  });
+}
+// ปุ่มเลือกโซนที่จะเน้น + ลิงก์ไป Sub Zone
+[["pMain", "main"], ["pSub", "sub"]].forEach(([id, sec]) => $(id).addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.go) {
+    S.subMain = S.focus.main = b.dataset.go; render();
+    $("cardSub").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  S.focus[sec] = b.dataset.k; render();
+}));
+// กดการ์ด Main Zone → เปิด Sub Zone ของโซนนั้น
+$("mMain").addEventListener("click", e => {
+  const c = e.target.closest(".mini"); if (!c) return;
+  S.subMain = S.focus.main = c.dataset.k; render();
+  $("cardSub").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+// เปลี่ยนธีมมืด/สว่างของเครื่อง → วาดใหม่ให้สีกราฟตาม
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => S.rows.length && render()); } catch (e) {}
+document.addEventListener("click", e => {
+  const th = e.target.closest("thead th[data-b]"); if (!th) return;
+  S.hl = S.hl === th.dataset.b ? null : th.dataset.b; applyHighlight();
+});
+$("btnReload").addEventListener("click", () => load(true));
+
+// ซ่อน / แสดงแถบตัวกรอง
+function setCollapsed(c) {
+  $("top").classList.toggle("collapsed", c);
+  $("btnToggle").textContent = c ? "▾ ตัวกรอง" : "▴ ซ่อน";
+  try { localStorage.setItem(STORE_KEY + ".collapsed", c ? "1" : ""); } catch (e) {}
+}
+$("btnToggle").addEventListener("click", () => setCollapsed(!$("top").classList.contains("collapsed")));
+try { if (localStorage.getItem(STORE_KEY + ".collapsed")) setCollapsed(true); } catch (e) {}
+
+// จัด dropdown ไม่ให้ล้นจอ
+$("zoneMore").addEventListener("toggle", () => {
+  const pop = $("zoneOther");
+  pop.style.left = "0"; pop.style.right = "auto";
+  if (!$("zoneMore").open) return;
+  const r = pop.getBoundingClientRect();
+  if (r.right > window.innerWidth - 8) { pop.style.left = "auto"; pop.style.right = "0"; }
+  const r2 = pop.getBoundingClientRect();
+  if (r2.left < 8) { pop.style.right = "auto"; pop.style.left = (8 - $("zoneMore").getBoundingClientRect().left) + "px"; }
+});
+// ปิด dropdown โซนอื่นๆ เมื่อกดข้างนอก
+document.addEventListener("click", e => {
+  const d = $("zoneMore");
+  if (d.open && !d.contains(e.target)) d.open = false;
+});
+
+/* ================= ข้อมูลจำลอง (?demo) ================= */
+function demoData() {
+  const subs = { "A":9, "B":6, "C":5, "D Big":4, "D NB":3, "E":4, "J":3, "N":2, "R":3, "S":3, "T":2, "U":2 };
+  const rows = [];
+  const today = new Date().toISOString().slice(0, 10);
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 1100; i >= 1; i--) {
+    const d = addDays(today, -i);
+    for (const z in subs) {
+      for (let k = 0; k < subs[z]; k++) {
+        const sale = Math.round(200 + rnd() * 900);
+        const nf = Math.round(sale * (rnd() * rnd() * 0.06));
+        rows.push([d, z, String(k), sale, sale - nf, nf]);
+      }
+    }
+  }
+  return { rows };
+}
+
+load(false);
+</script>
+</body>
+</html>

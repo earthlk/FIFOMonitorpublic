@@ -4,9 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FIFO Monitor</title>
+<meta name="color-scheme" content="light dark">
+<script>
+/* 🌙 Dark mode ตามการตั้งค่าเครื่อง (เหมือน dashboard.html)
+   Bootstrap 5.3 ใช้ data-bs-theme="dark" — ส่วนสีของเราเองอยู่ท้าย <style> */
+(function(){
+  var mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  function apply(){ document.documentElement.setAttribute("data-bs-theme", mq && mq.matches ? "dark" : "light"); }
+  apply();
+  if (mq) { try { mq.addEventListener("change", apply); } catch (e) { mq.addListener && mq.addListener(apply); } }
+})();
+</script>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
 
 <style>
@@ -1545,6 +1558,714 @@ body{background:#eef2ff;font-family:system-ui}
   z-index: 2;
 }
 
+/* ==========================================================
+   🌙 Dark mode — ใช้สีชุดเดียวกับ dashboard.html
+   เปิดอัตโนมัติเมื่อเครื่องตั้งเป็นโหมดมืด (data-bs-theme="dark")
+   ========================================================== */
+[data-bs-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f0f0f;
+  --dk-card:#1a1a19; --dk-soft:#222220; --dk-line:#2f2f2c;
+  --dk-text:#f0efec; --dk-text2:#c3c2b7; --dk-muted:#8f8e88;
+  --dk-blue:#8ab4f8; --dk-blue-bg:#1d2a3a; --dk-blue-line:#2f3b55;
+  --bs-body-bg:#1a1a19; --bs-body-color:#f0efec;
+  --bs-border-color:#2f2f2c; --bs-secondary-bg:#222220; --bs-tertiary-bg:#222220;
+  --bs-secondary-color:#a9a8a1;
+}
+[data-bs-theme="dark"] body{ background:#0f0f0f !important; color:var(--dk-text); }
+
+/* ข้อความ */
+[data-bs-theme="dark"] .code,
+[data-bs-theme="dark"] .app-title,
+[data-bs-theme="dark"] .risk-code,
+[data-bs-theme="dark"] .rm-table th{ color:var(--dk-text); }
+[data-bs-theme="dark"] .name,
+[data-bs-theme="dark"] .pc-name,
+[data-bs-theme="dark"] .risk-name,
+[data-bs-theme="dark"] .pc-stats,
+[data-bs-theme="dark"] .pc-zone-rule,
+[data-bs-theme="dark"] .rm-label{ color:var(--dk-text2); }
+
+/* พื้นการ์ด / กล่อง */
+[data-bs-theme="dark"] .card,
+[data-bs-theme="dark"] .card-item,
+[data-bs-theme="dark"] .skeleton-card,
+[data-bs-theme="dark"] .filter-bar,
+[data-bs-theme="dark"] .pc-filter-bar,
+[data-bs-theme="dark"] .date-picker-box,
+[data-bs-theme="dark"] .pc-card,
+[data-bs-theme="dark"] .pc-card-right,
+[data-bs-theme="dark"] .card-right,
+[data-bs-theme="dark"] .pc-sidebar,
+[data-bs-theme="dark"] .risk-card-container,
+[data-bs-theme="dark"] .pc-loading .box,
+[data-bs-theme="dark"] .app-modal-header,
+[data-bs-theme="dark"] .modal-footer{ background:var(--dk-card); color:var(--dk-text); box-shadow:none; }
+[data-bs-theme="dark"] .card,
+[data-bs-theme="dark"] .card-item,
+[data-bs-theme="dark"] .pc-card,
+[data-bs-theme="dark"] .filter-bar,
+[data-bs-theme="dark"] .pc-filter-bar{ border:1px solid var(--dk-line); }
+[data-bs-theme="dark"] .pc-sidebar{ border-right:1px solid var(--dk-line); }
+[data-bs-theme="dark"] .app-modal-header,
+[data-bs-theme="dark"] .modal-header{ border-bottom-color:var(--dk-line); }
+[data-bs-theme="dark"] .modal-footer{ border-top-color:var(--dk-line); }
+[data-bs-theme="dark"] .pc-side-box,
+[data-bs-theme="dark"] #reportScope,
+[data-bs-theme="dark"] .dh-pct{ background:var(--dk-soft); }
+[data-bs-theme="dark"] .card-normal{ border-color:var(--dk-line); }
+[data-bs-theme="dark"] .card-item:hover{ box-shadow:0 6px 18px rgba(0,0,0,.5); }
+
+/* การ์ดเตือน — คงสีขอบเดิม พื้นเป็นสีเข้มอมส้ม/แดง */
+[data-bs-theme="dark"] .card-warning{ background:linear-gradient(135deg,#2b1a0b,#33200c); border-color:#f97316; box-shadow:0 4px 14px rgba(249,115,22,.18); }
+[data-bs-theme="dark"] .card-urgent{  background:linear-gradient(135deg,#2b1013,#341316); border-color:#dc2626; box-shadow:0 4px 14px rgba(220,38,38,.2); }
+
+/* Loading */
+[data-bs-theme="dark"] #loadingOverlay,
+[data-bs-theme="dark"] .pc-loading{ background:rgba(15,15,15,.78); }
+[data-bs-theme="dark"] .skel-line,
+[data-bs-theme="dark"] .skel-box,
+[data-bs-theme="dark"] .skeleton-row{ background:linear-gradient(90deg,#262624 25%,#31312e 37%,#262624 63%); background-size:400% 100%; }
+[data-bs-theme="dark"] .progress{ background-color:#2a2a28; }
+
+/* ปุ่ม / ช่องค้นหา / ตัวกรอง */
+[data-bs-theme="dark"] .prefix-btn,
+[data-bs-theme="dark"] .zone-btn{ background:var(--dk-blue-bg); color:var(--dk-blue); box-shadow:none; }
+[data-bs-theme="dark"] .zone-btn:hover{ background:#243449; }
+[data-bs-theme="dark"] .prefix-btn.active,
+[data-bs-theme="dark"] .zone-btn.active{ background:linear-gradient(135deg,#2563eb,#4f46e5); color:#fff; }
+[data-bs-theme="dark"] .search-input,
+[data-bs-theme="dark"] .date-input{ background:var(--dk-soft); color:var(--dk-text); border-color:var(--dk-blue-line); box-shadow:none; }
+[data-bs-theme="dark"] .search-input::placeholder{ color:var(--dk-muted); }
+[data-bs-theme="dark"] .search-input:focus,
+[data-bs-theme="dark"] .date-input:focus{ border-color:#3987e5; background:var(--dk-soft); }
+[data-bs-theme="dark"] .search-icon{ color:#60a5fa; }
+[data-bs-theme="dark"] .filter-left,
+[data-bs-theme="dark"] .pc-filter-date,
+[data-bs-theme="dark"] .date-label{ color:#93c5fd; }
+[data-bs-theme="dark"] .filter-right,
+[data-bs-theme="dark"] .pc-filter-zone{ color:#60a5fa; }
+[data-bs-theme="dark"] .title-toggle,
+[data-bs-theme="dark"] .title-toggle-pc{ background:var(--dk-soft); border-color:var(--dk-line); color:#93c5fd; box-shadow:none; }
+[data-bs-theme="dark"] .title-toggle.dashboard,
+[data-bs-theme="dark"] .title-toggle-pc.dashboard{ background:linear-gradient(135deg,#dc2626,#f97316); color:#fff; border-color:#f97316; }
+[data-bs-theme="dark"] .zone-box button{ background:var(--dk-card); color:#60a5fa; border-color:#2563eb; }
+
+/* ตาราง PC */
+[data-bs-theme="dark"] .pc-table tbody tr td,
+[data-bs-theme="dark"] .tr-normal td{ background:var(--dk-card); color:var(--dk-text); }
+[data-bs-theme="dark"] .tr-warning td{ background:linear-gradient(135deg,#2b1a0b,#33200c); color:#fdba74; }
+[data-bs-theme="dark"] .tr-urgent td{  background:linear-gradient(135deg,#2b1013,#341316); color:#fca5a5; }
+[data-bs-theme="dark"] .pc-zone-label{ color:#93c5fd; }
+[data-bs-theme="dark"] .pc-sale-label{ color:#c4b5fd; }
+[data-bs-theme="dark"] .pc-fifo-label{ color:#86efac; }
+[data-bs-theme="dark"] .pc-notfifo-label{ color:#fca5a5; }
+[data-bs-theme="dark"] .pc-notfifo-value{ color:#f87171; }
+[data-bs-theme="dark"] .pc-side-row.warn b,
+[data-bs-theme="dark"] .pc-problem-item:hover{ color:#f87171; }
+
+/* ตาราง SN */
+[data-bs-theme="dark"] .table-primary{ --bs-table-bg:#1d2a3a; --bs-table-color:#e6edf7; --bs-table-border-color:#2f3b55; --bs-table-hover-bg:#243449; --bs-table-hover-color:#e6edf7; }
+[data-bs-theme="dark"] .table-light{ --bs-table-bg:#222220; --bs-table-color:#f0efec; --bs-table-border-color:#2f2f2c; }
+[data-bs-theme="dark"] .tr-stock > td{ background:var(--dk-card); }
+[data-bs-theme="dark"] .tr-sale > td{ background:#3a2e0e !important; color:#fcd34d !important; }
+[data-bs-theme="dark"] .tr-reserve > td{ background:#3a280b; color:#fbbf24; }
+
+/* หัวการ์ด SN แบบปกติ (สีขาวใส่ไว้ใน JS) */
+[data-bs-theme="dark"] .sn-card-header[style*="#ffffff"]{ background:var(--dk-card) !important; color:var(--dk-text) !important; border-color:var(--dk-line) !important; box-shadow:none !important; }
+[data-bs-theme="dark"] .sn-card-header[style*="#ffffff"] .code{ color:var(--dk-text) !important; }
+[data-bs-theme="dark"] .sn-card-header[style*="#ffffff"] .name{ color:var(--dk-text2) !important; }
+[data-bs-theme="dark"] .rm-table td[style*="#555"]{ color:var(--dk-text2) !important; }
+[data-bs-theme="dark"] .rm-zone-label{ color:#93c5fd; }
+
+/* Report */
+[data-bs-theme="dark"] .swipe-report-wrap{ background:#3a1416; }
+[data-bs-theme="dark"] .swipe-report-track{ color:#fca5a5; }
+[data-bs-theme="dark"] #reportError{ background:#3a1416; color:#fca5a5; }
+[data-bs-theme="dark"] #reportResult{ background:#12301c; color:#86efac; }
+[data-bs-theme="dark"] #reportResult.pending{ background:var(--dk-blue-bg); color:#93c5fd; }
+
+/* ประวัติการลบ / KPI */
+[data-bs-theme="dark"] .dh-item{ border-color:var(--dk-line); }
+[data-bs-theme="dark"] .dh-item:active{ background:var(--dk-soft); }
+[data-bs-theme="dark"] .dh-meta,
+[data-bs-theme="dark"] .dh-pct-label{ color:var(--dk-muted); }
+[data-bs-theme="dark"] .dh-codes,
+[data-bs-theme="dark"] .dh-code-sub{ color:#a5b4fc; }
+[data-bs-theme="dark"] .dh-back{ background:var(--dk-blue-bg); color:#a5b4fc; }
+[data-bs-theme="dark"] .kpi-box{ background:linear-gradient(135deg,#1a2235,#1d2740); border-color:var(--dk-blue-line); }
+[data-bs-theme="dark"] .kpi-title,
+[data-bs-theme="dark"] .dh-pct-after{ color:#93c5fd; }
+[data-bs-theme="dark"] .kpi-table{ background:var(--dk-card); }
+[data-bs-theme="dark"] .kpi-table td{ border-bottom-color:var(--dk-line); }
+[data-bs-theme="dark"] .kpi-down{ background:#12301c; color:#86efac; }
+[data-bs-theme="dark"] .kpi-up{ background:#3a1416; color:#fca5a5; }
+[data-bs-theme="dark"] .dh-month-chip{ background:var(--dk-card); border-color:var(--dk-blue-line); color:#93c5fd; }
+[data-bs-theme="dark"] .dh-month-chip.active{ background:linear-gradient(135deg,#2563eb,#4f46e5); color:#fff; }
+[data-bs-theme="dark"] .dhm-cnt{ background:rgba(255,255,255,.08); }
+[data-bs-theme="dark"] .dh-sub{ color:var(--dk-text2); }
+[data-bs-theme="dark"] .dh-code{ background:var(--dk-blue-bg); color:#c7d2fe; }
+[data-bs-theme="dark"] .del-head{ background:var(--dk-soft); color:var(--dk-muted); border-color:var(--dk-line); }
+[data-bs-theme="dark"] .del-head:active{ background:#2a2a28; }
+[data-bs-theme="dark"] .del-group-head{ background:#2a2a28; color:var(--dk-text2); }
+[data-bs-theme="dark"] .del-group-sub,
+[data-bs-theme="dark"] .del-meta,
+[data-bs-theme="dark"] .del-sn{ color:var(--dk-muted); }
+[data-bs-theme="dark"] .del-row{ background:var(--dk-soft); border-color:var(--dk-line); }
+
+/* Upload */
+[data-bs-theme="dark"] .upload-row{ background:transparent; }
+[data-bs-theme="dark"] .upload-btn{ background:var(--dk-soft); color:var(--dk-text); border-color:var(--dk-line); }
+[data-bs-theme="dark"] .upload-btn:hover{ background:#2a2a28; border-color:#55544f; }
+[data-bs-theme="dark"] .upload-filename{ color:var(--dk-muted); }
+
+
+/* =====================================================================
+   🎨 Redesign v2 — หน้าคอม (PC) ก่อน   มือถือยังเป็นหน้าตาเดิม
+   ทุกอย่างอยู่ใต้ #pcLayout หรือ #snModal.v-sidepanel ไม่กระทบมือถือ
+   ===================================================================== */
+:root{
+  --v-bg:#f3f4f6; --v-card:#ffffff; --v-line:#e3e5e8; --v-text:#14171c; --v-text2:#4a5059; --v-muted:#6b7280;
+  --v-chip:#f1f3f5; --v-accent:#2a78d6; --v-accentSoft:#e8f1fc;
+  --v-warn:#b45309; --v-warnSoft:#fff4e6; --v-warnLine:#f59e52;
+  --v-bad:#c62828; --v-badSoft:#fdecec; --v-badLine:#f5c2c2; --v-badSolid:#c62828;
+  --v-inSoft:#eaf2fd; --v-inLine:#c5dbf6; --v-inText:#1c4f8f;
+  --v-saleSoft:#fff1e3; --v-saleLine:#f8cfa1; --v-saleText:#9a4a07;
+  --v-zone:#1e3a8a; --v-instock:#0369a1; --v-sale:#6d28d9; --v-fifo:#15803d; --v-nf:#c62828; --v-rep:#c2410c; --v-month:#9f1239;
+}
+[data-bs-theme="dark"]{
+  --v-bg:#0f0f0f; --v-card:#1a1a19; --v-line:#2f2f2c; --v-text:#f0efec; --v-text2:#c3c2b7; --v-muted:#8f8e88;
+  --v-chip:#232321; --v-accent:#3987e5; --v-accentSoft:#1d2a3a;
+  --v-warn:#fdba74; --v-warnSoft:#2b1a0b; --v-warnLine:#c2600f;
+  --v-bad:#f87171; --v-badSoft:#3a1416; --v-badLine:#6b2226; --v-badSolid:#dc2626;
+  --v-inSoft:#1d2a3a; --v-inLine:#2f4a6b; --v-inText:#bcd4f6;
+  --v-saleSoft:#33220f; --v-saleLine:#6b4210; --v-saleText:#fdba74;
+}
+#pcLayout, #snModal.v-sidepanel{ font-family:'IBM Plex Sans Thai', system-ui, sans-serif; }
+#pcLayout .mono, #snModal .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; }
+#pcLayout button, #pcLayout input, #pcLayout select,
+#snModal.v-sidepanel button, #snModal.v-sidepanel input, #snModal.v-sidepanel select{ min-height:0; font-family:inherit; }
+
+/* ---------- ชิ้นส่วน ---------- */
+#pcLayout .v-viewbtn{ width:100%; display:flex; align-items:center; gap:10px; min-height:52px; padding:6px 10px; border-radius:12px; border:1px solid var(--v-line); background:var(--v-chip); color:var(--v-text); text-align:left; cursor:pointer; }
+.v-viewtxt{ display:flex; flex-direction:column; flex:1; min-width:0; }
+.v-viewtxt small{ font-size:12px; color:var(--v-muted); letter-spacing:.04em; white-space:nowrap; }
+.v-viewtxt b{ font-size:20px; line-height:1.2; white-space:nowrap; }
+.v-viewother{ display:flex; align-items:center; gap:4px; flex:none; height:30px; padding:0 8px; border-radius:8px; background:var(--v-accent); color:#fff; font-size:12px; font-weight:600; }
+#pcLayout .v-datebtn{ width:100%; display:flex; align-items:center; gap:8px; height:46px; padding:0 12px; border-radius:12px; border:1px solid var(--v-line); background:var(--v-bg); color:var(--v-text); font-size:16px; font-weight:600; white-space:nowrap; cursor:pointer; }
+#pcLayout .v-datebtn .bi-chevron-down{ margin-left:auto; }
+#pcLayout .v-search{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; height:46px; padding:0 14px; margin:0; border-radius:12px; background:var(--v-card); border:1px solid var(--v-line); color:var(--v-muted); }
+#pcLayout .v-search input{ flex:1; min-width:0; width:100%; border:0; outline:none; background:transparent; color:var(--v-text); font-size:16px; }
+#pcLayout .v-snbtn{ display:flex; align-items:center; gap:6px; height:46px; padding:0 16px; border-radius:12px; border:0; background:var(--v-accent); color:#fff; font-size:16px; font-weight:600; white-space:nowrap; }
+.v-seg{ display:flex; padding:3px; border-radius:12px; background:var(--v-chip); flex:none; }
+#pcLayout .v-seg button{ height:40px; padding:0 14px; border-radius:10px; border:0; background:transparent; color:var(--v-muted); font-size:15px; font-weight:600; cursor:pointer; white-space:nowrap; }
+#pcLayout .v-seg button.on{ background:var(--v-card); color:var(--v-text); box-shadow:0 1px 2px rgba(0,0,0,.12); }
+#pcLayout .v-select{ height:38px; padding:0 10px; border-radius:10px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:15px; }
+.v-filters{ display:flex; gap:6px; flex-wrap:wrap; }
+#pcLayout .v-filters button{ height:38px; padding:0 14px; border-radius:10px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:15px; font-weight:600; cursor:pointer; white-space:nowrap; }
+#pcLayout .v-filters button.on{ background:var(--v-text); color:var(--v-card); border-color:var(--v-text); }
+#pcLayout .v-filters button.on.bad{ background:var(--v-badSolid); border-color:var(--v-badSolid); color:#fff; }
+#pcLayout .v-filters button.on.warn{ background:var(--v-warnLine); border-color:var(--v-warnLine); color:#fff; }
+.v-pill{ display:inline-block; min-width:42px; padding:4px 10px; border-radius:8px; color:#fff; font-size:18px; font-weight:700; text-align:center; line-height:1.3; box-sizing:border-box; }
+.v-box{ display:flex; flex-direction:column; padding:8px 10px; border-radius:10px; color:#fff; min-width:0; }
+.v-box small{ font-size:13px; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v-box b{ font-size:24px; font-weight:700; line-height:1.2; }
+.v-box b i{ font-style:normal; font-size:14px; font-weight:500; }
+.v-cell{ display:flex; align-items:center; justify-content:center; height:26px; min-width:30px; border-radius:6px; font-size:17px; font-weight:700; }
+.v-cell.z{ color:var(--v-line); }
+.v-cell.in{ background:var(--v-inSoft); color:var(--v-inText); border:1px solid var(--v-inLine); }
+.v-cell.sale{ background:var(--v-saleSoft); color:var(--v-saleText); border:1px solid var(--v-saleLine); }
+.v-cell.hot{ background:var(--v-badSolid); color:#fff; border:0; }
+.v-empty{ padding:28px 16px; text-align:center; color:var(--v-muted); }
+
+/* ---------- โครงหน้า ---------- */
+.v-pc{ display:flex; height:100vh; overflow:hidden; background:var(--v-bg); color:var(--v-text); font-size:16px; }
+.v-pside{ width:280px; flex:none; display:flex; flex-direction:column; gap:14px; padding:20px 16px; background:var(--v-card); border-right:1px solid var(--v-line); overflow-y:auto; }
+.v-sidebox{ display:flex; flex-direction:column; gap:8px; padding:12px; border-radius:12px; background:var(--v-bg); border:1px solid var(--v-line); }
+.v-sidetitle{ font-size:13px; font-weight:700; color:var(--v-muted); letter-spacing:.02em; }
+.v-zgrid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+.v-zgrid.d{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+#pcLayout .v-zbtn{ display:flex; align-items:center; justify-content:center; gap:5px; height:40px; padding:0 4px; border-radius:10px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.v-zbtn .n{ min-width:22px; padding:0 4px; border-radius:6px; font-size:12px; line-height:20px; text-align:center; background:var(--v-badSolid); color:#fff; }
+.v-zbtn .n.risk{ background:var(--v-warnLine); }
+#pcLayout .v-zbtn.on{ background:var(--v-accent); border-color:var(--v-accent); color:#fff; }
+.v-zbtn.on .n{ background:rgba(255,255,255,.25); }
+#pcZoneRule{ font-size:14px; color:var(--v-text2); line-height:1.6; }
+#pcZoneRule .lg{ display:flex; align-items:center; gap:8px; }
+#pcZoneRule .lg i{ width:14px; height:14px; border-radius:4px; display:inline-block; flex:none; }
+#pcProblemList .pc-problem-item{ display:flex; justify-content:space-between; padding:6px 8px; border-radius:8px; cursor:pointer; font-size:15px; background:transparent; border:0; margin:0; }
+#pcProblemList .pc-problem-item:hover{ background:var(--v-card); }
+#pcProblemList .pc-problem-item span{ font-family:'IBM Plex Mono', ui-monospace, monospace; }
+.v-sidebtns{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:auto; }
+#pcLayout .v-sidebtns button{ height:42px; border-radius:10px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:14px; font-weight:600; }
+.v-pmain{ flex:1; min-width:0; display:flex; flex-direction:column; gap:14px; padding:20px 24px; overflow:hidden; transition:margin-right .15s; }
+.v-ptop{ display:flex; gap:10px; align-items:center; }
+.v-kpis{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.v-kpi{ display:flex; flex-direction:column; gap:2px; padding:14px; border-radius:12px; background:var(--v-card); border:1px solid var(--v-line); min-width:0; }
+.v-kpi > div:first-child{ font-size:13px; color:var(--v-muted); }
+.v-kpi .val{ font-size:28px; font-weight:700; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v-kpi .val.mono{ font-size:22px; }
+.v-kpi.nf .val{ color:var(--v-bad); }
+.v-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.v-sortlbl{ display:flex; align-items:center; gap:8px; margin:0; font-size:14px; color:var(--v-muted); }
+.v-tablewrap{ flex:1; min-height:0; overflow:auto; border-radius:14px; background:var(--v-card); border:1px solid var(--v-line); }
+.v-table{ width:100%; min-width:760px; border-collapse:collapse; font-size:16px; color:var(--v-text); }
+.v-table thead th{ position:sticky; top:0; z-index:1; background:var(--v-chip); color:var(--v-muted); font-size:14px; font-weight:600; padding:12px 8px; border-bottom:1px solid var(--v-line); text-align:left; white-space:nowrap; }
+.v-table th.r, .v-table td.r{ text-align:right; }
+.v-table th.c, .v-table td.c{ text-align:center; }
+.v-table td{ padding:10px 8px; border-bottom:1px solid var(--v-line); vertical-align:middle; }
+.v-table th:first-child, .v-table td:first-child{ padding-left:16px; }
+.v-table th:last-child, .v-table td:last-child{ padding-right:16px; }
+.v-table tbody tr{ cursor:pointer; }
+.v-table tbody tr:hover > td{ background:var(--v-accentSoft); }
+.v-table tbody tr.urgent > td, .v-table tbody tr.warn > td{ background:var(--v-warnSoft); }
+.v-table tbody tr.bad > td{ background:var(--v-badSoft); }
+.v-table tbody tr.sel > td{ box-shadow:inset 0 2px 0 var(--v-accent), inset 0 -2px 0 var(--v-accent); }
+.v-table tbody tr.sel > td:first-child{ box-shadow:inset 3px 0 0 var(--v-accent), inset 0 2px 0 var(--v-accent), inset 0 -2px 0 var(--v-accent); }
+.v-table .mono{ display:block; font-size:16px; font-weight:600; }
+.v-table .nm{ display:block; font-size:14px; color:var(--v-text2); max-width:320px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v-table .agec{ display:flex; flex-direction:column; gap:3px; align-items:center; }
+#dashboardPC{ flex:1; min-height:0; }
+#dashboardPC iframe{ display:block; width:100%; height:calc(100vh - 40px); border:0; border-radius:16px; background:var(--v-card); }
+
+/* ---------- SN Detail = แผงขวา (เฉพาะคอม) ---------- */
+#snModal.v-sidepanel{ left:auto; right:0; width:480px; max-width:100vw; }
+#snModal.v-sidepanel .modal-dialog{ margin:0; max-width:none; width:100%; height:100vh; max-height:none; min-height:0; transform:none !important; }
+#snModal.v-sidepanel .modal-content{ height:100vh; max-height:none; background:var(--v-bg); color:var(--v-text); border:0; border-left:1px solid var(--v-line); border-radius:0; box-shadow:-8px 0 24px rgba(0,0,0,.08); overflow-y:auto; }
+#snModal.v-sidepanel .app-modal-header{ display:none; }
+#snModal.v-sidepanel .modal-body{ padding:16px; }
+#snModal.v-sidepanel #snCardHeader{ display:flex; flex-direction:column; gap:12px; margin-bottom:12px; }
+.v-snhead{ display:flex; align-items:flex-start; gap:10px; }
+.v-snhead .x{ flex:none; width:36px; height:36px; border-radius:10px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:16px; }
+.v-snhead .t{ display:flex; flex-direction:column; min-width:0; flex:1; }
+.v-snhead .t small{ font-size:13px; color:var(--v-muted); }
+.v-snhead .t .mono{ font-size:22px; font-weight:600; line-height:1.2; }
+.v-snhead .t span:last-child{ font-size:15px; color:var(--v-text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v-snhead .z{ flex:none; display:flex; flex-direction:column; align-items:center; min-width:64px; padding:6px 12px; border-radius:10px; background:var(--v-zone); color:#fff; }
+.v-snhead .z small{ font-size:12px; opacity:.85; }
+.v-snhead .z b{ font-size:24px; line-height:1.1; }
+.v-stat5{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
+.v-warnbox{ display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:12px; }
+.v-warnbox.bad{ background:var(--v-badSoft); border:1px solid var(--v-badLine); color:var(--v-bad); }
+.v-warnbox.warn{ background:var(--v-warnSoft); border:1px solid var(--v-warnLine); color:var(--v-warn); }
+.v-warnbox > i{ font-size:20px; line-height:1; margin-top:1px; }
+.v-warnbox b{ display:block; font-size:15px; }
+.v-warnbox small{ display:block; font-size:14px; color:var(--v-text2); }
+.v-matrix{ display:grid; grid-template-columns:56px repeat(8,minmax(0,1fr)); gap:3px; font-size:13px; text-align:center; padding:10px 12px; border-radius:12px; background:var(--v-card); border:1px solid var(--v-line); }
+.v-matrix .h{ color:var(--v-muted); }
+.v-matrix .l{ text-align:left; color:var(--v-text2); align-self:center; }
+.v-matrix .v-cell{ min-width:0; font-size:14px; }
+#snModal.v-sidepanel .table{ font-size:16px; background:var(--v-card); border-radius:12px; overflow:hidden; }
+#snModal.v-sidepanel .table td, #snModal.v-sidepanel .table th{ padding:10px 12px; }
+#snModal.v-sidepanel .table tr.sn-row > td:first-child{ font-family:'IBM Plex Mono', ui-monospace, monospace; }
+#snModal.v-sidepanel #btnToggleAllRC{ font-size:14px !important; }
+/* แจ้งปัญหา: เลือกเหตุผล + ปุ่มส่ง แถวเดียว (แทนการปัด) */
+.v-pcreport{ display:none; }
+#snModal.v-sidepanel #reportSection > .fw-bold{ font-size:16px !important; }
+#snModal.v-sidepanel #reportScope{ font-size:14px; padding:8px 12px; margin-bottom:8px; }
+#snModal.v-sidepanel #reportScope button{ min-height:0; font-size:13px; padding:2px 10px; }
+#snModal.v-sidepanel #reportReason{ display:inline-block; width:calc(100% - 128px); font-size:15px !important; height:40px; vertical-align:top; }
+#snModal.v-sidepanel .v-pcreport{ display:inline-block; width:120px; margin-left:4px; height:40px; border-radius:10px; border:0; background:var(--v-badSolid); color:#fff; font-size:15px; font-weight:600; vertical-align:top; }
+#snModal.v-sidepanel #reportNote{ font-size:15px !important; height:40px; }
+#snModal.v-sidepanel #swipeWrap{ display:none !important; }
+body.v-sn-open .v-pmain{ margin-right:480px; }
+body.v-sn-open .v-table{ min-width:600px; }
+body.v-sn-open .v-table .nm{ max-width:180px; }
+body.v-sn-open .v-table td, body.v-sn-open .v-table th{ padding-left:5px; padding-right:5px; }
+body.v-sn-open .v-table .v-pill{ min-width:36px; padding:3px 7px; font-size:17px; }
+#snModal.v-sidepanel .modal-body > .d-flex .fw-bold{ font-size:17px !important; }
+#snModal.v-sidepanel .table thead th{ font-size:14px; }
+/* การ์ดทีละ Code (Not FIFO / Code Risk) */
+.v-kpis{ grid-template-columns:repeat(5,minmax(0,1fr)); }
+.v-kpi.pct .val{ color:var(--v-accent); }
+.v-cards{ display:flex; flex-direction:column; gap:10px; }
+#pcCardList.v-cardmode{ background:transparent; border:0; border-radius:0; }
+.v-pcard{ display:grid; grid-template-columns:minmax(200px,1fr) auto minmax(0,1fr); align-items:center; gap:16px; padding:14px 18px; border-radius:14px; background:var(--v-card); border:1px solid var(--v-line); cursor:pointer; color:var(--v-text); }
+.v-pcard:hover{ border-color:var(--v-accent); }
+.v-pcard.urgent, .v-pcard.warn{ background:var(--v-warnSoft); border-color:var(--v-warnLine); }
+.v-pcard.bad{ background:var(--v-badSoft); border-color:var(--v-badLine); }
+.v-pcard.sel{ box-shadow:0 0 0 2px var(--v-accent); border-color:var(--v-accent); }
+.v-pcard .id{ min-width:0; }
+.v-pcard .id .mono{ display:block; font-size:18px; font-weight:600; }
+.v-pcard .id .nm{ display:block; font-size:14px; color:var(--v-text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v-pcard .id .tag{ display:inline-block; margin-top:4px; padding:1px 8px; border-radius:999px; font-size:12px; font-weight:600; color:var(--v-warn); background:var(--v-warnSoft); border:1px solid var(--v-warnLine); }
+.v-pcard .id .tag.bad{ color:#fff; background:var(--v-badSolid); border-color:var(--v-badSolid); }
+.v-pcard .zn{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:76px; padding:6px 14px; border-radius:12px; background:var(--v-zone); color:#fff; }
+.v-pcard .zn small{ font-size:12px; opacity:.85; }
+.v-pcard .zn b{ font-size:28px; line-height:1.1; }
+.v-pcard .vals{ display:flex; align-items:center; justify-content:flex-end; gap:12px; min-width:0; }
+.v-pcard .st{ display:flex; flex-direction:column; align-items:center; gap:3px; }
+.v-pcard .st small{ font-size:12px; color:var(--v-muted); white-space:nowrap; }
+.v-pcard .st .v-pill{ font-size:24px; min-width:60px; padding:4px 10px; }
+.v-pcard .rm{ display:flex; flex-direction:column; gap:4px; }
+.v-pcard .rm > div{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.v-pcard .rm small{ font-size:12px; color:var(--v-muted); white-space:nowrap; }
+.v-pcard .rm .v-pill{ font-size:14px; min-width:54px; padding:2px 8px; }
+.v-cmatrix{ display:grid; grid-template-columns:52px repeat(8,40px); gap:3px; font-size:12px; text-align:center; }
+.v-cmatrix .h{ color:var(--v-muted); }
+.v-cmatrix .l{ text-align:left; color:var(--v-text2); align-self:center; }
+.v-cmatrix .v-cell{ min-width:0; height:26px; font-size:15px; }
+body.v-sn-open .v-pcard{ grid-template-columns:minmax(120px,1fr) auto auto; gap:10px; padding:12px; }
+body.v-sn-open .v-pcard .vals{ gap:6px; }
+body.v-sn-open .v-pcard .st .v-pill{ font-size:18px; min-width:40px; padding:3px 6px; }
+body.v-sn-open .v-pcard .zn{ min-width:56px; padding:4px 8px; } body.v-sn-open .v-pcard .zn b{ font-size:22px; }
+body.v-sn-open .v-cmatrix{ grid-template-columns:44px repeat(8,30px); }
+body.v-sn-open .v-kpis{ gap:8px; } body.v-sn-open .v-kpi{ padding:10px; } body.v-sn-open .v-kpi .val{ font-size:20px; } body.v-sn-open .v-kpi .val.mono{ font-size:15px; } body.v-sn-open .v-kpi > div:first-child{ font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* Zone ชิดชื่อ ให้พื้นที่ขวามากขึ้น */
+.v-pcard{ grid-template-columns:minmax(170px,300px) auto minmax(0,1fr); }
+body.v-sn-open .v-pcard{ grid-template-columns:minmax(110px,200px) auto minmax(0,1fr); }
+/* Code Risk: ตัวใหญ่ขึ้น */
+.v-cmatrix{ grid-template-columns:64px repeat(8,minmax(40px,52px)); gap:4px; font-size:14px; }
+.v-cmatrix .l{ font-size:15px; }
+.v-cmatrix .v-cell{ height:32px; font-size:19px; }
+body.v-sn-open .v-cmatrix{ grid-template-columns:56px repeat(8,minmax(28px,36px)); gap:3px; }
+body.v-sn-open .v-cmatrix .v-cell{ height:28px; font-size:16px; }
+.v-matrix{ font-size:14px; } .v-matrix .v-cell{ height:30px; font-size:17px; }
+/* ซ่อน sidebar ได้ */
+.v-sidetoggle{ flex:none; width:46px; height:46px; border-radius:12px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:20px; display:flex; align-items:center; justify-content:center; }
+body.v-noside .v-pside{ display:none; }
+.v-cmatrix .h{ white-space:nowrap; } body.v-sn-open .v-cmatrix .h{ font-size:12px; } body.v-sn-open .v-cmatrix{ grid-template-columns:56px minmax(38px,44px) repeat(7,minmax(28px,34px)); }
+/* รอบ 3: Zone กลับครึ่งทาง + ขยายช่องไฟด้านขวา + Code Risk ตัวใหญ่ขึ้น */
+.v-pcard{ grid-template-columns:minmax(170px,36%) auto minmax(0,1fr); gap:20px; }
+.v-pcard .vals{ gap:22px; }
+.v-pcard .st .v-pill{ min-width:68px; padding:5px 12px; }
+.v-pcard .rm{ gap:6px; margin-right:6px; }
+.v-pcard .rm .v-pill{ font-size:15px; min-width:62px; }
+.v-cmatrix{ grid-template-columns:72px repeat(8,minmax(44px,60px)); gap:6px; }
+.v-cmatrix .h{ font-size:16px; font-weight:600; }
+.v-cmatrix .l{ font-size:17px; }
+.v-cmatrix .v-cell{ height:34px; font-size:21px; }
+body.v-sn-open .v-pcard{ grid-template-columns:minmax(110px,30%) auto minmax(0,1fr); gap:10px; }
+body.v-sn-open .v-pcard .vals{ gap:8px; }
+body.v-sn-open .v-pcard .st .v-pill{ min-width:42px; padding:3px 6px; }
+body.v-sn-open .v-cmatrix{ grid-template-columns:60px minmax(40px,46px) repeat(7,minmax(30px,36px)); gap:3px; }
+body.v-sn-open .v-cmatrix .h{ font-size:13px; }
+body.v-sn-open .v-cmatrix .l{ font-size:15px; }
+body.v-sn-open .v-cmatrix .v-cell{ height:30px; font-size:17px; }
+/* รอบ 4: Zone ไปขวาอีก + ชุดตัวเลขเข้ามาใกล้ Zone + Code/ชื่อ ใหญ่ขึ้น */
+.v-pcard{ grid-template-columns:minmax(200px,42%) auto minmax(0,1fr); }
+.v-pcard .vals{ justify-content:center; }
+.v-pcard .id .mono{ font-size:22px; }
+.v-pcard .id .nm{ font-size:17px; }
+.v-pcard .id .tag{ font-size:13px; }
+body.v-sn-open .v-pcard{ grid-template-columns:minmax(120px,34%) auto minmax(0,1fr); }
+body.v-sn-open .v-pcard .vals{ justify-content:flex-end; }
+body.v-sn-open .v-pcard .id .mono{ font-size:19px; }
+body.v-sn-open .v-pcard .id .nm{ font-size:15px; }
+/* รอบ 5: Zone ติดกับชุดตัวเลข (ไม่มีช่องว่าง) ชื่อได้พื้นที่ที่เหลือ */
+.v-pcard, body.v-sn-open .v-pcard{ grid-template-columns:minmax(0,1fr) auto auto; }
+.v-pcard .vals, body.v-sn-open .v-pcard .vals{ justify-content:flex-start; }
+.v-pcard .id .mono{ font-size:25px; }
+.v-pcard .id .nm{ font-size:19px; }
+body.v-sn-open .v-pcard .id .mono{ font-size:22px; }
+body.v-sn-open .v-pcard .id .nm{ font-size:17px; }
+.v-cmatrix .h{ font-size:19px; }
+body.v-sn-open .v-cmatrix{ grid-template-columns:60px minmax(46px,52px) repeat(7,minmax(34px,40px)); }
+body.v-sn-open .v-cmatrix .h{ font-size:16px; }
+.v-pcard .id .tag{ white-space:nowrap; }
+body.v-sn-open .v-pcard{ grid-template-columns:minmax(170px,1fr) auto auto; }
+body.v-sn-open .v-cmatrix{ grid-template-columns:52px minmax(40px,46px) repeat(7,minmax(28px,34px)); gap:2px; }
+body.v-sn-open .v-cmatrix .h{ font-size:15px; }
+/* ===== รอบ 6 ===== */
+/* วันที่เลือกได้ตรงใน sidebar */
+#pcLayout .v-datebtn input[type=date]{ flex:1; min-width:0; border:0; outline:none; background:transparent; color:var(--v-text); font:inherit; font-size:16px; font-weight:600; padding:0; cursor:pointer; }
+#pcLayout .v-datebtn input[type=date]::-webkit-calendar-picker-indicator{ cursor:pointer; opacity:.7; }
+/* ปุ่มล่าง sidebar */
+.v-sidebtns{ grid-template-columns:1fr 1fr; }
+#pcLayout .v-sidebtns .wide{ grid-column:span 2; color:var(--v-bad); border-color:var(--v-badLine); background:var(--v-badSoft); }
+/* Dashboard เต็มหน้า */
+body.v-dash .v-pside{ display:none; }
+.v-dashbar{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+#pcLayout .v-dashbar .v-viewbtn{ width:auto; min-width:240px; }
+#dashboardPC iframe{ height:calc(100vh - 110px); }
+
+/* ===== Modal อื่น ๆ ให้เข้ากับหน้าตาใหม่ (เฉพาะคอม) ===== */
+body.v-pcmode .modal-backdrop.show{ opacity:.35; }
+body.v-pcmode .modal:not(#snModal) .modal-content{ background:var(--v-card); color:var(--v-text); border:1px solid var(--v-line); border-radius:18px !important; box-shadow:0 20px 50px rgba(0,0,0,.18); font-family:'IBM Plex Sans Thai', system-ui, sans-serif; }
+body.v-pcmode .modal:not(#snModal) .modal-header{ padding:16px 22px; border-bottom:1px solid var(--v-line); background:transparent; }
+body.v-pcmode .modal:not(#snModal) .modal-footer{ padding:14px 22px; border-top:1px solid var(--v-line); background:transparent; }
+body.v-pcmode .modal:not(#snModal) .modal-title, body.v-pcmode .app-modal-title{ font-size:20px; font-weight:700; color:var(--v-text); }
+body.v-pcmode .app-modal-content{ padding:24px; gap:14px; }
+body.v-pcmode .app-modal-text{ font-size:16px; color:var(--v-text2); white-space:pre-line; margin:8px 0 16px; }
+body.v-pcmode .modal-dialog.app-modal-size{ max-width:520px; }
+body.v-pcmode .btn-unified, body.v-pcmode .btn-unified2, body.v-pcmode .btn-barcodescan{ height:48px; padding:0; font-size:17px; font-weight:600; border-radius:12px; box-shadow:none; transform:none; }
+body.v-pcmode .btn-unified{ background:var(--v-accent); color:#fff; border:0; }
+body.v-pcmode .btn-unified:disabled{ opacity:.45; }
+body.v-pcmode .btn-unified2{ background:var(--v-chip); color:var(--v-text); border:1px solid var(--v-line); }
+body.v-pcmode .btn-barcodescan{ background:var(--v-chip); color:var(--v-text); border:1px solid var(--v-line); }
+body.v-pcmode .modal .form-control, body.v-pcmode .modal .form-select, body.v-pcmode .date-input{ background:var(--v-bg); color:var(--v-text); border:1px solid var(--v-line); border-radius:12px; box-shadow:none; font-size:16px; }
+body.v-pcmode #snInput{ font-size:26px !important; height:64px !important; border-radius:14px !important; letter-spacing:.08em; font-family:'IBM Plex Mono', ui-monospace, monospace; }
+body.v-pcmode .date-picker-box{ background:transparent; box-shadow:none; padding:0; margin-bottom:16px; }
+body.v-pcmode .zone-btn{ padding:10px 0; border-radius:10px; background:var(--v-chip); color:var(--v-text2); font-size:16px; font-weight:700; box-shadow:none; transform:none; border:1px solid var(--v-line); }
+body.v-pcmode .zone-btn.active{ background:var(--v-accent); border-color:var(--v-accent); color:#fff; }
+body.v-pcmode .modal-footer .btn{ border-radius:10px; font-size:15px; font-weight:600; }
+body.v-pcmode .upload-btn{ background:var(--v-chip); color:var(--v-text); border:1px solid var(--v-line); }
+body.v-pcmode .upload-modal .alert{ border-radius:10px; }
+/* ประวัติการลบ */
+body.v-pcmode #delHistModal .modal-body{ font-size:16px; }
+body.v-pcmode .dh-item{ border:1px solid var(--v-line); border-left:4px solid var(--v-accent); border-radius:12px; background:var(--v-card); }
+body.v-pcmode .dh-item:hover{ background:var(--v-bg); }
+body.v-pcmode .dh-top{ font-size:18px; font-weight:700; }
+body.v-pcmode .dh-cnt{ background:var(--v-badSolid); font-size:14px; }
+body.v-pcmode .dh-meta{ color:var(--v-muted); font-size:14px; }
+body.v-pcmode .dh-codes{ color:var(--v-accent); font-size:14px; }
+body.v-pcmode .dh-back{ background:var(--v-chip); color:var(--v-text); font-size:15px; font-weight:600; border-radius:10px; }
+body.v-pcmode .dh-month{ background:var(--v-zone); font-size:17px; font-weight:700; border-radius:12px; }
+body.v-pcmode .dh-month-chip{ background:var(--v-card); border:1px solid var(--v-line); color:var(--v-text2); font-size:15px; font-weight:600; border-radius:10px; }
+body.v-pcmode .dh-month-chip.active{ background:var(--v-accent); border-color:var(--v-accent); color:#fff; }
+body.v-pcmode .dh-sub{ color:var(--v-text2); font-size:17px; font-weight:700; }
+body.v-pcmode .dh-code{ background:var(--v-accentSoft); color:var(--v-text); font-size:17px; font-weight:700; }
+body.v-pcmode .dh-code-sub{ color:var(--v-muted); }
+body.v-pcmode .dh-pct{ background:var(--v-bg); }
+body.v-pcmode .kpi-box{ background:var(--v-bg); border:1px solid var(--v-line); }
+body.v-pcmode .kpi-title{ color:var(--v-text); font-size:17px; font-weight:700; }
+body.v-pcmode .kpi-table{ background:var(--v-card); }
+body.v-pcmode .kpi-table th{ background:var(--v-zone); }
+body.v-pcmode .kpi-table td{ border-bottom-color:var(--v-line); }
+
+/* ===== รายการแจ้งปัญหา ===== */
+#reportListModal .modal-dialog{ max-width:960px; }
+.v-rl-bar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+.v-rl-bar .v-search{ flex:1; min-width:200px; display:flex; align-items:center; gap:8px; height:42px; padding:0 12px; margin:0; border-radius:10px; background:var(--v-bg); border:1px solid var(--v-line); color:var(--v-muted); }
+.v-rl-bar .v-search input{ flex:1; min-width:0; border:0; outline:none; background:transparent; color:var(--v-text); font-size:15px; min-height:0; }
+.v-rl-bar .v-filters button, .v-rl-bar .v-rl-refresh{ height:42px; min-height:0; padding:0 14px; border-radius:10px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:15px; font-weight:600; }
+.v-rl-bar .v-filters button.on{ background:var(--v-text); color:var(--v-card); border-color:var(--v-text); }
+.v-rl-bar .v-filters button i{ font-style:normal; opacity:.7; margin-left:4px; }
+.v-rl-list{ display:flex; flex-direction:column; gap:10px; }
+.v-rl{ padding:12px 16px; border-radius:12px; border:1px solid var(--v-line); background:var(--v-card); }
+.v-rl.PENDING{ border-left:4px solid var(--v-warnLine); }
+.v-rl.APPROVED{ border-left:4px solid var(--v-fifo); }
+.v-rl.REJECTED{ border-left:4px solid var(--v-muted); }
+.v-rl-top{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.v-rl-top .mono{ font-size:19px; font-weight:600; }
+.v-rl-st{ margin-left:auto; padding:2px 10px; border-radius:999px; font-size:13px; font-weight:700; }
+.v-rl-st.PENDING{ background:var(--v-warnSoft); color:var(--v-warn); border:1px solid var(--v-warnLine); }
+.v-rl-st.APPROVED{ background:var(--v-fifo); color:#fff; }
+.v-rl-st.REJECTED{ background:var(--v-chip); color:var(--v-text2); border:1px solid var(--v-line); }
+.v-rl-meta{ font-size:13px; color:var(--v-muted); margin-top:4px; }
+.v-rl-reason{ font-size:15px; margin-top:6px; }
+.v-rl-reason b{ color:var(--v-bad); }
+.v-rl-items{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.v-rl-items span{ padding:2px 8px; border-radius:8px; background:var(--v-bg); border:1px solid var(--v-line); font-family:'IBM Plex Mono', ui-monospace, monospace; font-size:13px; }
+.v-rl-admin{ margin-top:8px; font-size:14px; color:var(--v-text2); background:var(--v-bg); border-radius:8px; padding:6px 10px; }
+.v-rl-more{ text-align:center; color:var(--v-muted); font-size:14px; padding:8px; }
+body.v-pcmode .modal .btn-close{ min-height:0; width:1em; height:1em; padding:.4em; font-size:14px; }
+.v-rl-bar .v-search i{ font-size:16px; }
+#reportListModal .v-rl-refresh{ font-size:16px; }
+/* ===== รอบ 7 ===== */
+#dashboardPC iframe{ height:calc(100vh - 40px); }
+/* วันที่ + ปฏิทิน */
+.v-datewrap{ position:relative; }
+#pcLayout .v-datebtn{ font-size:20px; height:52px; }
+#pcLayout .v-datebtn .bi-calendar3{ font-size:20px; }
+.v-cal{ position:fixed; z-index:1100; width:340px; padding:14px; border-radius:16px; background:var(--v-card); border:1px solid var(--v-line); box-shadow:0 16px 40px rgba(0,0,0,.18); }
+.v-cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.v-cal-head b{ font-size:20px; }
+#pcLayout .v-cal button{ min-height:0; font-family:inherit; }
+#pcLayout .v-cal-head button{ width:40px; height:40px; border-radius:10px; border:1px solid var(--v-line); background:var(--v-bg); color:var(--v-text); font-size:24px; line-height:1; }
+.v-cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center; }
+.v-cal-grid i{ font-style:normal; font-size:14px; color:var(--v-muted); padding:4px 0; }
+#pcLayout .v-cal-grid button{ height:40px; border-radius:10px; border:0; background:transparent; color:var(--v-text); font-size:18px; font-weight:600; }
+#pcLayout .v-cal-grid button:hover:not(:disabled){ background:var(--v-accentSoft); }
+#pcLayout .v-cal-grid button.today{ box-shadow:inset 0 0 0 1px var(--v-line); }
+#pcLayout .v-cal-grid button.latest{ color:var(--v-accent); }
+#pcLayout .v-cal-grid button.on{ background:var(--v-accent); color:#fff; }
+#pcLayout .v-cal-grid button:disabled{ color:var(--v-line); cursor:default; }
+.v-cal-foot{ margin-top:10px; }
+#pcLayout .v-cal-foot button{ width:100%; height:42px; border-radius:10px; border:1px solid var(--v-line); background:var(--v-bg); color:var(--v-accent); font-size:16px; font-weight:600; }
+/* โซนอื่นๆ */
+#pcLayout .v-zbtn.other{ grid-column:span 2; font-size:14px; }
+.v-zgrid.d{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+/* ===== กราฟ Sub Zone ใน sidebar ===== */
+.v-sub{ display:flex; flex-direction:column; gap:3px; }
+#pcLayout .v-sub-row{ display:grid; grid-template-columns:34px 1fr 54px; align-items:center; gap:6px; width:100%; padding:3px 4px; border:0; border-radius:8px; background:transparent; color:var(--v-text); cursor:pointer; text-align:left; }
+#pcLayout .v-sub-row:hover{ background:var(--v-card); }
+.v-sub-row .k{ font-size:14px; font-weight:700; color:var(--v-text2); }
+.v-sub-row .b{ position:relative; height:16px; }
+.v-sub-row .b i{ position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:color-mix(in srgb, var(--v-accent) 45%, var(--v-line)); min-width:2px; }
+.v-sub-row .b em{ position:absolute; top:-3px; bottom:-3px; width:0; border-left:1.5px dashed var(--v-muted); }
+.v-sub-row .v{ font-size:13px; font-weight:600; text-align:right; color:var(--v-text2); font-variant-numeric:tabular-nums; }
+#pcLayout .v-sub-row.on{ background:var(--v-accentSoft); }
+.v-sub-row.on .b i{ background:var(--v-accent); }
+.v-sub-row.on .k, .v-sub-row.on .v{ color:var(--v-accent); }
+.v-sub-row.dim{ opacity:.45; }
+.v-sub-row:first-child:not(.dim) .b i{ background:var(--v-accent); }
+.v-sub-foot{ display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:6px; font-size:12px; color:var(--v-muted); }
+.v-sub-foot em{ display:inline-block; width:0; height:10px; border-left:1.5px dashed var(--v-muted); margin-right:5px; vertical-align:middle; }
+#pcLayout .v-sub-foot button{ border:1px solid var(--v-line); background:var(--v-card); color:var(--v-accent); border-radius:8px; font-size:12px; font-weight:600; padding:2px 8px; }
+.v-sub-empty{ font-size:13px; color:var(--v-muted); }
+#pcLayout .v-filters button.subchip{ background:var(--v-accent); border-color:var(--v-accent); color:#fff; }
+
+/* =====================================================================
+   📱 Redesign v2 — มือถือ   (ใช้ตัวแปรสี --v-* ชุดเดียวกับหน้าคอม)
+   ===================================================================== */
+#mobileLayout{ font-family:'IBM Plex Sans Thai', system-ui, sans-serif; font-size:15px; color:var(--v-text); }
+#mobileLayout .mono, body.v-mmode #snModal .mono{ font-family:'IBM Plex Mono', ui-monospace, monospace; }
+#mobileLayout button, #mobileLayout input, #mobileLayout select{ min-height:0; font-family:inherit; }
+body.v-mmode{ background:var(--v-bg) !important; }
+
+.v-m{ min-height:100vh; display:flex; flex-direction:column; padding-bottom:72px; background:var(--v-bg); }
+.v-mhead{ position:sticky; top:0; z-index:20; display:flex; flex-direction:column; gap:12px; padding:14px 16px 12px; background:var(--v-card); border-bottom:1px solid var(--v-line); }
+.v-mtop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+#mobileLayout .v-viewbtn{ flex:1; min-width:0; max-width:240px; display:flex; align-items:center; gap:10px; min-height:52px; padding:6px 10px; border-radius:12px; border:1px solid var(--v-line); background:var(--v-chip); color:var(--v-text); text-align:left; cursor:pointer; }
+#mobileLayout .v-viewtxt b{ font-size:18px; }
+#mobileLayout .v-datebtn{ display:flex; align-items:center; gap:8px; height:46px; padding:0 12px; border-radius:12px; border:1px solid var(--v-line); background:var(--v-bg); color:var(--v-text); font-size:15px; font-weight:600; white-space:nowrap; cursor:pointer; }
+.v-zchips{ display:flex; gap:6px; overflow-x:auto; margin:0 -16px; padding:0 16px; scrollbar-width:none; }
+.v-zchips::-webkit-scrollbar{ display:none; }
+#mobileLayout .v-zchip{ flex:none; display:flex; align-items:center; gap:6px; height:40px; padding:0 12px; border-radius:999px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:15px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.v-zchip .n{ min-width:20px; padding:0 6px; border-radius:999px; font-size:12px; line-height:20px; text-align:center; background:var(--v-chip); color:var(--v-muted); }
+#mobileLayout .v-zchip.on{ background:var(--v-accent); border-color:var(--v-accent); color:#fff; }
+.v-zchip.on .n{ background:rgba(255,255,255,.22); color:#fff; }
+.v-searchrow{ display:flex; gap:8px; }
+#mobileLayout .v-search{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; height:46px; padding:0 14px; margin:0; border-radius:12px; background:var(--v-chip); color:var(--v-muted); }
+#mobileLayout .v-search input{ flex:1; min-width:0; width:100%; border:0; outline:none; background:transparent; color:var(--v-text); font-size:15px; }
+#mobileLayout .v-snbtn{ display:flex; align-items:center; gap:6px; height:46px; padding:0 14px; border-radius:12px; border:0; background:var(--v-accent); color:#fff; font-size:15px; font-weight:600; white-space:nowrap; }
+
+.v-mmain{ flex:1; padding:12px 16px 16px; display:flex; flex-direction:column; gap:12px; }
+.v-modebar{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+#mobileLayout .v-seg button{ height:38px; padding:0 14px; border-radius:10px; border:0; background:transparent; color:var(--v-muted); font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; }
+#mobileLayout .v-seg button.on{ background:var(--v-card); color:var(--v-text); box-shadow:0 1px 2px rgba(0,0,0,.12); }
+#mobileLayout .v-select{ flex:1; min-width:0; max-width:190px; height:44px; padding:0 10px; border-radius:12px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:14px; }
+#mobileLayout .v-filters button{ height:38px; padding:0 10px; border-radius:10px; border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2); font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+#mobileLayout .v-filters button.on{ background:var(--v-text); color:var(--v-card); border-color:var(--v-text); }
+#mobileLayout .v-filters button.on.bad{ background:var(--v-badSolid); border-color:var(--v-badSolid); color:#fff; }
+#mobileLayout .v-filters button.on.warn{ background:var(--v-warnLine); border-color:var(--v-warnLine); color:#fff; }
+#mobileLayout .v-subchip{ align-self:flex-start; height:34px; padding:0 12px; border-radius:999px; border:0; background:var(--v-accent); color:#fff; font-size:13px; font-weight:600; }
+
+.v-summary{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.v-summary.three{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+.v-sum{ display:flex; flex-direction:column; gap:2px; padding:10px; border-radius:12px; background:var(--v-card); border:1px solid var(--v-line); min-width:0; }
+.v-sum small{ font-size:11px; color:var(--v-muted); line-height:1.25; }
+.v-sum b{ font-size:20px; font-weight:700; white-space:nowrap; }
+.v-sum b i{ font-style:normal; font-size:13px; font-weight:500; }
+.v-sum.bad{ background:var(--v-badSoft); border-color:var(--v-badLine); } .v-sum.bad small, .v-sum.bad b{ color:var(--v-bad); }
+.v-sum.warn{ background:var(--v-warnSoft); border-color:var(--v-warnLine); } .v-sum.warn small, .v-sum.warn b{ color:var(--v-warn); }
+.v-legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--v-muted); }
+.v-legend span{ display:flex; align-items:center; gap:6px; }
+.v-legend i{ width:12px; height:12px; border-radius:3px; display:inline-block; }
+
+.v-list{ display:flex; flex-direction:column; gap:12px; }
+.v-mcard{ display:block; padding:14px; border-radius:16px; background:var(--v-card); border:1px solid var(--v-line); color:var(--v-text); cursor:pointer; }
+.v-mcard.urgent, .v-mcard.warn{ background:var(--v-warnSoft); border-color:var(--v-warnLine); }
+.v-mcard.bad{ background:var(--v-badSoft); border-color:var(--v-badLine); }
+.v-mcard:active{ transform:scale(.99); }
+.v-mcard-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.v-mcard-id{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.v-codeline{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.v-code{ font-size:17px; font-weight:600; }
+.v-zbadge{ display:inline-flex; align-items:center; padding:2px 8px; border-radius:6px; background:var(--v-zone); color:#fff; font-size:13px; font-weight:700; flex:none; white-space:nowrap; }
+.v-urgent{ padding:2px 8px; border-radius:999px; background:var(--v-warnSoft); color:var(--v-warn); font-size:12px; font-weight:600; border:1px solid var(--v-warnLine); }
+.v-mname{ font-size:14px; color:var(--v-text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v-nfbox{ display:flex; flex-direction:column; align-items:center; min-width:56px; padding:6px 10px; border-radius:10px; background:var(--v-nf); color:#fff; flex:none; }
+.v-nfbox b{ font-size:24px; line-height:1; }
+.v-nfbox small{ font-size:11px; opacity:.85; }
+.v-boxes3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; margin-top:10px; }
+.v-boxes3 .v-box{ padding:6px 8px; border-radius:8px; }
+.v-boxes3 .v-box small{ font-size:11px; }
+.v-boxes3 .v-box b{ font-size:15px; }
+.v-tags{ display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; font-size:12px; }
+.v-tags span{ display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:8px; color:#fff; }
+.v-tags span em{ font-style:normal; opacity:.85; }
+.v-mmatrix{ display:grid; grid-template-columns:48px repeat(8,minmax(0,1fr)); gap:3px; margin-top:10px; font-size:12px; text-align:center; }
+.v-mmatrix .h{ color:var(--v-muted); white-space:nowrap; }
+.v-mmatrix .l{ text-align:left; color:var(--v-text2); align-self:center; }
+.v-mmatrix .v-cell{ height:28px; min-width:0; font-size:13px; }
+#mobileLayout .v-empty{ padding:28px 16px; text-align:center; color:var(--v-muted); background:var(--v-card); border:1px dashed var(--v-line); border-radius:16px; }
+
+/* เมนูล่าง */
+.v-nav{ position:fixed; left:0; right:0; bottom:0; z-index:30; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); padding:6px 8px calc(10px + env(safe-area-inset-bottom)); background:var(--v-card); border-top:1px solid var(--v-line); }
+#mobileLayout .v-nav button{ display:flex; flex-direction:column; align-items:center; gap:2px; min-height:48px; justify-content:center; border:0; background:transparent; color:var(--v-muted); font-size:12px; }
+.v-nav button i{ font-size:20px; }
+#mobileLayout .v-nav button.on{ color:var(--v-accent); font-weight:600; }
+
+/* Dashboard เต็มจอ (ปุ่มสลับอยู่ใน dashboard.html) */
+body.v-mdash .v-mhead, body.v-mdash .v-nav{ display:none; }
+body.v-mdash .v-m{ padding-bottom:0; }
+#dashboardView{ padding:0; }
+#dashboardView iframe{ display:block; width:100%; height:100dvh; border:0; background:var(--v-bg); }
+
+/* ===== SN Detail (มือถือ) ===== */
+body.v-mmode #snModal .modal-content{ background:var(--v-bg); color:var(--v-text); font-family:'IBM Plex Sans Thai', system-ui, sans-serif; }
+body.v-mmode #snModal .app-modal-header{ display:none; }
+body.v-mmode #snModal .modal-body{ padding:0 16px 16px; font-size:15px; }
+body.v-mmode #snModal button, body.v-mmode #snModal input, body.v-mmode #snModal select{ min-height:0; font-family:inherit; }
+body.v-mmode #snCardHeader{ display:flex; flex-direction:column; gap:12px; margin-bottom:12px; }
+.v-msnhead{ position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:8px; margin:0 -16px; padding:8px 12px; background:var(--v-card); border-bottom:1px solid var(--v-line); }
+body.v-mmode .v-msnhead .back{ display:flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; border:0; background:transparent; color:var(--v-text); font-size:22px; flex:none; }
+.v-msnhead .t{ display:flex; flex-direction:column; min-width:0; flex:1; }
+.v-msnhead .t .mono{ font-size:17px; font-weight:600; }
+.v-msnhead .t span:last-child{ font-size:13px; color:var(--v-text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.v-msnhead .v-zbadge{ font-size:14px; padding:2px 10px; }
+.v-stat2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+.v-stat4{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin-top:-6px; }
+body.v-mmode #snCardHeader .v-box{ border-radius:12px; }
+body.v-mmode #snCardHeader .v-box small{ font-size:11px; }
+body.v-mmode #snCardHeader .v-box b{ font-size:18px; }
+body.v-mmode #snCardHeader .v-warnbox b{ font-size:14px; }
+body.v-mmode #snCardHeader .v-warnbox small{ font-size:13px; }
+body.v-mmode #snCardHeader .v-mmatrix{ margin-top:0; padding:10px 12px; border-radius:14px; background:var(--v-card); border:1px solid var(--v-line); }
+body.v-mmode #snModal .modal-body > .d-flex .fw-bold{ font-size:16px !important; }
+body.v-mmode #btnToggleAllRC{ font-size:13px !important; min-height:0; padding:4px 10px; }
+body.v-mmode #snModal .table{ font-size:15px; background:var(--v-card); border-radius:14px; overflow:hidden; }
+body.v-mmode #snModal .table td, body.v-mmode #snModal .table th{ padding:10px 12px; }
+body.v-mmode #snModal .table tr.sn-row > td:first-child{ font-family:'IBM Plex Mono', ui-monospace, monospace; }
+/* แจ้งปัญหา: แถวเดียว เลือกเหตุผล + ปุ่มส่ง */
+body.v-mmode #reportSection > .fw-bold{ font-size:14px !important; margin-bottom:4px !important; }
+body.v-mmode #reportScope{ font-size:12px; padding:6px 10px; margin-bottom:6px; }
+body.v-mmode #reportScope button{ min-height:0; font-size:12px; padding:1px 8px; }
+body.v-mmode #reportReason{ display:inline-block; width:calc(100% - 112px); font-size:14px !important; height:40px; vertical-align:top; }
+body.v-mmode .v-pcreport{ display:inline-block; width:104px; margin-left:4px; height:40px; border-radius:10px; border:0; background:var(--v-badSolid); color:#fff; font-size:14px; font-weight:600; vertical-align:top; }
+body.v-mmode #reportNote{ font-size:14px !important; height:40px; }
+body.v-mmode #swipeWrap{ display:none !important; }
+#mobileLayout .v-viewtxt small{ font-size:11px; overflow:hidden; text-overflow:ellipsis; }
+#mobileLayout .v-viewother{ padding:0 6px; font-size:11px; }
+#mobileLayout .v-datebtn{ font-size:14px; padding:0 10px; }
+/* ปุ่มเลือก วันที่ + Zone (เปิด modal แบบเดิม) */
+#mobileLayout .v-filterbtn{ flex:none; display:flex; align-items:center; gap:8px; height:52px; padding:0 10px 0 12px; border-radius:12px; border:1px solid var(--v-line); background:var(--v-bg); color:var(--v-text); cursor:pointer; }
+.v-filterbtn .d{ font-size:14px; font-weight:600; white-space:nowrap; }
+.v-filterbtn .z{ display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:8px; background:var(--v-accent); color:#fff; font-size:16px; font-weight:700; white-space:nowrap; }
+.v-filterbtn .z i{ display:none; }
+.v-filterbtn .z .filter-icon{ display:none; }
+
+/* modal ต่าง ๆ บนมือถือ ให้เข้ากับหน้าตาใหม่ */
+body.v-mmode .modal-backdrop.show{ opacity:.4; }
+body.v-mmode .modal:not(#snModal) .modal-content{ background:var(--v-card); color:var(--v-text); font-family:'IBM Plex Sans Thai', system-ui, sans-serif; }
+body.v-mmode .modal:not(#snModal) .modal-header{ border-bottom:1px solid var(--v-line); background:transparent; padding:14px 18px; }
+body.v-mmode .modal:not(#snModal) .modal-footer{ border-top:1px solid var(--v-line); background:transparent; padding:12px 18px; }
+body.v-mmode .app-modal-title{ font-size:19px; font-weight:700; color:var(--v-text); }
+body.v-mmode .app-modal-text{ font-size:16px; color:var(--v-text2); white-space:pre-line; margin:8px 0 16px; }
+body.v-mmode .app-modal-content{ padding:20px; }
+body.v-mmode .modal .btn-close{ min-height:0; width:1em; height:1em; padding:.4em; font-size:14px; }
+body.v-mmode .btn-unified, body.v-mmode .btn-unified2, body.v-mmode .btn-barcodescan{ min-height:0; height:50px; padding:0; font-size:17px; font-weight:600; border-radius:12px; box-shadow:none; transform:none; }
+body.v-mmode .btn-unified{ background:var(--v-accent); color:#fff; border:0; }
+body.v-mmode .btn-unified:disabled{ opacity:.45; }
+body.v-mmode .btn-unified2, body.v-mmode .btn-barcodescan{ background:var(--v-chip); color:var(--v-text); border:1px solid var(--v-line); }
+body.v-mmode .date-picker-box{ background:transparent; box-shadow:none; padding:0; margin-bottom:16px; }
+body.v-mmode .date-input{ min-height:0; height:52px; font-size:18px; background:var(--v-bg); color:var(--v-text); border:1px solid var(--v-line); border-radius:12px; box-shadow:none; }
+body.v-mmode .zone-grid{ gap:8px; }
+body.v-mmode .zone-btn{ min-height:0; height:52px; padding:0; border-radius:12px; background:var(--v-chip); color:var(--v-text2); border:1px solid var(--v-line); font-size:19px; font-weight:700; box-shadow:none; transform:none; }
+body.v-mmode .zone-btn.zone-btn-sub{ font-size:17px; }
+body.v-mmode .zone-btn.active{ background:var(--v-accent); border-color:var(--v-accent); color:#fff; }
+body.v-mmode #snInput{ font-size:24px !important; height:60px !important; border-radius:14px !important; font-family:'IBM Plex Mono', ui-monospace, monospace; background:var(--v-bg); color:var(--v-text); border:1px solid var(--v-line); }
+/* เลือกวันที่ & Zone: การ์ดกลางจอ ไม่เต็มจอ */
+body.v-mmode #filterModal .modal-dialog{ width:auto; height:auto; margin:16px; max-width:none; min-height:calc(100% - 32px); }
+body.v-mmode #filterModal .modal-content{ height:auto; border-radius:18px; border:1px solid var(--v-line); }
+/* หัวมือถือ: ปุ่มสลับเหลือไอคอน ⇆ ให้ชื่อหน้าอ่านได้เต็ม */
+#mobileLayout .v-viewother #viewOther{ display:none; }
+#mobileLayout .v-viewother{ width:34px; height:34px; justify-content:center; padding:0; border-radius:10px; font-size:16px; }
+#mobileLayout .v-viewbtn{ max-width:none; gap:8px; }
+/* การ์ด Not FIFO แบบแอปเดิม */
+.v-ocard{ padding:14px 16px; border-left:5px solid var(--v-line); }
+.v-ocard.urgent{ border-left-color:var(--v-warnLine); }
+.v-ocard .v-code{ font-size:19px; font-weight:700; }
+.v-ocard .v-mname{ font-size:15px; margin:2px 0 8px; white-space:normal; }
+.v-ocard .meta{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 8px; font-size:14px; color:var(--v-text2); margin-top:6px; }
+.v-ocard .meta i{ font-style:normal; color:var(--v-line); }
+.v-ocard .meta span, .v-ocard .stat span{ display:inline-flex; align-items:center; gap:6px; }
+#mobileLayout .v-ocard .meta .v-pill{ font-size:14px; min-width:30px; padding:2px 8px; }
+.v-ocard .stat{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:12px; padding-top:10px; border-top:1px solid var(--v-line); font-size:16px; font-weight:600; color:var(--v-text2); }
+#mobileLayout .v-ocard .stat .v-pill{ font-size:18px; min-width:40px; padding:3px 10px; }
+#mobileLayout .v-ocard .stat .nf .v-pill{ font-size:17px; }
 </style>
 </head>
 
@@ -1560,74 +2281,61 @@ body{background:#eef2ff;font-family:system-ui}
 </div>
 
 <div id="mobileLayout">
-  <div class="container-fluid px-1 py-2 app-root">
-    <div class="card p-3 mb-3">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <button id="titleToggleBtn" class="title-toggle" onclick="toggleMainView()">📦 FIFO Monitoring</button>
-        <div class="filter-bar" onclick="openFilterModal()">
-          <div class="filter-left" id="barDate"></div>
-          <div class="filter-right" id="barZone">
-            <i class="bi bi-geo-fill"></i> A <span class="filter-icon">▾</span>
-          </div>
-        </div>
-      </div>
-      <div class="search-row">
-        <input type="text" id="searchInput" class="search-input big-input" placeholder="ค้นหา Code / Zone / ชื่อสินค้า / RC" oninput="applyFilterSort()">
-        <button class="sn-side-btn big-btn" onclick="openSNInput()">🔍 SN</button>
-      </div>
-      <button id="btnToggleRiskMobile" class="btn btn-outline-warning w-100 mb-3 fw-bold" onclick="toggleRiskMode()" style="border-radius: 12px;">
-        ⏳ Code Risk
-      </button>
-      <div class="toolbar d-flex align-items-center gap-2 flex-wrap">
-        <div class="fw-bold text-secondary me-2" style="font-size:22px;">🔽 เรียงลำดับ:</div>
-        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('notfifo')">
-          <i class="bi bi-exclamation-triangle-fill me-1"></i> Not FIFO วันนี้มากสุด
+  <div class="v-m">
+    <header class="v-mhead">
+      <div class="v-mtop">
+        <button type="button" id="titleToggleBtn" class="v-viewbtn" onclick="toggleMainView()" title="แตะเพื่อสลับ รายการ / Dashboard">
+          <span class="v-viewtxt"><small>FIFO MONITOR</small><b id="viewLabel">Not FIFO</b></span>
+          <span class="v-viewother"><i class="bi bi-arrow-left-right"></i><span id="viewOther">Dashboard</span></span>
         </button>
-        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('notfifoMonth')">
-          <i class="bi bi-calendar-event-fill me-1"></i> Not FIFO รวมเดือนมากสุด
-        </button>
-        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('repeatDays')">
-          <i class="bi bi-arrow-repeat me-1"></i> จำนวนวันซ้ำมากสุด
-        </button>
-        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('zoneAsc')">
-          <i class="bi bi-sort-alpha-down me-1"></i> Zone A → Z
-        </button>
-        <button class="btn btn-outline-secondary prefix-btn" onclick="setSort('zoneDesc')">
-          <i class="bi bi-sort-alpha-up-alt me-1"></i> Zone Z → A
+        <button type="button" class="v-filterbtn" onclick="openFilterModal()" aria-label="เลือกวันที่และ Zone">
+          <span class="d" id="barDate">📅 –</span>
+          <span class="z" id="barZone">A</span>
+          <i class="bi bi-chevron-down small"></i>
         </button>
       </div>
-    </div>
+      <div class="v-searchrow">
+        <label class="v-search"><i class="bi bi-search"></i>
+          <input type="text" id="searchInput" placeholder="ค้นหา Code / ชื่อ / RC" oninput="applyFilterSort()">
+        </label>
+        <button type="button" class="v-snbtn" onclick="openSNInput()" aria-label="ค้นหา SN"><i class="bi bi-upc-scan"></i> SN</button>
+      </div>
+    </header>
 
-    <div id="fifoView">
-      <div id="fifoList"></div>
+    <div id="fifoView" class="v-mmain">
+      <div class="v-modebar">
+        <div class="v-seg" role="group" aria-label="โหมด">
+          <button type="button" data-mode="nf" class="on" onclick="setRiskMode(false)">Not FIFO</button>
+          <button type="button" data-mode="risk" onclick="setRiskMode(true)">Code Risk</button>
+        </div>
+        <select id="mSort" class="v-select" onchange="setSort(this.value)" aria-label="เรียงตาม">
+          <option value="notfifo">Not FIFO มากสุด</option>
+          <option value="notfifoMonth">Not FIFO เดือนนี้มากสุด</option>
+          <option value="repeatDays">วันซ้ำมากสุด</option>
+          <option value="zoneAsc">Zone A → Z</option>
+          <option value="zoneDesc">Zone Z → A</option>
+        </select>
+        <div class="v-filters" id="mRiskFilters" style="display:none"></div>
+      </div>
+      <div id="mSubChip"></div>
+      <section id="mSummary" class="v-summary" aria-label="สรุปโซน"></section>
+      <div id="mLegend" class="v-legend" style="display:none">
+        <span><i style="background:var(--v-inSoft);border:1px solid var(--v-inLine)"></i>Instock</span>
+        <span><i style="background:var(--v-saleSoft);border:1px solid var(--v-saleLine)"></i>Sale</span>
+        <span><i style="background:var(--v-badSolid)"></i>ล็อตที่ต้องหยิบก่อน</span>
+      </div>
+      <div id="fifoList" class="v-list"></div>
     </div>
 
     <div id="dashboardView" style="display:none">
-      <div class="row g-3">
-        <div class="col-12">
-          <div class="dashboard-card"><div>📦 จำนวน Code ทั้งหมด</div><div id="dashTotalCode" class="dashboard-value">0</div></div>
-        </div>
-        <div class="col-6">
-          <div class="dashboard-card"><div>⚠️ Not FIFO รวม</div><div id="dashNotFifo" class="dashboard-value">0</div></div>
-        </div>
-        <div class="col-6">
-          <div class="dashboard-card"><div>🔥 Code Not FIFO สูงสุด</div><div id="dashTopCode" class="dashboard-value">-</div></div>
-        </div>
-        <div class="col-12">
-          <div class="dashboard-card"><div>🔁 วันซ้ำสูงสุด</div><div id="dashRepeat" class="dashboard-value">0</div></div>
-        </div>
-        <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;">
-          <iframe id="lookerMobile"
-            data-src="https://lookerstudio.google.com/embed/reporting/ee908fe3-4f87-4a28-9485-f5da7400c447/page/igJoF" 
-            width="100%"
-            height="2732"
-            frameborder="0" 
-            style="border:0;" 
-            allowfullscreen>
-          </iframe>
-        </div>
-      </div>
+      <iframe id="lookerMobile" data-src="dashboard.html?embed=1" title="Dashboard"></iframe>
     </div>
+
+    <nav class="v-nav" aria-label="เมนูหลัก">
+      <button type="button" class="on" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i class="bi bi-list-ul"></i>รายการ</button>
+      <button type="button" onclick="openReportList()"><i class="bi bi-flag"></i>แจ้งปัญหา</button>
+      <button type="button" onclick="openDeleteHistory()"><i class="bi bi-clock-history"></i>ประวัติลบ</button>
+    </nav>
   </div>
 </div>
 
@@ -1640,62 +2348,82 @@ body{background:#eef2ff;font-family:system-ui}
     </div>
   </div>
 
-  <div class="pc-root">
-    <div class="pc-sidebar">
-      <button id="titleToggleBtnPC" class="title-toggle-pc" onclick="togglePCView()">📦 FIFO Monitoring</button>
-      <div class="filter-bar pc-only pc-filter-bar" onclick="openFilterModal()">
-        <div class="pc-filter-date" id="pcBarDate"></div>
-        <div class="pc-filter-zone" id="pcBarZone"><span class="zone-text"><i class="bi bi-geo-fill"></i> A <span class="filter-icon">▾</span></span></div>
-      </div>
-      <input id="pcSearch" class="form-control" placeholder="ค้นหา Code / Name / RC" oninput="pcApplyFilter()">
-      <select id="pcSort" class="form-select" onchange="pcApplyFilter()">
-        <option value="notfifo">NotFIFO มากสุด</option>
-        <option value="repeat">วันซ้ำมากสุด</option>
-        <option value="zoneAsc">Zone A-Z</option>
-        <option value="zoneDesc">Zone Z-A</option>
-      </select>
-
-      <button class="btn btn-primary w-100 mt-3" onclick="openSNInput()" style="border-radius: 12px; font-weight: bold; background: linear-gradient(135deg,#2563eb,#4f46e5); border: none; box-shadow: 0 4px 10px rgba(37,99,235,.3);">
-        🔍 ค้นหา SN
+  <div class="v-pc">
+    <aside class="v-pside">
+      <button type="button" id="titleToggleBtnPC" class="v-viewbtn" onclick="togglePCView()" title="คลิกเพื่อสลับ รายการ / Dashboard">
+        <span class="v-viewtxt"><small>FIFO MONITOR</small><b id="viewLabelPC">Not FIFO</b></span>
+        <span class="v-viewother"><i class="bi bi-arrow-left-right"></i><span id="viewOtherPC">Dashboard</span></span>
       </button>
-      <button id="btnToggleRiskPC" class="btn btn-outline-warning w-100 mt-2 fw-bold" onclick="toggleRiskMode()" style="border-radius: 12px;">
-        ⏳ Code Risk
-      </button>
-      <div class="pc-side-box">
-        <div class="pc-side-title">⚠️ เร่งด่วน กรอบสีส้ม</div>
-        <div id="pcZoneRule" class="pc-zone-rule"></div>
+      <div class="v-datewrap">
+        <button type="button" class="v-datebtn" onclick="vCalToggle()" aria-label="เลือกวันที่">
+          <i class="bi bi-calendar3"></i><span id="pcDateText">–</span><i class="bi bi-chevron-down small"></i>
+        </button>
+        <span id="pcBarDate" hidden></span>
+        <div id="vCal" class="v-cal" hidden></div>
       </div>
-      <div class="pc-side-box">
-        <div class="pc-side-title">🔥 Problem Code</div>
+      <span id="pcBarZone" hidden></span>
+      <div class="v-sidebox">
+        <div class="v-sidetitle">ZONE</div>
+        <div id="pcZoneGrid" class="v-zgrid"></div>
+        <div id="pcZoneGridD" class="v-zgrid d"></div>
+      </div>
+      <div class="v-sidebox">
+        <div class="v-sidetitle" id="pcRuleTitle">เร่งด่วน (แถวสีส้ม)</div>
+        <div id="pcZoneRule"></div>
+      </div>
+      <div class="v-sidebox" id="pcSubBox">
+        <div class="v-sidetitle" style="display:flex;justify-content:space-between;gap:6px"><span>NotFIFO%</span><span id="pcSubDate" style="font-weight:500"></span></div>
+        <div id="pcSubChart"></div>
+      </div>
+      <div class="v-sidebox">
+        <div class="v-sidetitle">🔥 Problem Code</div>
         <div id="pcProblemList"></div>
       </div>
-      <button class="btn btn-outline-primary w-100 mt-3" onclick="openUploadModal()">⬆️ Upload FIFO Data</button>
-      <button class="btn btn-outline-secondary w-100 mt-2" onclick="openDeleteHistory()">📜 ประวัติการลบ SN</button>
-    </div>
-
-    <div class="pc-main">
-      <div class="pc-dashboard">
-        <div class="pc-kpi green"><div>Total Code</div><div id="pcKpiTotal" class="val">0</div></div>
-        <div class="pc-kpi orange"><div>Not FIFO รวม</div><div id="pcKpiNotfifo" class="val">0</div></div>
-        <div class="pc-kpi red"><div>Repeat สูงสุด</div><div id="pcKpiRepeat" class="val">0</div></div>
-        <div class="pc-kpi red"><div>Code แย่สุด</div><div id="pcKpiWorst" class="val">-</div></div>
+      <div class="v-sidebtns">
+        <button type="button" class="wide" onclick="openReportList()"><i class="bi bi-flag"></i> รายการแจ้งปัญหา</button>
+        <button type="button" onclick="openUploadModal()"><i class="bi bi-upload"></i> Upload</button>
+        <button type="button" onclick="openDeleteHistory()"><i class="bi bi-clock-history"></i> ประวัติลบ</button>
       </div>
-      <div id="pcCardList" class="pc-card-list">
-        <table class="table pc-table"><tbody id="pcTable"></tbody></table>
+    </aside>
+
+    <main class="v-pmain">
+      <div id="pcListArea" style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
+        <div class="v-ptop">
+          <button type="button" class="v-sidetoggle" onclick="vToggleSidebar()" title="ซ่อน / แสดงแถบด้านซ้าย" aria-label="ซ่อน / แสดงแถบด้านซ้าย"><i class="bi bi-layout-sidebar"></i></button>
+          <label class="v-search"><i class="bi bi-search"></i>
+            <input id="pcSearch" placeholder="ค้นหา Code / ชื่อ / RC" oninput="pcApplyFilter()">
+          </label>
+          <button type="button" class="v-snbtn" onclick="openSNInput()"><i class="bi bi-upc-scan"></i> ค้นหา SN</button>
+          <div class="v-seg" role="group" aria-label="โหมด">
+            <button type="button" data-mode="nf" class="on" onclick="setRiskMode(false)">Not FIFO</button>
+            <button type="button" data-mode="risk" onclick="setRiskMode(true)">Code Risk</button>
+          </div>
+        </div>
+        <div class="v-kpis">
+          <div class="v-kpi"><div>Total Code</div><div id="pcKpiTotal" class="val">0</div></div>
+          <div class="v-kpi nf"><div>Not FIFO รวม</div><div id="pcKpiNotfifo" class="val">0</div></div>
+          <div class="v-kpi"><div>Repeat สูงสุด</div><div id="pcKpiRepeat" class="val">0</div></div>
+          <div class="v-kpi"><div>Code แย่สุด</div><div id="pcKpiWorst" class="val mono">-</div></div>
+          <div class="v-kpi pct"><div id="pcKpiPctLabel">NotFIFO% โซน A</div><div id="pcKpiPct" class="val">-</div></div>
+        </div>
+        <div class="v-toolbar">
+          <div class="v-filters" id="pcFilters"></div>
+          <label class="v-sortlbl" id="pcSortWrap">เรียงตาม
+            <select id="pcSort" class="v-select" onchange="pcApplyFilter()">
+              <option value="notfifo">Not FIFO มากสุด</option>
+              <option value="repeat">วันซ้ำมากสุด</option>
+              <option value="notfifoMonth">Not FIFO เดือนนี้มากสุด</option>
+              <option value="zoneAsc">Zone A → Z</option>
+              <option value="zoneDesc">Zone Z → A</option>
+            </select>
+          </label>
+        </div>
+        <div id="pcCardList" class="v-tablewrap"></div>
       </div>
       <div id="dashboardPC" style="display:none">
-        <div class="dashboard-section" style="text-align: center;">
-          <iframe id="lookerPC"
-            width="100%" 
-            height="800" 
-            data-src="https://lookerstudio.google.com/embed/reporting/d40b60f8-54f8-46bc-8e01-04e3a343ff36/page/p_zub42c8t0d" 
-            frameborder="0" 
-            style="border:0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px;" 
-            allowfullscreen>
-          </iframe>
-        </div>
+        <iframe id="lookerPC" data-src="dashboard.html?embed=1" title="Dashboard"></iframe>
       </div>
-    </div>
+    </main>
   </div>
 
   <div class="modal fade" id="pcSNModal" tabindex="-1">
@@ -1801,10 +2529,10 @@ body{background:#eef2ff;font-family:system-ui}
     	    <option value="โยกสาขา">โยกสาขา</option>
     	    <option value="Program Auto">Program Auto</option>
     	    <option value="อื่นๆ">อื่นๆ</option>
-  	  </select>
+  	  </select><button type="button" class="v-pcreport" onclick="showReportConfirm()">ส่ง Report</button>
 
 	  <!-- หมายเหตุ -->
-  	  <input type="text" id="reportNote" class="form-control mb-2" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)" style="font-size:18px;">
+  	  <input type="text" id="reportNote" style="display:none" class="form-control mb-2" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)" style="font-size:18px;">
 
 	  <!-- แจ้งเตือน / ผลลัพธ์ -->
 	  <div id="reportError" style="display:none;"></div>
@@ -1915,6 +2643,25 @@ body{background:#eef2ff;font-family:system-ui}
         <button id="btnCancel" class="btn btn-secondary" onclick="closeModal()">ยกเลิก</button>
         <button id="btnUpload" class="btn btn-primary" onclick="startBulkUpload()">🚀 อัปโหลดทั้งหมด</button>
         <button id="btnDone" class="btn btn-success d-none" onclick="closeModal()">ตกลง (OK)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="reportListModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="app-modal-title">📢 รายการแจ้งปัญหา</div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="v-rl-bar">
+          <div class="v-filters" id="rlFilters"></div>
+          <label class="v-search"><i class="bi bi-search"></i><input id="rlSearch" placeholder="ค้นหา Code / SN / RC / เหตุผล" oninput="renderReportList()"></label>
+          <button type="button" class="v-rl-refresh" onclick="loadReportList(true)" title="โหลดใหม่"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+        <div id="rlBody"></div>
       </div>
     </div>
   </div>
@@ -2066,7 +2813,9 @@ function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notf
   if (!date) { showToast("ไม่พบวันที่", "warn"); window.snLoading = false; return; }
 
   showSNLoading(); showSNSkeleton();
-  new bootstrap.Modal(document.getElementById('snModal')).show();
+  vShowSNModal();
+  vMarkSelected(code);
+  const pcPanel = document.getElementById('snModal').classList.contains('v-sidepanel');
 
   const cleanStr = (s) => String(s).replace(/\s+/g, '').toUpperCase();
   const targetCode = cleanStr(code);
@@ -2077,7 +2826,11 @@ function openSN(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notf
 
     // 🌟 เลื่อนการวาด Header มาไว้ใน setTimeout เพื่อให้มันใช้นับยอด SN จาก snCache ได้
     const headerBox = document.getElementById('snCardHeader');
-    if (headerBox) {
+    if (headerBox && pcPanel) {
+      headerBox.innerHTML = vSNHeaderPC(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notfifoMonth);
+    } else if (headerBox && document.body.classList.contains('v-mmode')) {
+      headerBox.innerHTML = vSNHeaderM(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notfifoMonth);
+    } else if (headerBox) {
       if (isRiskMode) {
          // ถ้าอยู่โหมดความเสี่ยง ก็วาดตารางเหมือนหน้าแรกเลย! (ส่ง isHeader = true ไปเพื่อปิดขอบเงาและคลิกไม่ได้)
          headerBox.innerHTML = buildRiskCardHTML({ code, name, zone }, true);
@@ -2208,7 +2961,8 @@ function formatDateDMY(dateStr){
 function setModalDateDefault(){
   const d = new Date();
   d.setDate(d.getDate()-1);
-  const iso = toISODateLocal(d);
+  // ใช้วันที่ที่กำลังดูอยู่ → วันล่าสุดที่มีข้อมูล → เมื่อวาน
+  const iso = (document.getElementById("dateInput") || {}).value || latestReportDate || toISODateLocal(d);
   const modal = document.getElementById("modalDate");
   if(modal){
     modal.value = iso;
@@ -2243,6 +2997,8 @@ function showMobile(){
   const p = document.getElementById("pcLayout");
   if(m) m.style.display="block";
   if(p) p.style.display="none";
+  document.body.classList.remove('v-pcmode');
+  document.body.classList.add('v-mmode');
 }
 
 function showPC(){
@@ -2250,6 +3006,8 @@ function showPC(){
   const p = document.getElementById("pcLayout");
   if(p) p.style.display="block";
   if(m) m.style.display="none";
+  document.body.classList.add('v-pcmode');
+  document.body.classList.remove('v-mmode', 'v-mdash');
 }
 
 let fifoRawCache = [];
@@ -2295,6 +3053,7 @@ function needReloadFIFO(date, apiPrefix){
 // 💾 Zone Data Cache — หน่วยความจำ + IndexedDB
 //   • โหลดโซนที่เลือกก่อน แล้วค่อยทยอยโหลดโซนที่เหลือของวันเดียวกันเบื้องหลัง
 //   • เก็บลง IndexedDB ปิดเว็บแล้วเปิดใหม่ก็ยังใช้ได้
+//   • เปิดเว็บ → แคชวันที่ล่าสุดครบทุกโซนก่อน แล้วย้อนหลังทีละวันจนเต็ม AUTO_MB (zcAutoCache)
 //   • เก็บย้อนหลังไม่เกิน KEEP_DAYS วัน และรวมไม่เกิน MAX_BYTES
 //   • ข้อมูลเก่ากว่า FRESH_MS → แสดงจากแคชทันที แล้วเช็คกับเซิร์ฟเวอร์เบื้องหลัง
 //   ดูสถานะใน Console:  await zcStats()     ล้างทั้งหมด:  await zcClear()
@@ -2302,10 +3061,15 @@ function needReloadFIFO(date, apiPrefix){
 const ZC = {
   DB_NAME        : "fifo-monitor-cache",
   MAX_BYTES      : 200 * 1048576,     // รวมไม่เกิน ~200 MB
-  KEEP_DAYS      : 7,                 // เก็บย้อนหลัง 7 วันนับจากวันนี้
+  KEEP_DAYS      : 60,                // เก็บย้อนหลังได้ไม่เกิน 60 วัน (ตัวจำกัดจริงคือ AUTO_MB)
+  AUTO_MB        : 100,               // 🔧 แคชอัตโนมัติตอนเปิดเว็บ ย้อนหลังจนครบกี่ MB (ต้องน้อยกว่า MAX_BYTES)
+  AUTO_DELAY     : 2500,              // เริ่มแคชเบื้องหลังหลังเปิดเว็บกี่ ms
+  AUTO_MISS_STOP : 5,                 // ไม่มีข้อมูลติดกันกี่วัน (วันหยุด/ยังไม่อัปโหลด) ให้หยุด
+  AUTO_SHOW      : true,              // เปิดเว็บแล้วแสดงวันที่ล่าสุด + โซน A ให้เลย ไม่ต้องกดตัวกรองก่อน
   FRESH_MS       : 30 * 60 * 1000,    // ใหม่กว่า 30 นาที ใช้เลยไม่ต้องเช็ค
   PREFETCH_SKIP_MS: 6 * 3600 * 1000,  // preload ข้ามโซนที่แคชไว้ไม่เกิน 6 ชม.
-  PREFETCH_CONC  : 2,                 // preload พร้อมกันทีละ 2 โซน
+  PREFETCH_CONC  : 1,                 // preload ทีละ 1 โซน ไม่แย่ง GAS กับโซนที่ผู้ใช้กด
+  PREFETCH_DELAY : 1500,              // รอให้หน้าจอวาดเสร็จก่อนค่อยเริ่ม preload (ms)
   MEM_MAX        : 24                 // เก็บในหน่วยความจำได้กี่ชุด (วัน|โซน)
 };
 
@@ -2315,6 +3079,8 @@ let zcDbPromise  = null;
 let zcPrefetchGen = 0;
 let zcPrefetchDateCur = null;
 let zoneViewReq = 0;
+let zcForeground = 0;           // จำนวนคำขอที่ผู้ใช้รออยู่ — preload จะหยุดรอ
+const zcSleep = ms => new Promise(r => setTimeout(r, ms));
 
 const zcKey = (date, zone) => date + "|" + zone;
 
@@ -2520,19 +3286,25 @@ async function zcRevalidate(date, zone, oldSig){
 }
 
 /** ทยอยโหลดโซนที่เหลือของวันที่นี้เบื้องหลัง */
+let zcPrefetchPromise = Promise.resolve();
 function zcPrefetchDate(date){
-  if (zcPrefetchDateCur === date) return;       // กำลังทำของวันนี้อยู่แล้ว
+  if (zcPrefetchDateCur === date) return zcPrefetchPromise;   // กำลังทำของวันนี้อยู่แล้ว
   zcPrefetchDateCur = date;
   const gen   = ++zcPrefetchGen;                // เปลี่ยนวันที่ → รอบเก่าหยุด
   const queue = ZONES_MAIN.slice();
 
   const worker = async () => {
+    await zcSleep(ZC.PREFETCH_DELAY);
     while (queue.length && gen === zcPrefetchGen) {
       const zone = queue.shift();
       try {
         if (await zcAge(date, zone) < ZC.PREFETCH_SKIP_MS) continue;
+        // ผู้ใช้กำลังรอโหลดโซนอื่นอยู่ → หลีกทางให้ก่อน
+        while (zcForeground > 0 && gen === zcPrefetchGen) await zcSleep(300);
         if (gen !== zcPrefetchGen) return;
+        const t0 = performance.now();
         await zcFetch(date, zone);
+        console.info(`[cache] preload ${date} ${zone} ${Math.round(performance.now() - t0)} ms`);
       } catch (e) {
         console.warn(`[cache] preload ${date} โซน ${zone} ไม่สำเร็จ`, e);
       }
@@ -2541,10 +3313,155 @@ function zcPrefetchDate(date){
 
   const workers = [];
   for (let i = 0; i < ZC.PREFETCH_CONC; i++) workers.push(worker());
-  Promise.all(workers).then(() => {
+  zcPrefetchPromise = Promise.all(workers).then(() => {
     if (gen === zcPrefetchGen) zcPrefetchDateCur = null;   // เสร็จแล้ว รอบหน้าเช็คใหม่ได้
   });
+  return zcPrefetchPromise;
 }
+
+/* ---------- แคชอัตโนมัติตอนเปิดเว็บ ----------
+   1) วันที่ล่าสุด ครบทุกโซน
+   2) ย้อนหลังทีละวัน จนพื้นที่ที่ใช้ถึง AUTO_MB หรือไม่มีข้อมูลติดกัน AUTO_MISS_STOP วัน
+   ทำทีละ 1 โซน และหลบให้ทุกครั้งที่ผู้ใช้กำลังรอโหลดโซนอื่นอยู่ (zcForeground)
+   ดูความคืบหน้าใน Console: [auto-cache] …   หรือ  await zcStats() */
+let zcAutoRunning = false;
+
+async function zcTotalBytes(){
+  const db = await zcDb(); if (!db) return Infinity;      // ไม่มี IndexedDB → ไม่แคชย้อนหลัง
+  try {
+    const metas = await zcReq(db.transaction("meta").objectStore("meta").getAll()) || [];
+    return metas.reduce((s, m) => s + (m.bytes || 0), 0);
+  } catch (e) { return Infinity; }
+}
+
+/** เต็มหรือยัง — เผื่อที่ไว้ 1 ชุดโดยเฉลี่ย กันลบ-โหลดสลับกันทุกครั้งที่เปิดเว็บ */
+async function zcIsFull(budget){
+  const db = await zcDb(); if (!db) return true;
+  try {
+    const metas = await zcReq(db.transaction("meta").objectStore("meta").getAll()) || [];
+    const total = metas.reduce((s, m) => s + (m.bytes || 0), 0);
+    const avg = metas.length ? total / metas.length : 0;
+    return total + avg > budget;
+  } catch (e) { return true; }
+}
+
+// วันนั้นไม่มีไฟล์รายวัน (วันหยุด / ยังไม่อัปโหลด) — ถ้าแค่ไม่มีชีตของบางโซน (โซนใหม่ในวันเก่า) ให้ข้ามโซนนั้นไป
+const zcIsMissing = e => /ไม่พบลิงค์|ไม่พบชีตเดือน|ไม่พบ Spreadsheet/.test(String((e && e.message) || e));
+
+const zcNoZoneSheet = e => /ไม่พบชีต \S+ SN Lite/.test(String((e && e.message) || e));
+
+/* วันที่ไม่มีไฟล์ — จำไว้ 24 ชม. เปิดเว็บรอบหน้าจะได้ไม่ถาม GAS ซ้ำ */
+const ZC_MISS_KEY = "zc-missing-dates";
+function zcMissGet(){ try { return JSON.parse(localStorage.getItem(ZC_MISS_KEY) || "{}"); } catch (e) { return {}; } }
+function zcMissIsFresh(date){ const t = zcMissGet()[date]; return t && Date.now() - t < 24 * 3600 * 1000; }
+function zcMissSet(date){
+  try {
+    const m = zcMissGet(); m[date] = Date.now();
+    Object.keys(m).forEach(k => { if (Date.now() - m[k] > 7 * 24 * 3600 * 1000) delete m[k]; });
+    localStorage.setItem(ZC_MISS_KEY, JSON.stringify(m));
+  } catch (e) {}
+}
+
+/** แคชวันเก่าครบทุกโซน — ข้ามโซนที่เคยแคชแล้ว (วันเก่าข้อมูลไม่ค่อยเปลี่ยน) */
+async function zcCacheOlderDate(date, budget){
+  if (zcMissIsFresh(date)) return "missing";
+  for (const zone of ZONES_MAIN) {
+    if (await zcAge(date, zone) < Infinity) continue;
+    while (zcForeground > 0) await zcSleep(300);
+    if (await zcIsFull(budget)) return "full";
+    try { await zcFetch(date, zone); }
+    catch (e) {
+      if (zcIsMissing(e)) { zcMissSet(date); return "missing"; }
+      if (zcNoZoneSheet(e)) {
+        // วันเก่ายังไม่มีชีตของโซนนี้ (โซนเพิ่มทีหลัง) → เก็บเป็นข้อมูลว่าง จะได้ไม่ถามซ้ำ
+        const json = '{"fifo":[],"sn":{}}';
+        await zcIdbSave(zcKey(date, zone), date, zone, json, { ts: Date.now(), sig: zcSig(json) });
+        continue;
+      }
+      console.warn(`[auto-cache] ${date} ${zone} ไม่สำเร็จ`, e);
+    }
+  }
+  return "ok";
+}
+
+/** เกิน AUTO_MB → ลบวันที่เก่าสุดออกก่อน (ไม่ลบวันล่าสุด / วันที่กำลังดู) ให้แคชเป็น "N MB ล่าสุด" เสมอ */
+async function zcTrimToBudget(budget, keepDate){
+  const db = await zcDb(); if (!db) return;
+  let metas = [];
+  try { metas = await zcReq(db.transaction("meta").objectStore("meta").getAll()) || []; } catch (e) { return; }
+  let total = metas.reduce((s, m) => s + (m.bytes || 0), 0);
+  if (total <= budget) return;
+  const drop = [];
+  metas.filter(m => m.date !== keepDate && m.date !== fifoCacheState.date)
+       .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.lastUsed - b.lastUsed)
+       .forEach(m => { if (total > budget) { drop.push(m.key); total -= m.bytes || 0; } });
+  if (drop.length) {
+    await zcDeleteKeys(drop);
+    console.info(`[auto-cache] เกิน ${ZC.AUTO_MB} MB → ลบแคชวันเก่า ${drop.length} ชุด`);
+  }
+}
+
+async function zcAutoCache(latest){
+  if (zcAutoRunning || !latest) return;
+  zcAutoRunning = true;
+  const budget = ZC.AUTO_MB * 1048576;
+  const t0 = performance.now();
+  try {
+    await zcSleep(ZC.AUTO_DELAY);
+    await zcPrefetchDate(latest);                          // ① วันล่าสุดครบทุกโซน
+    console.info(`[auto-cache] ${latest} ครบทุกโซน · ${Math.round((performance.now() - t0) / 1000)} s`);
+    await zcTrimToBudget(budget, latest);                  // วันใหม่เข้ามา → ดันวันเก่าสุดออก
+
+    const conn = navigator.connection;
+    if (conn && conn.saveData) { console.info("[auto-cache] เครื่องเปิดโหมดประหยัดเน็ต — ไม่แคชย้อนหลัง"); return; }
+
+    let date = latest, miss = 0;                            // ② ย้อนหลังจนเต็ม
+    for (let d = 1; d < ZC.KEEP_DAYS; d++) {
+      date = zcShiftDate(date, -1);
+      if (await zcIsFull(budget)) { console.info(`[auto-cache] ครบ ${ZC.AUTO_MB} MB แล้ว (${((await zcTotalBytes()) / 1048576).toFixed(1)} MB) หยุดที่ ${date}`); break; }
+      const r = await zcCacheOlderDate(date, budget);
+      if (r === "full") { console.info(`[auto-cache] ครบ ${ZC.AUTO_MB} MB แล้ว`); break; }
+      if (r === "missing") { if (++miss >= ZC.AUTO_MISS_STOP) { console.info(`[auto-cache] ไม่มีข้อมูลติดกัน ${miss} วัน — หยุด`); break; } continue; }
+      miss = 0;
+      console.info(`[auto-cache] ${date} ✓ · ใช้ไป ${((await zcTotalBytes()) / 1048576).toFixed(1)} MB`);
+    }
+  } finally {
+    zcAutoRunning = false;
+    console.info(`[auto-cache] เสร็จ · ${Math.round((performance.now() - t0) / 1000)} s`, await zcStats());
+  }
+}
+
+/* ---------- เปิดเว็บ: หาวันที่ล่าสุดจาก GAS → แสดงผล → แคชเบื้องหลัง ---------- */
+let latestReportDate = null;
+
+function setCurrentDateUI(iso){
+  const mainDate = document.getElementById("dateInput");
+  const modalDate = document.getElementById("modalDate");
+  const bar = document.getElementById("barDate");
+  const pcbar = document.getElementById("pcBarDate");
+  if (mainDate) mainDate.value = iso;
+  if (modalDate) modalDate.value = iso;
+  if (bar) bar.innerText = "📅 " + formatDateDMY(iso);
+  if (pcbar) pcbar.innerText = "📅 " + formatDateDMY(iso);
+}
+
+async function startupLoad(){
+  let latest = null;
+  try { latest = await callGAS("getLatestReportDate", {}); } catch (e) { /* GAS เก่ายังไม่มี action นี้ */ }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(latest || ""))) latest = getCurrentDate();   // fallback = เมื่อวาน
+  if (!latest) return;
+  latestReportDate = latest;
+  const userPicked = (document.getElementById("dateInput") || {}).value;   // ผู้ใช้กดตัวกรองไปก่อนแล้ว ไม่ทับ
+  if (!userPicked) {
+    setCurrentDateUI(latest);
+    if (ZC.AUTO_SHOW) {
+      if (isMobileDevice() || window.innerWidth < 992) onDateOrZoneChange();
+      else { pcOnDateOrZoneChange(); renderZoneRule(currentPrefix); }
+    }
+  }
+  zcAutoCache(latest);
+}
+document.addEventListener("DOMContentLoaded", () => setTimeout(startupLoad, 0));
 
 /** ตั้งข้อมูลโซนที่จะแสดง */
 function applyZoneData(date, zone, data){
@@ -2563,16 +3480,27 @@ function applyZoneData(date, zone, data){
  */
 async function loadZoneView(date, zone, ui){
   const req = ++zoneViewReq;
+  const t0 = performance.now();
+  const inMem = zcMem.has(zcKey(date, zone));
   let entry = await zcGet(date, zone);
   let fromCache = !!entry;
 
   if (!entry) {
     ui.show && ui.show();
+    zcForeground++;
     try { entry = await zcFetch(date, zone); }
-    finally { if (req === zoneViewReq && ui.hide) ui.hide(); }
+    finally {
+      zcForeground--;
+      if (req === zoneViewReq && ui.hide) ui.hide();
+    }
   } else if (ui.hide) {
     ui.hide();   // เผื่อ loading ของคำขอก่อนหน้ายังค้าง
   }
+
+  const src = !fromCache ? "server" : inMem ? "memory" : "IndexedDB";
+  const ageMin = Math.round((Date.now() - entry.ts) / 60000);
+  console.info(`[cache] ${date} ${zone} ← ${src} ${Math.round(performance.now() - t0)} ms` +
+               (fromCache ? ` (อายุ ${ageMin} นาที)` : "") + ` · ${entry.data.fifo.length} codes`);
 
   if (req !== zoneViewReq) return false;
   applyZoneData(date, zone, entry.data);
@@ -2583,6 +3511,53 @@ async function loadZoneView(date, zone, ui){
 }
 
 /* ---------- เครื่องมือ Console ---------- */
+
+/**
+ * ไล่ดูว่า Code นี้หายไปตรงไหน   ใช้:  await fifoDebug("A0114043")
+ */
+async function fifoDebug(code){
+  const key  = String(code || "").replace(/\s+/g, "").toUpperCase();
+  const same = r => String(r.code || "").replace(/\s+/g, "").toUpperCase() === key;
+  const date = fifoCacheState.date;
+  const q    = getSearchKeyword();
+  const out  = {
+    code: key, date: date, dataZone: fifoCacheState.zone, selectedZone: currentPrefix,
+    mode: isRiskMode ? "Code Risk" : "ปกติ (NotFIFO > 0)",
+    searchMobile: (document.getElementById("searchInput") || {}).value || "",
+    searchPC: (document.getElementById("pcSearch") || {}).value || "",
+    searchUsed: q
+  };
+
+  const r = fifoViewList.find(same);
+  out.inLoadedData = !!r;
+  if (r) {
+    out.row = { zone: r.zone, notfifo: r.notfifo, isRisk: r.isRisk, repeatDays: r.repeatDays };
+    out.passZone   = isMatchZone(r.zone, currentPrefix);
+    out.passMode   = isRiskMode ? !!r.isRisk : r.notfifo > 0;
+    out.passSearch = !q || String(r.code).toLowerCase().startsWith(q) || String(r.zone).toLowerCase().startsWith(q)
+                     || String(r.name).toLowerCase().includes(q) || matchRC(r.code, q);
+  }
+
+  // หาในแคชทุกโซนของวันเดียวกัน
+  out.foundInCache = [];
+  for (const z of ZONES_MAIN) {
+    const e = await zcGet(date, z);
+    if (!e) continue;
+    const hit = e.data.fifo.find(same);
+    if (hit) out.foundInCache.push(`${z} (zone ${hit.zone}, notfifo ${hit.notfifo}, แคชเมื่อ ${new Date(e.ts).toLocaleString()})`);
+  }
+
+  out.verdict =
+    !r && !out.foundInCache.length ? "❌ GAS ไม่ได้ส่ง Code นี้มา → รัน DEBUG_traceCode ฝั่ง GAS" :
+    !r                             ? "อยู่คนละโซนกับที่เลือก → " + out.foundInCache.join(", ") :
+    !out.passZone                  ? "❌ Zone ไม่ตรงกับปุ่มที่เลือก (เช่น D Big / D NB)" :
+    !out.passMode                  ? "❌ ไม่ผ่านเงื่อนไขโหมด (NotFIFO = " + r.notfifo + ")" :
+    !out.passSearch                ? "❌ ถูกช่องค้นหากรองออก (\"" + q + "\")" :
+                                     "✅ ควรแสดงการ์ด";
+  console.log(out);
+  return out.verdict;
+}
+
 async function zcStats(){
   const db = await zcDb();
   const metas = db ? await zcReq(db.transaction("meta").objectStore("meta").getAll()).catch(() => []) : [];
@@ -2723,15 +3698,16 @@ function getSearchKeyword(){
 
 function applyFilterSort(){
   const q = getSearchKeyword();
-  let list = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
+  const zoneAll = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
+  const base = isRiskMode ? zoneAll.filter(r => r.isRisk) : zoneAll.filter(r => r.notfifo > 0);
+  if (isRiskMode && !snGroupedByCode) prepareSNGroupCache();
+  if (vSubPrefix !== currentPrefix) { vSubPrefix = currentPrefix; vSubZone = null; }
 
-  // 🚨 คัดกรองตามโหมด
-  if (isRiskMode) {
-    list = list.filter(r => r.isRisk); // โหมดเฝ้าระวัง
-  } else {
-    list = list.filter(r => r.notfifo > 0); // โหมดปกติ: บังคับ NotFIFO > 0 อย่างเดียว
-  }
+  renderMobileSummary(zoneAll, base);
 
+  let list = base;
+  if (isRiskMode && riskFilter !== 'all') list = list.filter(r => riskInfo(r).bad === (riskFilter === 'bad'));
+  if (vSubZone) list = list.filter(r => vSubOf(r.zone) === vSubZone);
   if(q){
     list = list.filter(r=>{
       const code=String(r.code||'').toLowerCase(); const zone=String(r.zone||'').toLowerCase(); const name=String(r.name||'').toLowerCase();
@@ -2739,49 +3715,31 @@ function applyFilterSort(){
     });
   }
 
-  // จัดเรียง
-  if (isRiskMode) { list.sort((a,b) => b.riskCount - a.riskCount); } 
-  else {
-     if(sortMode==='notfifo') list.sort((a,b)=>(b.notfifo||0)-(a.notfifo||0));
-     if(sortMode==='notfifoMonth') list.sort((a,b)=>(b.notfifoMonth||0)-(a.notfifoMonth||0));
-     if(sortMode==='repeatDays') list.sort((a,b)=>(b.repeatDays||0)-(a.repeatDays||0));
-     if(sortMode==='zoneAsc') list.sort((a,b)=>String(a.zone||'').localeCompare(String(b.zone||'')));
-     if(sortMode==='zoneDesc') list.sort((a,b)=>String(b.zone||'').localeCompare(String(a.zone||'')));
+  list = [...list];
+  if (isRiskMode) {
+    list.sort((a,b) => (riskInfo(b).bad - riskInfo(a).bad) || (b.riskCount - a.riskCount));
+  } else {
+    if(sortMode==='notfifo') list.sort((a,b)=>(b.notfifo||0)-(a.notfifo||0));
+    if(sortMode==='notfifoMonth') list.sort((a,b)=>(b.notfifoMonth||0)-(a.notfifoMonth||0));
+    if(sortMode==='repeatDays') list.sort((a,b)=>(b.repeatDays||0)-(a.repeatDays||0));
+    if(sortMode==='zoneAsc') list.sort((a,b)=>String(a.zone||'').localeCompare(String(b.zone||'')));
+    if(sortMode==='zoneDesc') list.sort((a,b)=>String(b.zone||'').localeCompare(String(a.zone||'')));
   }
   renderCards(list);
+  renderZoneChips();
+  updateModeUI();
 }
 
 function renderCards(data){
-  const box=document.getElementById('fifoList');
+  const box = document.getElementById('fifoList');
   if(!box) return;
-  if(!data || !data.length){
-    box.innerHTML=`<div class="card-item text-center text-muted">${isRiskMode ? '✅ ปลอดภัย ไม่มีสินค้าเสี่ยงในโซนนี้' : 'ไม่พบข้อมูล FIFO'}</div>`;
+  vRowsM = data || [];
+  if(!vRowsM.length){
+    box.innerHTML = `<div class="v-empty">${isRiskMode ? '✅ ปลอดภัย ไม่มีสินค้าเสี่ยงในโซนนี้' : 'ไม่พบข้อมูล FIFO'}</div>`;
     return;
   }
-  
-  // ⚡ สั่งสร้างดัชนีแค่ 1 ครั้ง ก่อนเริ่มวาดการ์ดทั้งหมด
-  if (isRiskMode) prepareSNGroupCache();
-  
-  let htmlStr = '';
-  data.forEach(r => {
-    if (isRiskMode) {
-      htmlStr += buildRiskCardHTML(r, false);
-    } else {
-      const urgentClass = getUrgentClass(r.zone, r.notfifo, r.repeatDays);
-      htmlStr += `<div class='card-item ${urgentClass}' onclick="openSN('${esc(r.code)}','${esc(r.name)}','${esc(r.zone)}',${r.instock},${r.sale},${r.fifo},${r.notfifo},${r.repeatDays},${r.notfifoMonth})">
-        <div class='code'>${r.code}</div>
-        <div class='name'>${r.name}</div>
-        <div class='meta'>Zone: <span class='badge badge-zone text-white'>${r.zone}</span> | Instock: <span class='badge badge-instock text-white'> ${r.instock}</div>
-        <div class='meta'>จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${r.repeatDays}</span> | NotFIFO รวมเดือน: <span class='badge badge-notfifo text-white'>${r.notfifoMonth}</span></div>
-        <div class='stat-row'>
-          <div>Sale: <span class='badge badge-sale text-white'>${r.sale}</div>
-          <div>FIFO: <span class='badge badge-fifo text-white'>${r.fifo}</div>
-          <div><span class='badge badge-notfifo text-white'>Not FIFO: ${r.notfifo}</span></div>
-        </div>
-      </div>`;
-    }
-  });
-  box.innerHTML = htmlStr;
+  if (isRiskMode && !snGroupedByCode) prepareSNGroupCache();
+  box.innerHTML = vRowsM.map((r, i) => isRiskMode ? vRiskCardM(r, i) : vNfCardM(r, i)).join('');
 }
 
 // หน้านี้ใช้มุมมอง RC อย่างเดียว — renderSNTableAuto() ถูกตัดออกแล้ว
@@ -3519,48 +4477,41 @@ let currentView = "fifo";
 let currentViewPC = "fifo";
 
 function toggleMainView(){
-  const btn = document.getElementById("titleToggleBtn");
   const fifo = document.getElementById("fifoView");
   const dash = document.getElementById("dashboardView");
   if(!fifo || !dash) return;
-
   if(currentView === "fifo"){
     fifo.style.display = "none"; dash.style.display = "block";
-    btn.innerText = "📊 Dashboard"; btn.classList.add("dashboard");
-    renderDashboard();   
-    
-    // Lazy Load
+    document.body.classList.add('v-mdash');
     const iframe = document.getElementById("lookerMobile");
     if (iframe && !iframe.src) iframe.src = iframe.getAttribute("data-src");
-
     currentView = "dashboard";
   }else{
-    dash.style.display = "none"; fifo.style.display = "block";
-    btn.innerText = "📦 FIFO Monitoring"; btn.classList.remove("dashboard");
+    dash.style.display = "none"; fifo.style.display = "flex";
+    document.body.classList.remove('v-mdash');
     currentView = "fifo";
   }
+  window.scrollTo(0, 0);
+  updateModeUI();
 }
 
 function togglePCView(){
-  const btn = document.getElementById("titleToggleBtnPC");
-  const fifo = document.getElementById("pcCardList");
+  const list = document.getElementById("pcListArea");
   const dash = document.getElementById("dashboardPC");
-  if(!fifo || !dash) return;
-
+  if(!list || !dash) return;
   if(currentViewPC === "fifo"){
-    fifo.style.display = "none"; dash.style.display = "block";
-    btn.innerText = "📊 Dashboard"; btn.classList.add("dashboard");
-
-    // Lazy Load
+    list.style.display = "none"; dash.style.display = "block";
+    document.body.classList.add('v-dash');
+    closeSNModal();
     const iframe = document.getElementById("lookerPC");
     if (iframe && !iframe.src) iframe.src = iframe.getAttribute("data-src");
-
     currentViewPC = "dashboard";
   }else{
-    dash.style.display = "none"; fifo.style.display = "block";
-    btn.innerText = "📦 FIFO Monitoring"; btn.classList.remove("dashboard");
+    dash.style.display = "none"; list.style.display = "flex";
+    document.body.classList.remove('v-dash');
     currentViewPC = "fifo";
   }
+  updateModeUI();
 }
 
 function renderDashboard(){
@@ -3637,86 +4588,82 @@ async function pcOnDateOrZoneChange(){
 function pcApplyFilter() {
   const q = document.getElementById("pcSearch")?.value.toLowerCase() || "";
   const sort = document.getElementById("pcSort")?.value || "notfifo";
-  
-  // --------------------------------------------------------
-  // 1. ก้อนภาพรวม (Base List): กรองแค่โซน และ โหมด
-  // --------------------------------------------------------
+
+  // 1. ภาพรวม: กรองแค่โซน + โหมด (KPI / Problem Code ไม่โดนตัวกรองอื่น)
   let baseList = fifoViewList.filter(r => isMatchZone(r.zone, currentPrefix));
+  baseList = isRiskMode ? baseList.filter(r => r.isRisk) : baseList.filter(r => r.notfifo > 0);
 
-  if (isRiskMode) {
-    baseList = baseList.filter(r => r.isRisk);
-  } else {
-    baseList = baseList.filter(r => r.notfifo > 0);
-  }
-
-  // วาด Problem Code และ Dashboard (ไม่โดนช่องค้นหากระทบ)
   renderProblemCode(baseList);
   renderDashboardPC(baseList);
+  renderZonePctPC();
+  renderSubChartPC();
 
-  // --------------------------------------------------------
-  // 2. ก้อนแสดงผล (Display List): เอาไปกรองต่อด้วยช่องค้นหา
-  // --------------------------------------------------------
+  // 2. ตัวกรอง + ค้นหา
   let list = [...baseList];
-
-  if (q) { 
-    list = list.filter(r => { 
-      return (
-        String(r.code || "").toLowerCase().includes(q) || 
-        String(r.name || "").toLowerCase().includes(q) ||
-        String(r.zone || "").toLowerCase().includes(q) ||
-        matchRC(r.code, q)                              // ✨ ค้นด้วยเลข RC
-      ); 
-    }); 
+  if (isRiskMode && riskFilter !== 'all') list = list.filter(r => riskInfo(r).bad === (riskFilter === 'bad'));
+  if (!isRiskMode && pcOnlyUrgent) list = list.filter(r => getUrgentClass(r.zone, r.notfifo, r.repeatDays) === 'card-warning');
+  if (vSubZone) list = list.filter(r => vSubOf(r.zone) === vSubZone);
+  if (q) {
+    list = list.filter(r =>
+      String(r.code || "").toLowerCase().includes(q) ||
+      String(r.name || "").toLowerCase().includes(q) ||
+      String(r.zone || "").toLowerCase().includes(q) ||
+      matchRC(r.code, q));                              // ✨ ค้นด้วยเลข RC
   }
 
-  // --------------------------------------------------------
-  // 3. จัดเรียง Card ตรงกลาง
-  // --------------------------------------------------------
-  if (isRiskMode) { 
-    list.sort((a,b) => b.riskCount - a.riskCount); 
+  // 3. เรียง (Code Risk: หยิบผิดล็อตขึ้นก่อน)
+  if (isRiskMode) {
+    list.sort((a,b) => (riskInfo(b).bad - riskInfo(a).bad) || (b.riskCount - a.riskCount));
   } else {
-     if(sort === "notfifo") list.sort((a,b)=>b.notfifo - a.notfifo);
-     if(sort === "repeat") list.sort((a,b)=>b.repeatDays - a.repeatDays);
-     if(sort === "zoneAsc") list.sort((a,b)=>String(a.zone).localeCompare(String(b.zone)));
-     if(sort === "zoneDesc") list.sort((a,b)=>String(b.zone).localeCompare(String(a.zone)));
+    if(sort === "notfifo") list.sort((a,b)=>b.notfifo - a.notfifo);
+    if(sort === "repeat") list.sort((a,b)=>b.repeatDays - a.repeatDays);
+    if(sort === "notfifoMonth") list.sort((a,b)=>(b.notfifoMonth||0) - (a.notfifoMonth||0));
+    if(sort === "zoneAsc") list.sort((a,b)=>String(a.zone).localeCompare(String(b.zone)));
+    if(sort === "zoneDesc") list.sort((a,b)=>String(b.zone).localeCompare(String(a.zone)));
   }
-  
-  // 👉 วาดตารางฝั่ง PC ด้วยก้อนแสดงผล
-  renderCardsPC(list); 
+
+  const dt = document.getElementById('pcDateText'), cd = getCurrentDate();
+  if (dt && cd) dt.textContent = formatDateDMY(cd);
+
+  renderCardsPC(list);
+  renderZoneGridPC();
+  updateModeUI();
 }
 
 function renderCardsPC(list){
   const box = document.getElementById("pcCardList");
   if(!box) return;
-  if(!list || !list.length){
-    box.innerHTML = `<div class="text-muted text-center py-4">${isRiskMode ? '✅ ปลอดภัย ไม่มีสินค้าเสี่ยงในโซนนี้' : 'ไม่พบข้อมูล'}</div>`; return;
+  vRowsP = list || [];
+  box.classList.add('v-cardmode');
+  if(!vRowsP.length){
+    box.innerHTML = `<div class="v-empty">${isRiskMode ? '✅ ปลอดภัย ไม่มีสินค้าเสี่ยงในโซนนี้' : 'ไม่พบข้อมูล'}</div>`;
+    return;
   }
-  
-  // ⚡ สั่งสร้างดัชนีแค่ 1 ครั้ง ก่อนเริ่มวาดการ์ดทั้งหมด
-  if (isRiskMode) prepareSNGroupCache();
-  
-  let htmlStr = '';
-  list.forEach(r => {
+  // การ์ดทีละ Code: ซ้าย Code/ชื่อ · กลาง Zone · ขวา ตัวเลข (หรือตารางอายุในโหมด Code Risk)
+  const st = (label, cls, v) => `<div class="st"><small>${label}</small>${vPill(cls, v)}</div>`;
+  box.innerHTML = '<div class="v-cards">' + vRowsP.map((r, i) => {
+    const code = vNorm(r.code);
+    const zone = `<div class="zn"><small>Zone</small><b>${r.zone || ''}</b></div>`;
     if (isRiskMode) {
-      htmlStr += buildRiskCardHTML(r, false);
-    } else {
-      const urgentClass = getUrgentClass(r.zone,r.notfifo,r.repeatDays);
-      htmlStr += `
-        <div class="pc-card ${urgentClass}" onclick="openSN('${esc(r.code)}','${esc(r.name)}','${esc(r.zone)}',${r.instock||0},${r.sale||0},${r.fifo||0},${r.notfifo||0},${r.repeatDays||0},${r.notfifoMonth||0})">
-          <div class="pc-card-left"><div class="pc-code">${r.code}</div><div class="pc-name">${r.name}</div></div>
-          <div class="pc-card-right"><div class="pc-zone-label">Zone</div><div class='badge badge-zone text-white'>${r.zone}</div></div>
-          <div class="pc-card-mid">
-            <div class="pc-stats">Instock: <span class='badge badge-instock text-white'>${r.instock}</span></div>
-            <div class="pc-stats">จำนวนวันซ้ำ: <span class='badge badge-month text-white'>${r.repeatDays}</b></span></div>
-            <div class="pc-stats">Not FIFO รวมเดือน: <span class='badge badge-notfifo text-white'>${r.notfifoMonth}</b></span></div>
-          </div>
-          <div class="pc-card-right"><div class="pc-sale-label">Sale</div><div class='badge badge-sale text-white'>${r.sale}</div></div>
-          <div class="pc-card-right"><div class="pc-fifo-label">FIFO</div><div class='badge badge-fifo text-white'>${r.fifo}</div></div>
-          <div class="pc-card-right"><div class="pc-notfifo-label">Not FIFO</div><div class='badge badge-notfifo text-white'>${r.notfifo}</div></div>
-        </div>`;
+      const info = riskInfo(r);
+      const mx = `<div class="v-cmatrix"><span class="l"></span>${V_AGE_KEYS.map(k => `<span class="h">${k}</span>`).join('')}`
+        + `<span class="l">Instock</span>${V_AGE_KEYS.map(k => vCell(info.mx.instock[k], 'in', k === info.hotKey)).join('')}`
+        + `<span class="l">Sale</span>${V_AGE_KEYS.map(k => vCell(info.mx.sale[k], 'sale', false)).join('')}</div>`;
+      return `<div class="v-pcard ${info.bad ? 'bad' : 'warn'}${code === vSelCode ? ' sel' : ''}" data-code="${code}" onclick="vOpenRowPC(${i})">`
+        + `<div class="id"><span class="mono">${r.code}</span><span class="nm">${r.name || ''}</span>`
+        + `<span class="tag ${info.bad ? 'bad' : ''}">${info.bad ? 'หยิบผิดล็อต' : 'เสี่ยง'} · อายุ ${info.maxAge} วัน</span></div>`
+        + zone + `<div class="vals">${mx}</div></div>`;
     }
-  });
-  box.innerHTML = htmlStr;
+    const urgent = getUrgentClass(r.zone, r.notfifo, r.repeatDays) === 'card-warning';
+    return `<div class="v-pcard${urgent ? ' urgent' : ''}${code === vSelCode ? ' sel' : ''}" data-code="${code}" onclick="vOpenRowPC(${i})">`
+      + `<div class="id"><span class="mono">${r.code}</span><span class="nm">${r.name || ''}</span>`
+      + (urgent ? `<span class="tag">เร่งด่วน · ${vUrgentReason(r)}</span>` : '') + `</div>`
+      + zone
+      + `<div class="vals">`
+      +   `<div class="rm"><div><small>ซ้ำ</small>${vPill('rep', (r.repeatDays || 0) + ' วัน')}</div><div><small>เดือนนี้</small>${vPill('month', r.notfifoMonth || 0)}</div></div>`
+      +   st('Instock', 'instock', r.instock || 0) + st('Sale', 'sale', r.sale || 0) + st('FIFO', 'fifo', r.fifo || 0) + st('Not FIFO', 'nf', r.notfifo || 0)
+      + `</div></div>`;
+  }).join('') + '</div>';
 }
 
 function renderDashboardPC(list){
@@ -3772,15 +4719,22 @@ function pcSetProgress(p){ const bar = document.getElementById("pcLoadingBar"); 
 function pcHideLoading(){ const box = document.getElementById("pcLoading"); if(box) box.style.display = "none"; }
 
 function renderZoneRule(zone){
-  const z = String(zone).charAt(0);
-  let html = "";
-  if(ZONE_GROUP_LOOSE.includes(z)){
-    html = `<div>• NotFIFO &gt; 10</div><div>• Repeat &gt; 1 วัน</div>`;
-  }else{
-    html = `<div>• NotFIFO &gt; 3</div><div>• Repeat &gt; 1 วัน</div>`;
-  }
   const el = document.getElementById("pcZoneRule");
-  if(el) el.innerHTML = html;
+  const title = document.getElementById("pcRuleTitle");
+  if (isRiskMode) {
+    if (title) title.textContent = 'สีของแถว';
+    if (el) el.innerHTML =
+        `<div class="lg"><i style="background:var(--v-badSoft);border:1px solid var(--v-badLine)"></i>แดง = หยิบผิดล็อต</div>`
+      + `<div class="lg"><i style="background:var(--v-warnSoft);border:1px solid var(--v-warnLine)"></i>ส้ม = เสี่ยง (อายุ 23–29)</div>`
+      + `<div class="lg"><i style="background:var(--v-badSolid)"></i>ช่องแดงทึบ = ล็อตที่ต้องหยิบก่อน</div>`
+      + `<div class="lg"><i style="background:var(--v-inSoft);border:1px solid var(--v-inLine)"></i>บน Instock · <i style="background:var(--v-saleSoft);border:1px solid var(--v-saleLine)"></i>ล่าง Sale</div>`
+      + `<div style="font-size:12px;color:var(--v-muted);margin-top:4px">ถ้าไม่หยิบก่อนอายุครบ 30 วัน จะนับเป็น Not FIFO</div>`;
+    return;
+  }
+  if (title) title.textContent = 'เร่งด่วน (แถวสีส้ม)';
+  const z = String(zone).charAt(0);
+  const lim = ZONE_GROUP_LOOSE.includes(z) ? 10 : 3;
+  if (el) el.innerHTML = `Not FIFO มากกว่า ${lim}<br>หรือ ซ้ำมากกว่า 1 วัน`;
 }
 
 function renderProblemCode(list){
@@ -4098,6 +5052,8 @@ function toggleRiskMode() {
     if(btnM) { btnM.className = "btn btn-outline-warning w-100 mb-3 fw-bold"; btnM.innerHTML = "⏳ Code Risk"; }
     if(btnP) { btnP.className = "btn btn-outline-warning w-100 mt-2 fw-bold"; btnP.innerHTML = "⏳ Code Risk"; }
   }
+  riskFilter = 'all';
+  updateModeUI();
   
   // ใช้ setTimeout 10ms เพื่อให้ปุ่มเปลี่ยนสีก่อน แล้วค่อยโหลดข้อมูล (ลดอาการปุ่มค้าง)
   setTimeout(() => {
@@ -4535,9 +5491,8 @@ function updateReportScope(){
   if (!box) return;
   const n = reportSelection.size;
   box.innerHTML = n
-    ? `<span class="fw-bold text-success">✅ เลือกไว้ ${n} SN</span>`
-      + `<button class="btn btn-outline-secondary" onclick="clearSNSelect()">ล้างทั้งหมด</button>`
-    : `<span class="text-muted" style="font-size:16px;">👈 ปัดซ้ายเพื่อเลือก SN/RC · ไม่เลือก = Report ระดับ Code (ไม่ระบุ SN)</span>`;
+    ? `<span class="fw-bold text-success">✅ เลือกไว้ ${n} SN</span><button class="btn btn-outline-secondary" onclick="clearSNSelect()">ล้าง</button>`
+    : `<span class="text-muted">ทั้ง Code · ปัดซ้ายที่ SN / RC เพื่อเลือกเฉพาะบางตัว</span>`;
 }
 
 let swipeCurrentSN = null;
@@ -4667,6 +5622,7 @@ function onReasonChange(){
   const note = document.getElementById("reportNote");
   hideReportError();
   if (!note) return;
+  note.style.display = reason ? '' : 'none';
   if (reason === "อื่นๆ") {
     note.placeholder = "ระบุเหตุผลเพิ่มเติม (จำเป็น) *";
     note.classList.add("border-danger");
@@ -4772,6 +5728,498 @@ async function submitReport(reason, note) {
     hideReportResult();
     showReportError("ส่ง Report ไม่สำเร็จ: " + err.message);
   }
+}
+
+
+/* =====================================================================
+   🎨 Redesign v2 — หน้าคอม (โลจิกข้อมูลเดิมทั้งหมด)
+   ===================================================================== */
+const V_ZONES_MAIN = ["A","B","C","E","J","N","R","S","T","U"];
+const V_ZONES_D    = ["D","D Big","D NB"];   // อยู่ใน "โซนอื่นๆ"
+let vOtherOpen = false;
+const V_AGE_KEYS   = ['0-22','23','24','25','26','27','28','29'];
+let riskFilter   = 'all';   // all | bad | warn
+let pcOnlyUrgent = false;   // ทั้งหมด / เฉพาะเร่งด่วน
+let vSelCode     = null;    // Code ที่เปิดแผง SN อยู่
+let vRowsP = [];
+
+function isPCLayout(){ return !(isMobileDevice() || window.innerWidth < 992); }
+function vNorm(code){ return String(code || '').replace(/\s+/g, '').toUpperCase(); }
+function vPill(cls, v){ return `<span class="v-pill" style="background:var(--v-${cls})">${v}</span>`; }
+function vBox(cls, label, val){ return `<div class="v-box" style="background:var(--v-${cls})"><small>${label}</small><b>${val}</b></div>`; }
+function vOpenRowPC(i){
+  const r = vRowsP[i];
+  if (r) openSN(r.code, r.name, r.zone, r.instock || 0, r.sale || 0, r.fifo || 0, r.notfifo || 0, r.repeatDays || 0, r.notfifoMonth || 0);
+}
+function vUrgentReason(r){
+  const lim = ZONE_GROUP_STRICT.includes(String(r.zone || '').charAt(0).toUpperCase()) ? 3 : 10;
+  return (Number(r.notfifo) || 0) > lim ? 'NotFIFO > ' + lim : 'ซ้ำ > 1 วัน';
+}
+// NotFIFO% ของโซน = SUM(NotFIFO) / SUM(Sale) ทุก Code ในโซน (ไม่นับ Code ที่ขึ้นต้น **)
+function renderZonePctPC(){
+  let nf = 0, sale = 0;
+  fifoViewList.forEach(r => {
+    if (!isMatchZone(r.zone, currentPrefix) || String(r.code || '').startsWith('**')) return;
+    nf += Number(r.notfifo) || 0; sale += Number(r.sale) || 0;
+  });
+  const v = document.getElementById('pcKpiPct'), l = document.getElementById('pcKpiPctLabel');
+  if (l) l.textContent = 'NotFIFO% โซน ' + currentPrefix;
+  if (v) v.textContent = sale ? (nf / sale * 100).toFixed(2) + '%' : '-';
+}
+// ซ่อน / แสดง sidebar (จำไว้ในเครื่อง)
+function vToggleSidebar(force){
+  const hide = typeof force === 'boolean' ? force : !document.body.classList.contains('v-noside');
+  document.body.classList.toggle('v-noside', hide);
+  try { localStorage.setItem('fifo.pcSideHidden', hide ? '1' : '0'); } catch (e) {}
+}
+try { if (localStorage.getItem('fifo.pcSideHidden') === '1') document.body.classList.add('v-noside'); } catch (e) {}
+/* ---------- ปฏิทินเลือกวันที่ (ตัวใหญ่ อ่านง่าย) ---------- */
+const V_TH_MONTH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+let vCalView = null;   // { y, m }
+function vCalToggle(force){
+  const el = document.getElementById('vCal');
+  const open = typeof force === 'boolean' ? force : el.hidden;
+  el.hidden = !open;
+  if (open) {
+    const r = document.querySelector('.v-datewrap .v-datebtn').getBoundingClientRect();
+    el.style.left = r.left + 'px'; el.style.top = (r.bottom + 6) + 'px';
+    const cur = getCurrentDate() || latestReportDate || toISODateLocal(new Date());
+    vCalView = { y: +cur.slice(0, 4), m: +cur.slice(5, 7) - 1 };
+    vCalRender();
+  }
+}
+function vCalMove(d){ vCalView.m += d; if (vCalView.m < 0) { vCalView.m = 11; vCalView.y--; } if (vCalView.m > 11) { vCalView.m = 0; vCalView.y++; } vCalRender(); }
+function vCalRender(){
+  const el = document.getElementById('vCal');
+  const { y, m } = vCalView;
+  const cur = getCurrentDate();
+  const max = latestReportDate || toISODateLocal(new Date());
+  const today = toISODateLocal(new Date());
+  const first = new Date(y, m, 1).getDay();
+  const days = new Date(y, m + 1, 0).getDate();
+  const p = n => String(n).padStart(2, '0');
+  let cells = '';
+  for (let i = 0; i < first; i++) cells += '<span></span>';
+  for (let d = 1; d <= days; d++) {
+    const iso = `${y}-${p(m + 1)}-${p(d)}`;
+    const cls = [iso === cur ? 'on' : '', iso === today ? 'today' : '', iso === max ? 'latest' : ''].join(' ');
+    cells += iso > max ? `<button type="button" disabled>${d}</button>`
+                       : `<button type="button" class="${cls}" onclick="vCalPick('${iso}')">${d}</button>`;
+  }
+  el.innerHTML = `<div class="v-cal-head"><button type="button" onclick="vCalMove(-1)">‹</button>`
+    + `<b>${V_TH_MONTH[m]} ${y + 543}</b><button type="button" onclick="vCalMove(1)">›</button></div>`
+    + `<div class="v-cal-grid">${['อา','จ','อ','พ','พฤ','ศ','ส'].map(w => `<i>${w}</i>`).join('')}${cells}</div>`
+    + `<div class="v-cal-foot"><button type="button" onclick="vCalPick('${max}')">วันล่าสุด (${formatDateDMY(max)})</button></div>`;
+}
+function vCalPick(iso){ vCalToggle(false); vPickDatePC(iso); }
+document.addEventListener('mousedown', e => {
+  const el = document.getElementById('vCal');
+  if (el && !el.hidden && !e.target.closest('.v-datewrap')) el.hidden = true;
+});
+
+function vPickDatePC(v){
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v || '')) return;
+  setCurrentDateUI(v);
+  pcOnDateOrZoneChange();
+  renderZoneRule(currentPrefix);
+}
+
+/* ---------- รายการแจ้งปัญหา (อ่านจาก SN_Report ผ่าน getSNReports) ---------- */
+let rlCache = null, rlStatus = 'PENDING';
+const RL_LABEL = { PENDING: 'รอตรวจ', APPROVED: 'อนุมัติแล้ว', REJECTED: 'ไม่อนุมัติ', ALL: 'ทั้งหมด' };
+function openReportList(){
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('reportListModal')).show();
+  loadReportList(false);
+}
+async function loadReportList(force){
+  const body = document.getElementById('rlBody');
+  if (rlCache && !force) { renderReportList(); return; }
+  body.innerHTML = '<div class="v-empty">⏳ กำลังโหลด...</div>';
+  try { rlCache = await callGAS('getSNReports', {}) || []; }
+  catch (e) { body.innerHTML = `<div class="v-empty">โหลดไม่สำเร็จ: ${e.message}</div>`; return; }
+  renderReportList();
+}
+function rlDate(v, withTime){
+  if (!v) return '';
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return formatDateDMY(s);
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) return formatDateDMY(s.slice(0, 10)) + (withTime ? ' ' + s.slice(11, 16) : '');
+  const d = new Date(s);
+  if (isNaN(d)) return s;
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}` + (withTime ? ` ${p(d.getHours())}:${p(d.getMinutes())}` : '');
+}
+function renderReportList(){
+  const body = document.getElementById('rlBody');
+  if (!body || !rlCache) return;
+  // รวมแถวที่ส่งพร้อมกัน (เวลา + Code + เหตุผล เดียวกัน) เป็นการ์ดเดียว
+  const groups = new Map();
+  rlCache.forEach(r => {
+    const k = [r.timestamp, r.code, r.reason, r.note, r.reportDate].join('|');
+    if (!groups.has(k)) groups.set(k, { ...r, items: [], statuses: new Set() });
+    const g = groups.get(k);
+    g.items.push(r); g.statuses.add(String(r.status || 'PENDING').toUpperCase());
+  });
+  let list = [...groups.values()].map(g => {
+    g.st = g.statuses.has('PENDING') ? 'PENDING' : g.statuses.has('APPROVED') ? 'APPROVED' : (g.statuses.has('REJECTED') ? 'REJECTED' : [...g.statuses][0]);
+    return g;
+  });
+  const cnt = { ALL: list.length, PENDING: 0, APPROVED: 0, REJECTED: 0 };
+  list.forEach(g => { if (cnt[g.st] != null) cnt[g.st]++; });
+  document.getElementById('rlFilters').innerHTML = ['PENDING', 'APPROVED', 'REJECTED', 'ALL']
+    .map(k => `<button type="button" class="${k === rlStatus ? 'on' : ''}" onclick="rlStatus='${k}';renderReportList()">${RL_LABEL[k]}<i>${cnt[k]}</i></button>`).join('');
+
+  const q = (document.getElementById('rlSearch')?.value || '').trim().toLowerCase();
+  if (rlStatus !== 'ALL') list = list.filter(g => g.st === rlStatus);
+  if (q) list = list.filter(g => [g.code, g.zone, g.reason, g.note, ...g.items.map(i => i.sn + ' ' + i.rc)].join(' ').toLowerCase().includes(q));
+  list.sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)) || (b.rowIndex - a.rowIndex));
+  if (!list.length) { body.innerHTML = '<div class="v-empty">ไม่มีรายการ</div>'; return; }
+
+  const MAX = 300;
+  body.innerHTML = '<div class="v-rl-list">' + list.slice(0, MAX).map(g => {
+    const items = g.items.map(i => {
+      const t = String(i.type || '').toUpperCase();
+      return t === 'CODE' ? '<span>ทั้ง Code</span>' : t === 'RC' ? `<span>RC ${i.rc}</span>` : `<span>${i.sn}</span>`;
+    }).join('');
+    return `<div class="v-rl ${g.st}">
+      <div class="v-rl-top"><span class="mono">${g.code}</span>${g.zone ? vPill('zone', g.zone) : ''}<span class="v-rl-st ${g.st}">${RL_LABEL[g.st] || g.st}</span></div>
+      <div class="v-rl-meta">ข้อมูลวันที่ ${rlDate(g.reportDate)} · แจ้งเมื่อ ${rlDate(g.timestamp, true)} · ${g.items.length} รายการ</div>
+      <div class="v-rl-reason"><b>${g.reason || '-'}</b>${g.note ? ' — ' + g.note : ''}</div>
+      <div class="v-rl-items">${items}</div>
+      ${g.adminComment ? `<div class="v-rl-admin">💬 Admin: ${g.adminComment}</div>` : ''}
+    </div>`;
+  }).join('') + '</div>' + (list.length > MAX ? `<div class="v-rl-more">แสดง ${MAX} จาก ${list.length} รายการ — ใช้ช่องค้นหาเพื่อกรอง</div>` : '');
+}
+
+// ปุ่มสลับใน dashboard.html (โหมดฝัง) ส่งข้อความมาให้กลับหน้ารายการ
+window.addEventListener('message', e => {
+  const d = e.data || {};
+  if (d.type === 'fifo:toggleView') {
+    if (!isPCLayout() && currentView === 'dashboard') toggleMainView();
+    else if (currentViewPC === 'dashboard') togglePCView();
+  }
+  if (d.type === 'fifo:ready') updateModeUI();
+  if (d.type === 'fifo:goto') vGotoFromDash(d);
+});
+/* ---------- กราฟ NotFIFO% แยก Sub Zone (sidebar) — กดแท่งเพื่อกรองการ์ด ---------- */
+let vSubZone = null, vSubPrefix = null;
+function vSubOf(zone){ return String(zone || '').trim().toUpperCase().slice(0, 2); }
+function renderSubChartPC(){
+  const box = document.getElementById('pcSubChart');
+  if (!box) return;
+  if (vSubPrefix !== currentPrefix) { vSubPrefix = currentPrefix; vSubZone = null; }
+  const d = getCurrentDate();
+  const dl = document.getElementById('pcSubDate'); if (dl) dl.textContent = d ? formatDateDMY(d) : '';
+  const agg = {};
+  let tNF = 0, tSale = 0;
+  fifoViewList.forEach(r => {
+    if (!isMatchZone(r.zone, currentPrefix) || String(r.code || '').startsWith('**')) return;
+    const k = vSubOf(r.zone);
+    const a = agg[k] || (agg[k] = { nf: 0, sale: 0, codes: 0 });
+    a.nf += Number(r.notfifo) || 0; a.sale += Number(r.sale) || 0;
+    if ((Number(r.notfifo) || 0) > 0) a.codes++;
+    tNF += Number(r.notfifo) || 0; tSale += Number(r.sale) || 0;
+  });
+  const rows = Object.entries(agg).map(([k, a]) => ({ k, pct: a.sale ? a.nf / a.sale * 100 : 0, codes: a.codes }))
+                     .sort((a, b) => b.pct - a.pct || a.k.localeCompare(b.k));
+  if (!rows.length) { box.innerHTML = '<div class="v-sub-empty">ยังไม่มีข้อมูล</div>'; return; }
+  const total = tSale ? tNF / tSale * 100 : 0;
+  const max = Math.max(total, ...rows.map(r => r.pct)) || 1;
+  box.innerHTML = `<div class="v-sub">`
+    + rows.map(r => `<button type="button" class="v-sub-row${r.k === vSubZone ? ' on' : ''}${vSubZone && r.k !== vSubZone ? ' dim' : ''}" onclick="vPickSub('${r.k}')" title="${r.k}: ${r.pct.toFixed(2)}% · ${r.codes} Code ที่มี Not FIFO">`
+      + `<span class="k">${r.k}</span><span class="b"><i style="width:${(r.pct / max * 100).toFixed(1)}%"></i><em style="left:${(total / max * 100).toFixed(1)}%"></em></span>`
+      + `<span class="v">${r.pct.toFixed(2)}%</span></button>`).join('')
+    + `</div><div class="v-sub-foot"><span><em></em>รวมโซน ${total.toFixed(2)}%</span>${vSubZone ? `<button type="button" onclick="vPickSub('${vSubZone}')">ล้างตัวกรอง</button>` : '<span>กดแท่งเพื่อกรอง</span>'}</div>`;
+}
+function vPickSub(k){
+  vSubZone = vSubZone === k ? null : k;
+  pcApplyFilter();
+}
+
+// กดกราฟใน Dashboard → กลับหน้า Not FIFO ที่ วันที่ / Zone / Sub Zone นั้น
+function vGotoFromDash(d){
+  if (d.date && /^\d{4}-\d{2}-\d{2}$/.test(d.date)) setCurrentDateUI(d.date);
+  if (d.zone) {
+    currentPrefix = d.zone; unifiedZone = d.zone;
+    document.querySelectorAll('#zoneGrid .zone-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === d.zone));
+  }
+  vSubPrefix = currentPrefix;            // กันไม่ให้ renderSubChartPC ล้างตัวกรองที่ตั้งไว้
+  vSubZone = d.sub ? String(d.sub).toUpperCase() : null;
+  const search = document.getElementById('pcSearch'); if (search) search.value = '';
+  if (!isPCLayout()) {
+    const ms = document.getElementById('searchInput'); if (ms) ms.value = '';
+    if (currentView === 'dashboard') toggleMainView();
+    onDateOrZoneChange();
+    showToast('เปิด Not FIFO ' + formatDateDMY(getCurrentDate()) + ' · Zone ' + currentPrefix + (vSubZone ? ' · ' + vSubZone : ''), 'ok');
+    return;
+  }
+  if (currentViewPC === 'dashboard') togglePCView();
+  pcOnDateOrZoneChange();
+  renderZoneRule(currentPrefix);
+  showToast('เปิด Not FIFO ' + formatDateDMY(getCurrentDate()) + ' · Zone ' + currentPrefix + (vSubZone ? ' · ' + vSubZone : ''), 'ok');
+}
+function setRiskMode(on){ if (isRiskMode !== !!on) toggleRiskMode(); }
+
+/* ---------- Code Risk: ระดับ + ข้อความเตือน ---------- */
+let vRiskMemo = { src: null, map: new Map() };
+function riskInfo(r){
+  if (!snGroupedByCode) prepareSNGroupCache();
+  if (vRiskMemo.src !== snGroupedByCode) vRiskMemo = { src: snGroupedByCode, map: new Map() };
+  const key = vNorm(r.code);
+  if (vRiskMemo.map.has(key)) return vRiskMemo.map.get(key);
+
+  const mx = getRiskMatrixData(r.code);
+  const maxAge = mx.maxAgeInStock;
+  const bad = (mx.minAgeSold !== 999) && (mx.minAgeSold < maxAge);
+  const left = 30 - maxAge;
+  const bucket = maxAge < 0 ? null : maxAge <= 22 ? '0-22' : maxAge <= 29 ? String(maxAge) : null;
+  const hotKey = (bad || maxAge >= 23) ? bucket : null;
+  const rcs = [...new Set((snGroupedByCode[key] || [])
+      .filter(s => String(s.status).toUpperCase() !== 'SALE' && (Number(s.day) || 0) === maxAge)
+      .map(s => s.rc).filter(Boolean))];
+  let msg;
+  if (maxAge < 0) msg = 'ไม่มีของค้างในสต็อก';
+  else if (bad) msg = `ขายตัวอายุ ${mx.minAgeSold} วันไปแล้ว แต่ยังเหลือตัวอายุ ${maxAge} วัน ${mx.riskQty} ชิ้น`;
+  else msg = `ต้องหยิบตัวอายุ ${maxAge} วันก่อน ${mx.riskQty} ชิ้น`;
+  const sub = (left > 0 ? `อีก ${left} วันเป็น Not FIFO` : 'ถึงเกณฑ์ 30 วันแล้ว')
+            + (rcs.length ? ` · หยิบ ${rcs.slice(0, 3).join(', ')}${rcs.length > 3 ? ' …' : ''} ก่อน` : '');
+  const info = { mx, bad, maxAge, left, hotKey, msg, sub };
+  vRiskMemo.map.set(key, info);
+  return info;
+}
+function vCell(v, kind, hot){ return `<span class="v-cell ${hot ? 'hot' : (!v ? 'z' : kind)}">${v || '·'}</span>`; }
+
+/* ---------- หัวแผง SN (คอม) ---------- */
+function vSNHeaderPC(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notfifoMonth){
+  let html = `<div class="v-snhead">
+      <div class="t"><small>${isRiskMode ? 'SN ที่ต้องหยิบก่อน' : 'SN Detail'}</small><span class="mono">${code}</span><span>${name || ''}</span></div>
+      <div class="z"><small>Zone</small><b>${zone || ''}</b></div>
+      <button type="button" class="x" onclick="closeSNModal()" aria-label="ปิด"><i class="bi bi-x-lg"></i></button>
+    </div>`;
+  if (isRiskMode) {
+    const info = riskInfo({ code });
+    html += `<div class="v-warnbox ${info.bad ? 'bad' : 'warn'}"><i class="bi bi-exclamation-triangle"></i><div><b>${info.msg}</b><small>${info.sub}</small></div></div>`;
+  }
+  html += `<div class="v-stat5">${vBox('rep', 'ซ้ำ', `${repeatDays || 0} <i>วัน</i>`)}${vBox('instock', 'Instock', instock || 0)}${vBox('sale', 'Sale', sale || 0)}${vBox('fifo', 'FIFO', fifo || 0)}${vBox('nf', 'Not FIFO', notfifo || 0)}</div>`;
+  if (isRiskMode) {
+    const info = riskInfo({ code });
+    html += `<div class="v-matrix"><span class="l h">อายุ</span>${V_AGE_KEYS.map(k => `<span class="h">${k}</span>`).join('')}`
+      + `<span class="l">Instock</span>${V_AGE_KEYS.map(k => vCell(info.mx.instock[k], 'in', k === info.hotKey)).join('')}`
+      + `<span class="l">Sale</span>${V_AGE_KEYS.map(k => vCell(info.mx.sale[k], 'sale', false)).join('')}</div>`;
+  }
+  return html;
+}
+
+/* ---------- ปุ่ม Zone ใน sidebar (มีตัวเลขเมื่อโซนนั้นอยู่ในแคชแล้ว) ---------- */
+function zoneCount(z){
+  const d = getCurrentDate();
+  if (!d) return null;
+  const e = zcMem.get(zcKey(d, z.charAt(0)));
+  if (!e || !e.data || !e.data.fifo) return null;
+  return e.data.fifo.filter(r => isMatchZone(r.zone, z) && (isRiskMode ? r.isRisk : r.notfifo > 0)).length;
+}
+function renderZoneGridPC(){
+  const btn = z => {
+    const n = zoneCount(z);
+    return `<button type="button" class="v-zbtn${z === currentPrefix ? ' on' : ''}" onclick="vPickZonePC('${z}')">${z}`
+      + (n ? `<span class="n${isRiskMode ? ' risk' : ''}">${n}</span>` : '') + `</button>`;
+  };
+  const g = document.getElementById('pcZoneGrid');
+  const gd = document.getElementById('pcZoneGridD');
+  const inOther = V_ZONES_D.includes(currentPrefix);
+  const open = vOtherOpen || inOther;
+  const nOther = V_ZONES_D.reduce((a, z) => a + (z === 'D' ? 0 : (zoneCount(z) || 0)), 0);
+  if (g) g.innerHTML = V_ZONES_MAIN.map(btn).join('')
+    + `<button type="button" class="v-zbtn other${inOther ? ' on' : ''}" onclick="vOtherOpen=!vOtherOpen;renderZoneGridPC()">`
+    + `${inOther ? currentPrefix : 'โซนอื่นๆ'} ${open ? '▴' : '▾'}${!inOther && nOther ? `<span class="n${isRiskMode ? ' risk' : ''}">${nOther}</span>` : ''}</button>`;
+  if (gd) { gd.innerHTML = V_ZONES_D.map(btn).join(''); gd.style.display = open ? '' : 'none'; }
+}
+function vPickZonePC(z){
+  if (!getCurrentDate()) { openFilterModal(); return; }
+  currentPrefix = z; unifiedZone = z; vSubZone = null;
+  document.querySelectorAll('#zoneGrid .zone-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === z));
+  const barZone = document.getElementById('barZone');
+  if (barZone) barZone.innerHTML = `<i class="bi bi-geo-fill"></i> ${z} <span class="filter-icon">▾</span>`;
+  renderZoneGridPC();
+  pcOnDateOrZoneChange();
+  renderZoneRule(z);
+}
+
+/* ---------- ตัวกรอง + ป้ายโหมด ---------- */
+function vSetFilter(v){
+  if (isRiskMode) riskFilter = v; else pcOnlyUrgent = (v === 'urgent');
+  if (isPCLayout()) pcApplyFilter(); else applyFilterSort();
+}
+function updateModeUI(){
+  vUpdateModeM();
+  const name = isRiskMode ? 'Code Risk' : 'Not FIFO';
+  document.querySelectorAll('#pcLayout .v-seg button[data-mode]').forEach(b => b.classList.toggle('on', (b.dataset.mode === 'risk') === isRiskMode));
+  const dash = typeof currentViewPC !== 'undefined' && currentViewPC === 'dashboard';
+  const lab = document.getElementById('viewLabelPC'), oth = document.getElementById('viewOtherPC');
+  if (lab) lab.textContent = dash ? 'Dashboard' : name;
+  if (oth) oth.textContent = dash ? name : 'Dashboard';
+  ['lookerPC', 'lookerMobile'].forEach(id => {
+    const fr = document.getElementById(id);
+    try { if (fr && fr.contentWindow) fr.contentWindow.postMessage({ type: 'fifo:mode', name }, '*'); } catch (e) {}
+  });
+
+  const opts = isRiskMode
+    ? [['all', 'ทั้งหมด', ''], ['bad', 'หยิบผิดล็อต', 'bad'], ['warn', 'เสี่ยง', 'warn']]
+    : [['all', 'ทั้งหมด', ''], ['urgent', 'เฉพาะเร่งด่วน', 'warn']];
+  const cur = isRiskMode ? riskFilter : (pcOnlyUrgent ? 'urgent' : 'all');
+  const pf = document.getElementById('pcFilters');
+  if (pf) pf.innerHTML = (vSubZone ? `<button type="button" class="on subchip" onclick="vPickSub('${vSubZone}')" title="ล้างตัวกรอง Sub Zone">Sub Zone ${vSubZone} ✕</button>` : '') + opts.map(([v, label, tone]) => `<button type="button" class="${v === cur ? 'on ' + tone : ''}" onclick="vSetFilter('${v}')">${label}</button>`).join('');
+  const ps = document.getElementById('pcSortWrap');
+  if (ps) ps.style.display = isRiskMode ? 'none' : '';
+  renderZoneRule(currentPrefix);
+}
+
+/* ---------- SN Detail: คอม = แผงขวา (กดแถวอื่นได้), มือถือ = modal เดิม ---------- */
+function vMarkSelected(code){
+  vSelCode = code ? vNorm(code) : null;
+  document.querySelectorAll('#pcCardList [data-code]').forEach(tr => tr.classList.toggle('sel', tr.dataset.code === vSelCode));
+}
+function vShowSNModal(){
+  const el = document.getElementById('snModal');
+  if (el.classList.contains('show')) return;            // เปิดอยู่แล้ว แค่เปลี่ยนเนื้อหา
+  const side = isPCLayout();
+  const old = bootstrap.Modal.getInstance(el);
+  if (old) old.dispose();
+  el.classList.toggle('v-sidepanel', side);
+  el.classList.toggle('app-modal', !side);
+  new bootstrap.Modal(el, { backdrop: !side, focus: !side }).show();
+}
+(function(){
+  const el = document.getElementById('snModal');
+  if (!el) return;
+  el.addEventListener('shown.bs.modal', () => { if (el.classList.contains('v-sidepanel')) document.body.classList.add('v-sn-open'); });
+  el.addEventListener('hidden.bs.modal', () => { document.body.classList.remove('v-sn-open'); vMarkSelected(null); });
+})();
+
+
+/* =====================================================================
+   📱 Redesign v2 — มือถือ
+   ===================================================================== */
+let vRowsM = [], vLastChipZone = null;
+const V_ZONES_CHIP = ["A","B","C","D","E","J","N","R","S","T","U","D Big","D NB"];
+
+function vOpenRowM(i){
+  const r = vRowsM[i];
+  if (r) openSN(r.code, r.name, r.zone, r.instock || 0, r.sale || 0, r.fifo || 0, r.notfifo || 0, r.repeatDays || 0, r.notfifoMonth || 0);
+}
+function vMatrixM(info){
+  return `<div class="v-mmatrix"><span class="l h">อายุ</span>${V_AGE_KEYS.map(k => `<span class="h">${k}</span>`).join('')}`
+    + `<span class="l">Instock</span>${V_AGE_KEYS.map(k => vCell(info.mx.instock[k], 'in', k === info.hotKey)).join('')}`
+    + `<span class="l">Sale</span>${V_AGE_KEYS.map(k => vCell(info.mx.sale[k], 'sale', false)).join('')}</div>`;
+}
+function vNfCardM(r, i){
+  // เลย์เอาต์การ์ดของแอปเดิม (Zone/Instock · ซ้ำ/เดือนนี้ · Sale FIFO Not FIFO) แต่ใช้สีชุดใหม่
+  const urgent = getUrgentClass(r.zone, r.notfifo, r.repeatDays) === 'card-warning';
+  return `<div class="v-mcard v-ocard${urgent ? ' urgent' : ''}" onclick="vOpenRowM(${i})">
+    <div class="v-codeline"><span class="mono v-code">${r.code}</span>${urgent ? `<span class="v-urgent">เร่งด่วน · ${vUrgentReason(r)}</span>` : ''}</div>
+    <div class="v-mname">${r.name || ''}</div>
+    <div class="meta"><span>Zone ${vPill('zone', r.zone)}</span><i>|</i><span>Instock ${vPill('instock', r.instock || 0)}</span></div>
+    <div class="meta"><span>จำนวนวันซ้ำ ${vPill('rep', r.repeatDays || 0)}</span><i>|</i><span>NotFIFO รวมเดือน ${vPill('month', r.notfifoMonth || 0)}</span></div>
+    <div class="stat"><span>Sale ${vPill('sale', r.sale || 0)}</span><span>FIFO ${vPill('fifo', r.fifo || 0)}</span><span class="nf">${vPill('nf', 'Not FIFO: ' + (r.notfifo || 0))}</span></div>
+  </div>`;
+}
+function vRiskCardM(r, i){
+  const info = riskInfo(r);
+  return `<div class="v-mcard ${info.bad ? 'bad' : 'warn'}" onclick="vOpenRowM(${i})">
+    <div class="v-codeline"><span class="mono v-code">${r.code || ''}</span><span class="v-zbadge">${r.zone || ''}</span></div>
+    <div class="v-mname">${r.name || ''}</div>
+    ${vMatrixM(info)}
+  </div>`;
+}
+
+/* หัว SN Detail (มือถือ): กลับ · Code/ชื่อ · Zone → (Code Risk: คำเตือน) → ซ้ำ/เดือนนี้ → Instock/Sale/FIFO/NotFIFO */
+function vSNHeaderM(code, name, zone, instock, sale, fifo, notfifo, repeatDays, notfifoMonth){
+  let html = `<div class="v-msnhead">
+      <button type="button" class="back" onclick="closeSNModal()" aria-label="กลับ"><i class="bi bi-chevron-left"></i></button>
+      <div class="t"><span class="mono">${code}</span><span>${name || ''}</span></div>
+      <span class="v-zbadge">${zone || ''}</span>
+    </div>`;
+  let info = null;
+  if (isRiskMode) {
+    info = riskInfo({ code });
+    html += `<div class="v-warnbox ${info.bad ? 'bad' : 'warn'}"><i class="bi bi-exclamation-triangle"></i><div><b>${info.msg}</b><small>${info.sub}</small></div></div>`;
+  }
+  html += `<div class="v-stat2">${vBox('rep', 'ซ้ำ', `${repeatDays || 0} <i>วัน</i>`)}${vBox('month', 'NotFIFO เดือนนี้', notfifoMonth || 0)}</div>`
+        + `<div class="v-stat4">${vBox('instock', 'Instock', instock || 0)}${vBox('sale', 'Sale', sale || 0)}${vBox('fifo', 'FIFO', fifo || 0)}${vBox('nf', 'Not FIFO', notfifo || 0)}</div>`;
+  if (info) html += vMatrixM(info);
+  return html;
+}
+
+/* สรุปบนสุด */
+function renderMobileSummary(zoneAll, base){
+  const box = document.getElementById('mSummary');
+  if (!box) return;
+  if (isRiskMode) {
+    let bad = 0, warn = 0, nearest = null;
+    base.forEach(r => {
+      const info = riskInfo(r);
+      info.bad ? bad++ : warn++;
+      if (info.maxAge >= 0 && (nearest === null || info.left < nearest)) nearest = info.left;
+    });
+    box.className = 'v-summary three';
+    box.innerHTML = `<div class="v-sum bad"><small>หยิบผิดล็อต</small><b>${bad} <i>Code</i></b></div>`
+      + `<div class="v-sum warn"><small>เสี่ยง (อายุ 23–29)</small><b>${warn} <i>Code</i></b></div>`
+      + `<div class="v-sum"><small>ใกล้ 30 วันสุด</small><b>${nearest === null ? '-' : Math.max(nearest, 0)} <i>วัน</i></b></div>`;
+    return;
+  }
+  let sumNF = 0, maxRep = 0, zNF = 0, zSale = 0;
+  base.forEach(r => { sumNF += Number(r.notfifo) || 0; maxRep = Math.max(maxRep, Number(r.repeatDays) || 0); });
+  zoneAll.forEach(r => { if (String(r.code || '').startsWith('**')) return; zNF += Number(r.notfifo) || 0; zSale += Number(r.sale) || 0; });
+  box.className = 'v-summary';
+  box.innerHTML = `<div class="v-sum"><small>Code ที่ต้องดู</small><b>${base.length}</b></div>`
+    + `<div class="v-sum"><small>Not FIFO รวม</small><b style="color:var(--v-bad)">${sumNF}</b></div>`
+    + `<div class="v-sum"><small>ซ้ำสูงสุด</small><b>${maxRep} <i>วัน</i></b></div>`
+    + `<div class="v-sum"><small>NotFIFO% โซน ${currentPrefix}</small><b style="color:var(--v-accent)">${zSale ? (zNF / zSale * 100).toFixed(2) + '%' : '-'}</b></div>`;
+}
+
+/* ปุ่ม Zone เลื่อนข้าง */
+function renderZoneChips(){
+  const m = document.getElementById('zoneChips');
+  if (!m) return;
+  m.innerHTML = V_ZONES_CHIP.map(z => {
+    const n = zoneCount(z);
+    return `<button type="button" class="v-zchip${z === currentPrefix ? ' on' : ''}" onclick="vPickZoneM('${z}')">${z}`
+      + (n != null ? `<span class="n">${n}</span>` : '') + `</button>`;
+  }).join('');
+  if (vLastChipZone !== currentPrefix) {
+    vLastChipZone = currentPrefix;
+    const on = m.querySelector('.on');
+    if (on && m.offsetParent !== null) on.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+}
+function vPickZoneM(z){
+  if (!getCurrentDate()) { openFilterModal(); return; }
+  currentPrefix = z; unifiedZone = z; vSubZone = null;
+  document.querySelectorAll('#zoneGrid .zone-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === z));
+  renderZoneChips();
+  onDateOrZoneChange();
+}
+
+/* ส่วนของมือถือใน updateModeUI */
+function vUpdateModeM(){
+  document.querySelectorAll('#mobileLayout .v-seg button[data-mode]').forEach(b => b.classList.toggle('on', (b.dataset.mode === 'risk') === isRiskMode));
+  const name = isRiskMode ? 'Code Risk' : 'Not FIFO';
+  const dash = typeof currentView !== 'undefined' && currentView === 'dashboard';
+  const lab = document.getElementById('viewLabel'), oth = document.getElementById('viewOther');
+  if (lab) lab.textContent = dash ? 'Dashboard' : name;
+  if (oth) oth.textContent = dash ? name : 'Dashboard';
+  const sort = document.getElementById('mSort');
+  const mf = document.getElementById('mRiskFilters');
+  const lg = document.getElementById('mLegend');
+  if (sort) { sort.style.display = isRiskMode ? 'none' : ''; sort.value = sortMode; }
+  if (lg) lg.style.display = isRiskMode ? 'flex' : 'none';
+  if (mf) {
+    mf.style.display = isRiskMode ? 'flex' : 'none';
+    mf.innerHTML = [['all', 'ทั้งหมด', ''], ['bad', 'ผิดล็อต', 'bad'], ['warn', 'เสี่ยง', 'warn']]
+      .map(([v, l, t]) => `<button type="button" class="${v === riskFilter ? 'on ' + t : ''}" onclick="vSetFilter('${v}')">${l}</button>`).join('');
+  }
+  const sc = document.getElementById('mSubChip');
+  if (sc) sc.innerHTML = vSubZone ? `<button type="button" class="v-subchip" onclick="vSubZone=null;applyFilterSort()">Sub Zone ${vSubZone} ✕</button>` : '';
 }
 
 </script>
