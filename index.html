@@ -3258,7 +3258,7 @@ function zcFetch(date, zone){
 
   const p = (async () => {
     const res  = await callGAS("getZoneDataMerged", { date: date, mainzone: zone });
-    const data = { fifo: (res && res.fifo) || [], sn: (res && res.sn) || {} };
+    const data = { fifo: (res && res.fifo) || [], sn: (res && res.sn) || {}, tot: (res && res.tot) || null };
     const json = JSON.stringify(data);
     const entry = { data, ts: Date.now(), sig: zcSig(json) };
     zcMemSet(key, entry);
@@ -3464,12 +3464,38 @@ async function startupLoad(){
 document.addEventListener("DOMContentLoaded", () => setTimeout(startupLoad, 0));
 
 /** ตั้งข้อมูลโซนที่จะแสดง */
+let zoneTotals = null;   // { "A1": {sale, nf}, ... } ยอดรวมทุก Code ของโซน (จาก GAS)
+/** รวม Sale / NotFIFO ของโซนที่เลือก แยก Sub Zone — ใช้ยอดรวมจาก GAS ถ้ามี (ตรงกับ Dashboard)
+ *  ถ้า GAS ยังเป็นเวอร์ชันเก่า (ไม่มี tot) ค่อยรวมจากรายการ Code ที่ได้มา */
+function vZoneAgg(){
+  const subs = {}; let nf = 0, sale = 0;
+  const get = k => subs[k] || (subs[k] = { nf: 0, sale: 0, codes: 0 });
+  if (zoneTotals) {
+    Object.keys(zoneTotals).forEach(k => {
+      if (!isMatchZone(k, currentPrefix)) return;
+      const t = zoneTotals[k], a = get(k);
+      a.nf += Number(t.nf) || 0; a.sale += Number(t.sale) || 0;
+    });
+  }
+  fifoViewList.forEach(r => {
+    if (!isMatchZone(r.zone, currentPrefix)) return;
+    const a = get(vSubOf(r.zone));
+    if (!zoneTotals) {
+      if (String(r.code || '').startsWith('**')) return;
+      a.nf += Number(r.notfifo) || 0; a.sale += Number(r.sale) || 0;
+    }
+    if ((Number(r.notfifo) || 0) > 0) a.codes++;
+  });
+  Object.values(subs).forEach(a => { nf += a.nf; sale += a.sale; });
+  return { subs, nf, sale };
+}
 function applyZoneData(date, zone, data){
   fifoRawCache = data.fifo;
   fifoViewList = data.fifo;
   snIndexMap   = data.sn;
   fifoCacheState.date = date;
   fifoCacheState.zone = zone;
+  zoneTotals = data.tot || null;
   snGroupedByCode = null;
   snRCGroupCache  = null;
 }
@@ -5757,11 +5783,7 @@ function vUrgentReason(r){
 }
 // NotFIFO% ของโซน = SUM(NotFIFO) / SUM(Sale) ทุก Code ในโซน (ไม่นับ Code ที่ขึ้นต้น **)
 function renderZonePctPC(){
-  let nf = 0, sale = 0;
-  fifoViewList.forEach(r => {
-    if (!isMatchZone(r.zone, currentPrefix) || String(r.code || '').startsWith('**')) return;
-    nf += Number(r.notfifo) || 0; sale += Number(r.sale) || 0;
-  });
+  const { nf, sale } = vZoneAgg();
   const v = document.getElementById('pcKpiPct'), l = document.getElementById('pcKpiPctLabel');
   if (l) l.textContent = 'NotFIFO% โซน ' + currentPrefix;
   if (v) v.textContent = sale ? (nf / sale * 100).toFixed(2) + '%' : '-';
@@ -5910,16 +5932,7 @@ function renderSubChartPC(){
   if (vSubPrefix !== currentPrefix) { vSubPrefix = currentPrefix; vSubZone = null; }
   const d = getCurrentDate();
   const dl = document.getElementById('pcSubDate'); if (dl) dl.textContent = d ? formatDateDMY(d) : '';
-  const agg = {};
-  let tNF = 0, tSale = 0;
-  fifoViewList.forEach(r => {
-    if (!isMatchZone(r.zone, currentPrefix) || String(r.code || '').startsWith('**')) return;
-    const k = vSubOf(r.zone);
-    const a = agg[k] || (agg[k] = { nf: 0, sale: 0, codes: 0 });
-    a.nf += Number(r.notfifo) || 0; a.sale += Number(r.sale) || 0;
-    if ((Number(r.notfifo) || 0) > 0) a.codes++;
-    tNF += Number(r.notfifo) || 0; tSale += Number(r.sale) || 0;
-  });
+  const z = vZoneAgg(), agg = z.subs, tNF = z.nf, tSale = z.sale;
   const rows = Object.entries(agg).map(([k, a]) => ({ k, pct: a.sale ? a.nf / a.sale * 100 : 0, codes: a.codes }))
                      .sort((a, b) => b.pct - a.pct || a.k.localeCompare(b.k));
   if (!rows.length) { box.innerHTML = '<div class="v-sub-empty">ยังไม่มีข้อมูล</div>'; return; }
@@ -6169,7 +6182,7 @@ function renderMobileSummary(zoneAll, base){
   }
   let sumNF = 0, maxRep = 0, zNF = 0, zSale = 0;
   base.forEach(r => { sumNF += Number(r.notfifo) || 0; maxRep = Math.max(maxRep, Number(r.repeatDays) || 0); });
-  zoneAll.forEach(r => { if (String(r.code || '').startsWith('**')) return; zNF += Number(r.notfifo) || 0; zSale += Number(r.sale) || 0; });
+  { const z = vZoneAgg(); zNF = z.nf; zSale = z.sale; }   // ยอดรวมทุก Code ของโซน — ตรงกับ Dashboard
   box.className = 'v-summary';
   box.innerHTML = `<div class="v-sum"><small>Code ที่ต้องดู</small><b>${base.length}</b></div>`
     + `<div class="v-sum"><small>Not FIFO รวม</small><b style="color:var(--v-bad)">${sumNF}</b></div>`
