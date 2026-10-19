@@ -790,6 +790,31 @@ button, input, select, textarea{ font-family:inherit; }
 .toast-msg.warn{ background:var(--v-badSolid); color:#fff; }
 [data-bs-theme="dark"] .toast-msg.ok{ background:#15803d; }
 
+
+/* ---------- 📋 ปุ่มคัดลอก SN (แยกจากการแตะเลือก) ---------- */
+.sn-copy{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:22px; height:22px; margin:-2px -6px -2px 0; padding:0;
+  border:0; border-radius:6px; background:transparent; color:inherit;
+  opacity:.55; cursor:pointer; flex:0 0 auto;
+}
+.sn-copy svg{ width:14px; height:14px; }
+.sn-copy:hover{ opacity:1; background:rgba(127,127,127,.18); }
+.sn-copy.done{ opacity:1; color:var(--v-ok); }
+.sn-chip.sel .sn-copy.done{ color:#fff; }
+.col-sn .sn-copy{ margin:0 0 0 6px; vertical-align:-3px; }
+.rc-copy{
+  border:1px solid var(--v-line); background:var(--v-card); color:var(--v-text2);
+  border-radius:8px; padding:2px 10px; font-size:12px; font-weight:700; cursor:pointer;
+  display:inline-flex; align-items:center; gap:4px;
+}
+.rc-copy:hover{ border-color:var(--v-accent); color:var(--v-accent); }
+.rc-copy svg{ width:13px; height:13px; }
+.rc-block-head .rc-copy{ margin-left:8px; }
+.rc-block-head .rc-flag + .rc-copy, .rc-block-head .rc-flag ~ .rc-pick{ }
+.sn-chip.deleted .sn-copy{ text-decoration:none; }
+@media (hover:hover){ .sn-chip .sn-copy{ opacity:.35; } .sn-chip:hover .sn-copy{ opacity:.8; } .sn-chip .sn-copy:hover{ opacity:1; } }
+
 @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
 </style>
 </head>
@@ -1443,7 +1468,8 @@ function renderGlobalExtraBar(){
     <span>🗑️ เลือกไว้ ${extraSelection.size} SN จาก ${gx.length} Code</span>
     <span class="ge-codes">📅 ${escapeHtml(selectionDate() || "")}</span>
     <span class="ge-codes">${escapeHtml(codes)}</span>
-    <button class="btn btn-sm btn-light fw-bold ms-auto" onclick="clearExtra()">ล้าง</button>
+    <button class="btn btn-sm btn-light fw-bold ms-auto" onclick="copySelectedSNs(this)">📋 Copy ที่เลือก</button>
+    <button class="btn btn-sm btn-light fw-bold" onclick="clearExtra()">ล้าง</button>
     <button class="btn btn-sm btn-danger fw-bold" onclick="askExtraDelete()">ลบทั้งหมดทีเดียว</button>`;
 }
 
@@ -1771,7 +1797,8 @@ function renderAllSN(g, list){
   if (hereCount || extraSelection.size){
     html += `<div class="extra-bar">
         <span>🗑️ Code นี้ ${hereCount} SN · รวมทุก Code ${extraSelection.size} SN</span>
-        <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="clearExtra()">ล้าง</button>
+        <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="copySelectedSNs(this)">📋 Copy ที่เลือก</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearExtra()">ล้าง</button>
         <button class="btn btn-sm btn-danger fw-bold" onclick="askExtraDelete()">ลบ SN ที่เลือก</button>
       </div>`;
   }
@@ -1811,6 +1838,9 @@ function renderAllSN(g, list){
                      : (hitCount ? `<span class="rc-flag partial">Report ${hitCount}</span>` : ``)}
         <button class="rc-pick ${items.every(x => extraSelection.has(extraKey(g, x.sn))) ? "on" : ""}"
                 onclick="toggleExtraRC('${escapeAttr(rc)}')">เลือกทั้ง RC</button>
+        <button type="button" class="rc-copy" title="คัดลอก SN ทั้ง RC (บรรทัดละ 1 SN)"
+                data-sns="${escapeHtml(shown.map(x => x.sn).join(" "))}"
+                onclick="copySNs(this.dataset.sns.split(' '), this)">${COPY_ICON} Copy</button>
       </div>
       <div class="sn-chips">`;
 
@@ -1827,6 +1857,7 @@ function renderAllSN(g, list){
             onclick="toggleExtra('${escapeAttr(s.sn)}')">
           ${escapeHtml(s.sn)}
           <i class="sn-chip-meta">${escapeHtml(s.status || "")}</i>
+          ${copyBtn(s.sn)}
         </span>`;
     });
 
@@ -1988,7 +2019,7 @@ function buildRow(r){
     <tr class="st-${st} ${checked ? "is-selected" : ""}">
       <td class="col-chk">${chk}</td>
       <td data-label="ประเภท:"><span class="type-tag type-${String(r.type || "SN").toLowerCase()}">${escapeHtml(r.type || "SN")}</span></td>
-      <td class="col-sn">${escapeHtml(r.sn || (r.type === "RC" ? "— ทั้ง RC —" : "— ไม่ระบุ SN —"))}</td>
+      <td class="col-sn">${escapeHtml(r.sn || (r.type === "RC" ? "— ทั้ง RC —" : "— ไม่ระบุ SN —"))}${r.sn ? copyBtn(r.sn) : ""}</td>
       <td data-label="RC:">${escapeHtml(r.rc || "-")}</td>
       <td data-label="อายุ:">${r.age !== "" && r.age != null ? escapeHtml(r.age) : "-"}</td>
       <td data-label="เหตุผล:">${escapeHtml(r.reason || "-")}
@@ -2397,6 +2428,7 @@ function buildBatchCodeBlocks(list){
                   title="${escapeHtml(d.reason || "-")}">
                   ${escapeHtml(d.sn)}
                   <i class="sn-chip-meta">${escapeHtml(d.status || "")}</i>
+                  ${copyBtn(d.sn)}
                 </span>`).join("")}</div>
             </div>`;
         }).join("")
@@ -2485,6 +2517,7 @@ function renderDeletedSN(list){
               title="${escapeHtml((d.reason || "-") + " · ลบเมื่อ " + (d.deletedAt || ""))}">
               ${escapeHtml(d.sn)}
               <i class="sn-chip-meta">${escapeHtml(d.status || "")}</i>
+              ${copyBtn(d.sn)}
             </span>`;
         }).join("")}</div>
       </div>`;
@@ -2631,6 +2664,43 @@ function showToast(msg, type = ""){
   el.className = "toast-msg show " + type;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+/* ==========================================================
+   📋 คัดลอก SN — ปุ่มแยกในชิป จะได้ไม่ไปสลับการเลือก
+   ========================================================== */
+const COPY_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5.5" y="5.5" width="8" height="8.5" rx="1.6"/><path d="M10.5 5.5V3.6A1.6 1.6 0 0 0 8.9 2H3.6A1.6 1.6 0 0 0 2 3.6v5.3a1.6 1.6 0 0 0 1.6 1.6h1.9"/></svg>';
+function copyBtn(sn){
+  return `<button type="button" class="sn-copy" title="คัดลอก SN" aria-label="คัดลอก SN ${escapeHtml(sn)}"
+    onclick="event.stopPropagation(); copySNs(['${escapeAttr(sn)}'], this)">${COPY_ICON}</button>`;
+}
+async function copyText(text){
+  try {
+    if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; }
+  } catch (e) {}
+  // สำรอง: เบราว์เซอร์เก่า / ไม่ใช่ https
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.setAttribute("readonly", "");
+  ta.style.cssText = "position:fixed;top:-1000px;opacity:0";
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  ta.remove();
+  return ok;
+}
+async function copySNs(list, btn){
+  list = (list || []).map(x => String(x).trim()).filter(Boolean);
+  if (!list.length) return;
+  const ok = await copyText(list.join("\n"));
+  if (!ok) { showToast("คัดลอกไม่สำเร็จ", "warn"); return; }
+  showToast(list.length === 1 ? "คัดลอก " + list[0] + " แล้ว" : "คัดลอก " + list.length + " SN แล้ว", "ok");
+  if (btn && btn.classList.contains("sn-copy")) {
+    btn.classList.add("done");
+    setTimeout(() => btn.classList.remove("done"), 1200);
+  }
+}
+function copySelectedSNs(btn){
+  copySNs([...extraSelection.values()].map(v => v.sn), btn);
 }
 </script>
 
