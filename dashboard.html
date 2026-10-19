@@ -224,7 +224,7 @@ td .na{color:var(--muted)}
   <div class="bar">
     <div class="brand"><button type="button" class="backapp" id="btnBackApp" title="กลับหน้ารายการ"><span class="t"><small>FIFO MONITOR</small><b>Dashboard</b></span><span class="o">⇆ <span id="backAppName">Not FIFO</span></span></button><h1>FIFO Dashboard</h1><span id="updated" class="muted"></span></div>
     <span id="filterSum" class="muted sum"></span>
-    <button class="btn-ghost" id="btnReload" title="อ่านข้อมูลใหม่จากชีต (ข้าม cache)">↻</button>
+    <button class="btn-ghost" id="btnReload" title="ล้างแคชทั้งหมด แล้วอ่านข้อมูลใหม่จากชีต">↻</button>
     <a class="btn-ghost" id="btnFull" href="dashboard.html" target="_blank" rel="noopener" title="เปิดเต็มหน้าในแท็บใหม่" style="text-decoration:none;color:inherit">↗</a>
     <button class="btn-ghost" id="btnToggle">▴ ซ่อน</button>
   </div>
@@ -344,7 +344,7 @@ td .na{color:var(--muted)}
 <script>
 /* ================= ตั้งค่า ================= */
 // ใช้ URL เดียวกับที่ index.html เรียก GAS (ผ่าน Cloudflare Worker)
-const API_URL = "https://script.google.com/macros/s/AKfycbw9FUQVEOripWQc7x2l7wmL1krMRsh5M_ouW5LGLJonBOXW62H4J850YvPUigJfrFnl/exec";
+const API_URL = "https://YOUR-WORKER.workers.dev";
 // เปิดด้วย dashboard.html?demo เพื่อดูหน้าตาด้วยข้อมูลจำลอง
 const DEMO = new URLSearchParams(location.search).has("demo");
 // เปิดด้วย dashboard.html?embed=1 เมื่อฝังใน iframe ของ index.html
@@ -1249,7 +1249,11 @@ document.addEventListener("click", e => {
   const th = e.target.closest("thead th[data-b]"); if (!th) return;
   S.hl = S.hl === th.dataset.b ? null : th.dataset.b; applyHighlight();
 });
-$("btnReload").addEventListener("click", () => load(true));
+$("btnReload").addEventListener("click", () => {
+  // โหมดฝังใน index → ให้หน้าหลักล้างแคชข้อมูลโซน (GAS + เบราว์เซอร์) ด้วย
+  if (EMBED) { try { window.parent.postMessage({ type: "fifo:refreshAll" }, "*"); } catch (e) {} }
+  load(true);
+});
 
 // ซ่อน / แสดงแถบตัวกรอง
 function setCollapsed(c) {

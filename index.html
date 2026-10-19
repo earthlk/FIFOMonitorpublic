@@ -3082,7 +3082,8 @@ let zoneViewReq = 0;
 let zcForeground = 0;           // จำนวนคำขอที่ผู้ใช้รออยู่ — preload จะหยุดรอ
 const zcSleep = ms => new Promise(r => setTimeout(r, ms));
 
-const zcKey = (date, zone) => date + "|" + zone;
+const ZC_VER = "v2";   // 🔧 เปลี่ยนเมื่อรูปแบบข้อมูลจาก GAS เปลี่ยน → แคชเก่าในเครื่องจะไม่ถูกใช้
+const zcKey = (date, zone) => ZC_VER + "|" + date + "|" + zone;
 
 function zcSig(s){
   // hash สั้นๆ ไว้เทียบว่าข้อมูลเปลี่ยนไหม
@@ -3496,6 +3497,7 @@ function applyZoneData(date, zone, data){
   fifoCacheState.date = date;
   fifoCacheState.zone = zone;
   zoneTotals = data.tot || null;
+  if (!zoneTotals && data.fifo && data.fifo.length) console.warn("[FIFO] GAS ไม่ได้ส่ง tot มา — NotFIFO% จะคำนวณจากเฉพาะ Code ที่มีปัญหา (ตรวจว่า Deploy Code.gs เวอร์ชันใหม่แล้ว)");
   snGroupedByCode = null;
   snRCGroupCache  = null;
 }
@@ -5922,7 +5924,38 @@ window.addEventListener('message', e => {
   }
   if (d.type === 'fifo:ready') updateModeUI();
   if (d.type === 'fifo:goto') vGotoFromDash(d);
+  if (d.type === 'fifo:refreshAll') vRefreshAll();
 });
+/** ล้างแคชทั้งหมด (ฝั่ง GAS + ในเบราว์เซอร์) แล้วโหลดโซนที่ดูอยู่ใหม่ — เรียกจากปุ่ม ↻ ใน Dashboard */
+let vRefreshing = false;
+async function vRefreshAll(){
+  if (vRefreshing) return;
+  vRefreshing = true;
+  const date = getCurrentDate();
+  try {
+    try { await callGAS("clearZoneCache", { date: date }); } catch (e) { console.warn("[refresh] clearZoneCache", e); }
+    zcPrefetchGen++; zcPrefetchDateCur = null;          // หยุด preload รอบเก่า
+    zcMem.clear();
+    try {
+      const db = await zcDb();
+      if (db) {
+        const tx = db.transaction(["data", "meta"], "readwrite");
+        tx.objectStore("data").clear(); tx.objectStore("meta").clear();
+        await zcTxDone(tx);
+      }
+    } catch (e) { console.warn("[refresh] idb", e); }
+    try { localStorage.removeItem(ZC_MISS_KEY); } catch (e) {}
+    fifoCacheState.date = null; fifoCacheState.zone = null;   // บังคับให้โหลดใหม่
+    if (currentPrefix && date) {
+      await onDateOrZoneChange();
+      pcApplyFilter();
+      zcPrefetchDate(date);
+    }
+    showToast("ล้างแคชและโหลดข้อมูลใหม่แล้ว", "ok");
+  } catch (e) {
+    showToast("รีเฟรชไม่สำเร็จ: " + (e.message || e), "warn");
+  } finally { vRefreshing = false; }
+}
 /* ---------- กราฟ NotFIFO% แยก Sub Zone (sidebar) — กดแท่งเพื่อกรองการ์ด ---------- */
 let vSubZone = null, vSubPrefix = null;
 function vSubOf(zone){ return String(zone || '').trim().toUpperCase().slice(0, 2); }
