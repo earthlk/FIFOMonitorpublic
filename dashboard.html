@@ -344,7 +344,7 @@ td .na{color:var(--muted)}
 <script>
 /* ================= ตั้งค่า ================= */
 // ใช้ URL เดียวกับที่ index.html เรียก GAS (ผ่าน Cloudflare Worker)
-const API_URL = "https://script.google.com/macros/s/AKfycbw9FUQVEOripWQc7x2l7wmL1krMRsh5M_ouW5LGLJonBOXW62H4J850YvPUigJfrFnl/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbw9FUQVEOripWQc7x2l7wmL1krMRsh5M_ouW5LGLJonBOXW62H4J850YvPUigJfrFnl/exec";   // GAS ตัวเดียวกับ index.html
 // เปิดด้วย dashboard.html?demo เพื่อดูหน้าตาด้วยข้อมูลจำลอง
 const DEMO = new URLSearchParams(location.search).has("demo");
 // เปิดด้วย dashboard.html?embed=1 เมื่อฝังใน iframe ของ index.html
@@ -458,6 +458,12 @@ function label(k) {
 }
 const keyOf = r => S.mode === "day" ? r.d : r.d.slice(0, 7);
 
+/** แทน sale ด้วยค่าที่กำหนด (ใช้ Sale ของ Main Zone เป็นตัวหารของ Sub Zone) */
+function shareOf(map, saleOf) {
+  const out = new Map();
+  map.forEach((o, k) => out.set(k, Object.assign({}, o, { sale: saleOf(k) })));
+  return out;
+}
 function sumBy(rows, keyFn) {
   const m = new Map();
   for (const r of rows) {
@@ -587,7 +593,7 @@ function render() {
 
   $("tTotal").textContent = "NotFIFO% " + unit;
   $("tMain").textContent = "NotFIFO% แยก Main Zone " + unit;
-  $("tSub").textContent = "NotFIFO% แยก Sub Zone " + unit;
+  $("tSub").textContent = "NotFIFO% แยก Sub Zone " + unit + " (÷ Sale ของ Main Zone)";
 
   renderZoneList(inRange);
   const prev = prevRows();
@@ -619,10 +625,17 @@ function render() {
   // Sub Zone ใน sheet เป็นเลข (0,1,2…) → แสดงเป็น A0, A1 แบบ Looker
   const subLbl = s => !s ? "(ไม่ระบุ)" : /^\d+$/.test(s) ? S.subMain.charAt(0) + s : s;
   const subByB = sumBy(subRows, keyOf);
-  if (S.view.sub === "cards") renderMinis("mSub", B, subs, subCell, subTot, sumBy(prev.filter(r => r.m === S.subMain), r => r.s), subByB, subLbl, "sub", () => zoneColor(S.subMain));
-  else renderCompare("sub", B, subs, subCell, subTot, total(subRows), subLbl, () => zoneColor(S.subMain));
+  // 🎯 Sub Zone = NotFIFO ของ Sub Zone ÷ Sale ของ Main Zone (ช่วงเดียวกัน)
+  //    → ทุก Sub Zone รวมกันได้ NotFIFO% ของ Main Zone พอดี เห็นว่า Sub ไหนดันตัวเลขขึ้น
+  const mainSale = new Map([...subByB].map(([b, o]) => [b, o.sale]));
+  const prevSubRows = prev.filter(r => r.m === S.subMain);
+  const subCellS = shareOf(subCell, k => mainSale.get(k.slice(k.lastIndexOf("|") + 1)) || 0);
+  const subTotS = shareOf(subTot, () => total(subRows).sale);
+  const prevSubS = shareOf(sumBy(prevSubRows, r => r.s), () => total(prevSubRows).sale);
+  if (S.view.sub === "cards") renderMinis("mSub", B, subs, subCellS, subTotS, prevSubS, subByB, subLbl, "sub", () => zoneColor(S.subMain));
+  else renderCompare("sub", B, subs, subCellS, subTotS, total(subRows), subLbl, () => zoneColor(S.subMain));
   $("tblSub").innerHTML = subs.length
-    ? pivot(B, subs, subCell, subTot, subByB, total(subRows), subLbl, () => zoneColor(S.subMain))
+    ? pivot(B, subs, subCellS, subTotS, subByB, total(subRows), subLbl, () => zoneColor(S.subMain), subs.length)
     : '<div class="empty">ไม่มีข้อมูล</div>';
 
   const rng = S.mode === "day"
@@ -697,8 +710,9 @@ function renderSummary(B, byB, tot) {
 }
 
 /* ---- Pivot: แถว = zone, คอลัมน์ = วัน/เดือน ---- */
-function pivot(B, keys, cell, rowTot, colTot, grand, lblOf, colorOf) {
-  const g = pct(grand) || 0;
+function pivot(B, keys, cell, rowTot, colTot, grand, lblOf, colorOf, shareN) {
+  // Sub Zone (shareN) แต่ละตัวเป็นส่วนหนึ่งของ Main → ไฮไลต์ตัวที่เกินค่าเฉลี่ยต่อ Sub Zone
+  const g = (pct(grand) || 0) / (shareN || 1);
   const heat = v => {
     if (v == null || !g || v <= g) return "";
     const a = Math.min((v - g) / (2 * g), 1) * 0.45;
@@ -974,7 +988,8 @@ function renderCompare(sec, B, keys, cell, rowTot, grand, lblOf, colorOf) {
         legend: { display: false },
         tooltip: Object.assign(tooltipStyle(), { displayColors: false, callbacks: {
           label: c => "NotFIFO% " + c.parsed.x.toFixed(2) + "%",
-          footer: it => { const o = ranked[it[0].dataIndex].o; return `NotFIFO ${fmtNum(o.nf)} / Sale ${fmtNum(o.sale)}`; } } })
+          footer: it => { const o = ranked[it[0].dataIndex].o;
+            return `NotFIFO ${fmtNum(o.nf)} / Sale ${sec === "sub" ? "ของ " + S.subMain + " " : ""}${fmtNum(o.sale)}`; } } })
       }
     },
     plugins: [barLabels, avgV]

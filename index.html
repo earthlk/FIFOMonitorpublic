@@ -5966,16 +5966,17 @@ function renderSubChartPC(){
   const d = getCurrentDate();
   const dl = document.getElementById('pcSubDate'); if (dl) dl.textContent = d ? formatDateDMY(d) : '';
   const z = vZoneAgg(), agg = z.subs, tNF = z.nf, tSale = z.sale;
-  const rows = Object.entries(agg).map(([k, a]) => ({ k, pct: a.sale ? a.nf / a.sale * 100 : 0, codes: a.codes }))
+  // 🎯 NotFIFO ของ Sub Zone ÷ Sale ของทั้ง Main Zone → รวมทุกแท่ง = NotFIFO% ของโซน
+  const rows = Object.entries(agg).map(([k, a]) => ({ k, pct: tSale ? a.nf / tSale * 100 : 0, nf: a.nf, codes: a.codes }))
                      .sort((a, b) => b.pct - a.pct || a.k.localeCompare(b.k));
   if (!rows.length) { box.innerHTML = '<div class="v-sub-empty">ยังไม่มีข้อมูล</div>'; return; }
   const total = tSale ? tNF / tSale * 100 : 0;
-  const max = Math.max(total, ...rows.map(r => r.pct)) || 1;
+  const max = Math.max(...rows.map(r => r.pct)) || 1;   // แท่งเป็นส่วนของโซน ไม่ต้องเทียบเส้นรวม
   box.innerHTML = `<div class="v-sub">`
-    + rows.map(r => `<button type="button" class="v-sub-row${r.k === vSubZone ? ' on' : ''}${vSubZone && r.k !== vSubZone ? ' dim' : ''}" onclick="vPickSub('${r.k}')" title="${r.k}: ${r.pct.toFixed(2)}% · ${r.codes} Code ที่มี Not FIFO">`
-      + `<span class="k">${r.k}</span><span class="b"><i style="width:${(r.pct / max * 100).toFixed(1)}%"></i><em style="left:${(total / max * 100).toFixed(1)}%"></em></span>`
+    + rows.map(r => `<button type="button" class="v-sub-row${r.k === vSubZone ? ' on' : ''}${vSubZone && r.k !== vSubZone ? ' dim' : ''}" onclick="vPickSub('${r.k}')" title="${r.k}: NotFIFO ${r.nf} ÷ Sale โซน ${tSale} = ${r.pct.toFixed(2)}% · ${r.codes} Code ที่มี Not FIFO">`
+      + `<span class="k">${r.k}</span><span class="b"><i style="width:${(r.pct / max * 100).toFixed(1)}%"></i></span>`
       + `<span class="v">${r.pct.toFixed(2)}%</span></button>`).join('')
-    + `</div><div class="v-sub-foot"><span><em></em>รวมโซน ${total.toFixed(2)}%</span>${vSubZone ? `<button type="button" onclick="vPickSub('${vSubZone}')">ล้างตัวกรอง</button>` : '<span>กดแท่งเพื่อกรอง</span>'}</div>`;
+    + `</div><div class="v-sub-foot"><span>รวมทุก Sub = ${total.toFixed(2)}%</span>${vSubZone ? `<button type="button" onclick="vPickSub('${vSubZone}')">ล้างตัวกรอง</button>` : '<span>กดแท่งเพื่อกรอง</span>'}</div>`;
 }
 function vPickSub(k){
   vSubZone = vSubZone === k ? null : k;
