@@ -2266,6 +2266,22 @@ body.v-mmode #filterModal .modal-content{ height:auto; border-radius:18px; borde
 .v-ocard .stat{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:12px; padding-top:10px; border-top:1px solid var(--v-line); font-size:16px; font-weight:600; color:var(--v-text2); }
 #mobileLayout .v-ocard .stat .v-pill{ font-size:18px; min-width:40px; padding:3px 10px; }
 #mobileLayout .v-ocard .stat .nf .v-pill{ font-size:17px; }
+
+/* ---------- 🔍 ตรวจความถูกต้องของไฟล์ก่อนอัปโหลด ---------- */
+.u-check{ margin-top:12px; border:1px solid var(--v-line); border-radius:12px; padding:12px 14px; background:var(--v-card); color:var(--v-text); font-size:14px; }
+.u-check.ok{ border-color:#86c99a; background:#eefaf1; }
+.u-check.warn{ border-color:var(--v-warnLine); background:var(--v-warnSoft); }
+.u-check.bad{ border-color:var(--v-badLine); background:var(--v-badSoft); }
+[data-bs-theme="dark"] .u-check.ok{ border-color:#24573a; background:#10261a; }
+.u-check .uc-head{ font-weight:700; font-size:15px; margin-bottom:8px; display:flex; gap:8px; align-items:center; }
+.u-check table{ width:100%; border-collapse:collapse; font-size:13px; }
+.u-check th, .u-check td{ padding:4px 6px; border-bottom:1px solid var(--v-line); text-align:right; white-space:nowrap; }
+.u-check th:first-child, .u-check td:first-child{ text-align:left; }
+.u-check th{ color:var(--v-muted); font-weight:600; }
+.u-check td.st{ text-align:center; }
+.u-check .uc-note{ color:var(--v-text2); font-size:12.5px; margin-top:8px; }
+.u-check details{ margin-top:6px; font-size:12.5px; }
+.u-check summary{ cursor:pointer; color:var(--v-text2); }
 </style>
 </head>
 
@@ -2626,6 +2642,7 @@ body.v-mmode #filterModal .modal-content{ height:auto; border-radius:18px; borde
              </div>
             <input type="file" accept=".csv" hidden id="file_snFile" onchange="onFilePicked('snFile',this)">
           </div>
+          <div id="uploadCheck" class="u-check" hidden></div>
         </div>
         <div id="uploadLoading" class="upload-loading d-none">
           <div class="spinner-border text-primary mb-3"></div>
@@ -3082,7 +3099,7 @@ let zoneViewReq = 0;
 let zcForeground = 0;           // จำนวนคำขอที่ผู้ใช้รออยู่ — preload จะหยุดรอ
 const zcSleep = ms => new Promise(r => setTimeout(r, ms));
 
-const ZC_VER = "v2";   // 🔧 เปลี่ยนเมื่อรูปแบบข้อมูลจาก GAS เปลี่ยน → แคชเก่าในเครื่องจะไม่ถูกใช้
+const ZC_VER = "v3";   // 🔧 เปลี่ยนเมื่อรูปแบบข้อมูลจาก GAS เปลี่ยน → แคชเก่าในเครื่องจะไม่ถูกใช้
 const zcKey = (date, zone) => ZC_VER + "|" + date + "|" + zone;
 
 function zcSig(s){
@@ -4819,6 +4836,8 @@ function closeModal() { if(modalInstance) modalInstance.hide(); }
 
 function resetUI() {
   uploadFiles = { fifoByDay: null, snReturn: null, snFile: null };
+  uploadCheckResult = null; uploadCheckGen++;
+  const uc = document.getElementById("uploadCheck"); if (uc) { uc.hidden = true; uc.innerHTML = ""; }
   document.querySelectorAll("input[type=file]").forEach(i => i.value = "");
   const dateLabel = document.getElementById("date_fifoByDay");
   if(dateLabel){ dateLabel.style.display = "none"; dateLabel.innerText = ""; }
@@ -4851,6 +4870,7 @@ function onFilePicked(key, input) {
   }
   uploadFiles[key] = file;
   nameLabel.innerText = file.name + " ✅"; nameLabel.className = "upload-filename text-success fw-bold";
+  runUploadCheck();
 
   if (key === "fifoByDay" && dateLabel) {
     dateLabel.style.display = "inline";
@@ -4909,6 +4929,10 @@ const readFileAsText = (file) => new Promise((resolve, reject) => {
 
 async function startBulkUpload() {
   if (!uploadFiles.fifoByDay || !uploadFiles.snReturn || !uploadFiles.snFile) { alert("กรุณาเลือกไฟล์ให้ครบทั้ง 3 ไฟล์ครับ"); return; }
+  if (uploadCheckBusy) { alert("กำลังตรวจไฟล์อยู่ รอสักครู่แล้วกดอีกครั้งครับ"); return; }
+  if (uploadCheckResult && uploadCheckResult.level === "bad" &&
+      !confirm("❌ ไฟล์ fifo_sn.csv ไม่ตรงกับ fifo_by_day.xlsx\n\n" + uploadCheckResult.summary +
+               "\n\nอาจเลือกไฟล์ผิดวัน — ยังต้องการอัปโหลดต่อหรือไม่?")) return;
   toggleLoading(true); updateProgress(5, "กำลังเตรียมข้อมูล...");
   try {
     const f1 = await readFileAsBase64(uploadFiles.fifoByDay);
@@ -6267,6 +6291,199 @@ function vUpdateModeM(){
   }
   const sc = document.getElementById('mSubChip');
   if (sc) sc.innerHTML = vSubZone ? `<button type="button" class="v-subchip" onclick="vSubZone=null;applyFilterSort()">Sub Zone ${vSubZone} ✕</button>` : '';
+}
+
+
+/* ==========================================================
+   🔍 ตรวจไฟล์ก่อนอัปโหลด
+   fifo_by_day คำนวณมาจาก SN ชุดเดียวกับ fifo_sn.csv
+   → นับ SN ใน CSV ตามกติกาเดียวกับระบบ (calcFIFO_) แล้วเทียบราย Code
+     Instock = SN ที่ยังไม่ขาย · Sale = SN ที่ SALE · Aging = อายุ ≥ 30 · NotFIFO
+   ถ้าเป็นไฟล์คนละวัน ตัวเลขจะไม่ตรงกันจำนวนมาก
+   ========================================================== */
+let uploadCheckResult = null, uploadCheckBusy = false, uploadCheckGen = 0;
+const ucEsc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+const UC_AGING = 30;
+
+const ucKey = v => String(v == null ? "" : v).replace(/\s+/g, "").toUpperCase();
+const ucSN  = v => String(v == null ? "" : v).replace(/\D/g, "").replace(/^0+/, "");
+const ucNum = v => { const n = Number(String(v == null ? "" : v).replace(/,/g, "").trim()); return isNaN(n) ? 0 : n; };
+const readArrayBuffer = file => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsArrayBuffer(file); });
+
+/** กติกาเดียวกับ calcFIFO_ ใน GAS */
+function ucCalc(items){
+  const sold = items.filter(x => x.sale), s = sold.length;
+  const old = items.filter(x => x.age >= UC_AGING).sort((a, b) => b.age - a.age);
+  let nf = 0;
+  if (old.length && s) {
+    const req = Math.min(s, old.length), quota = {};
+    for (let i = 0; i < req; i++) quota[old[i].age] = (quota[old[i].age] || 0) + 1;
+    let hits = 0;
+    sold.forEach(x => { if (quota[x.age] > 0) { quota[x.age]--; hits++; } });
+    nf = s - (hits + (s - req));
+  }
+  const inst = items.filter(x => !x.sale);
+  return { instock: inst.length, sale: s, aging: inst.filter(x => x.age >= UC_AGING).length, nf: nf };
+}
+
+/** หาแถวหัวตาราง (3 แถวแรก) → { row, col:{name:index} } */
+function ucHeader(rows, need){
+  for (let r = 0; r < Math.min(3, rows.length); r++) {
+    const col = {};
+    (rows[r] || []).forEach((h, i) => { const k = String(h == null ? "" : h).replace(/\s+/g, "").toLowerCase(); if (k && col[k] === undefined) col[k] = i; });
+    if (need.every(n => col[n] !== undefined)) return { row: r, col: col };
+  }
+  return null;
+}
+
+async function runUploadCheck(){
+  const box = document.getElementById("uploadCheck");
+  if (!box) return;
+  const f = uploadFiles;
+  if (!f.fifoByDay || !f.snFile) { box.hidden = true; uploadCheckResult = null; return; }
+
+  const gen = ++uploadCheckGen;
+  uploadCheckBusy = true;
+  box.hidden = false; box.className = "u-check";
+  box.innerHTML = `<div class="uc-head">⏳ กำลังตรวจความถูกต้องของไฟล์...</div>`;
+  try {
+    const res = await ucBuild(f);
+    if (gen !== uploadCheckGen) return;
+    uploadCheckResult = res;
+    ucRender(box, res);
+  } catch (e) {
+    if (gen !== uploadCheckGen) return;
+    uploadCheckResult = null;
+    box.className = "u-check warn";
+    box.innerHTML = `<div class="uc-head">⚠️ ตรวจไฟล์ไม่ได้</div><div class="uc-note">${ucEsc(e.message || String(e))}</div>`;
+  } finally {
+    if (gen === uploadCheckGen) uploadCheckBusy = false;
+  }
+}
+
+async function ucBuild(f){
+  /* ---- 1. fifo_by_day ---- */
+  const wb = XLSX.read(new Uint8Array(await readArrayBuffer(f.fifoByDay)), { type: "array" });
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: "" });
+  const H = ucHeader(rows, ["code", "instock", "sale"]);
+  if (!H) throw new Error("fifo_by_day.xlsx: หาหัวคอลัมน์ code / instock / sale ไม่เจอ");
+  const C = H.col, nameCol = C.shortname;
+  const hasAging = C.instock_aging !== undefined, hasNF = C.stock_not_fifo2 !== undefined;
+  const fileBy = {}, starCodes = new Set();   // Code ชื่อขึ้นต้น ** ระบบไม่นับ
+  for (let i = H.row + 1; i < rows.length; i++) {
+    const r = rows[i], code = ucKey(r[C.code]);
+    if (!code) continue;
+    if (nameCol !== undefined && String(r[nameCol] || "").trim().startsWith("**")) { starCodes.add(code); continue; }
+    const o = fileBy[code] || (fileBy[code] = { instock: 0, sale: 0, aging: 0, nf: 0 });
+    o.instock += ucNum(r[C.instock]); o.sale += ucNum(r[C.sale]);
+    if (hasAging) o.aging += ucNum(r[C.instock_aging]);
+    if (hasNF) o.nf += ucNum(r[C.stock_not_fifo2]);
+  }
+  const dl = document.getElementById("date_fifoByDay");
+  const fileDate = dl && /วันที่/.test(dl.innerText) ? dl.innerText.replace(/^.*วันที่:\s*/, "") : "";
+
+  /* ---- 2. fifo_sn.csv — ตัวอ่านเดียวกับตอนอัปโหลด คืน [sn, code, day_, module_, rec_num] (ลำดับเดียวกับชีต SN File) ---- */
+  const csv = parseCSVAndMapColumnsFast(await readFileAsText(f.snFile));
+  const byCode = {}, csvSN = new Set(), statusCount = {};
+  let snRows = 0;
+  csv.forEach(r => {
+    const sn = ucSN(r[0]), code = ucKey(r[1]);
+    if (!sn || !code || code === "CODE") return;          // ข้ามหัวตาราง
+    snRows++; csvSN.add(sn);
+    const st = String(r[3] || "").trim().toUpperCase() || "(ว่าง)";
+    statusCount[st] = (statusCount[st] || 0) + 1;
+    (byCode[code] = byCode[code] || []).push({
+      sale: String(r[3] || "").trim().toUpperCase() === "SALE",     // module_
+      age: Number(String(r[2] || "").replace(/[^\d.-]/g, "")) || 0  // day_
+    });
+  });
+  if (!snRows) throw new Error("fifo_sn.csv: ไม่พบข้อมูล SN");
+  const csvBy = {};
+  Object.keys(byCode).forEach(c => { csvBy[c] = ucCalc(byCode[c]); });
+
+  /* ---- 3. เทียบราย Code ---- */
+  const zero = { instock: 0, sale: 0, aging: 0, nf: 0 };
+  // fifo_by_day มีเฉพาะ Code ที่ขายในวันนั้น ส่วน fifo_sn มี SN ทุกตัว → เทียบเฉพาะ Code ที่อยู่ใน fifo_by_day
+  const codes = new Set(Object.keys(fileBy));
+  const csvCodes = Object.keys(csvBy).length;
+  const tot = { file: { ...zero }, csv: { ...zero } };
+  let compared = 0, matched = 0;
+  const bad = [];
+  codes.forEach(c => {
+    const a = fileBy[c] || zero, b = csvBy[c] || zero;
+    if (starCodes.has(c)) return;
+    ["instock", "sale", "aging", "nf"].forEach(k => { tot.file[k] += a[k]; tot.csv[k] += b[k]; });
+    if (!(a.instock + a.sale + b.instock + b.sale)) return;
+    compared++;
+    // ตัวชี้ขาด = Instock + Sale ราย Code (เปลี่ยนทุกวัน ไฟล์ต่างวันจะไม่ตรง)
+    // Aging / NotFIFO ใช้ดูประกอบ — ระบบต้นทางอาจนับต่างจากกติกาของเราเล็กน้อย
+    const same = a.instock === b.instock && a.sale === b.sale;
+    if (same) matched++;
+    if (!same || (hasAging && a.aging !== b.aging) || (hasNF && a.nf !== b.nf)) bad.push({ c, a, b, core: !same });
+  });
+
+  /* ---- 4. SN Return ต้องอยู่ใน CSV ---- */
+  let ret = null;
+  if (f.snReturn) {
+    try {
+      const wb2 = XLSX.read(new Uint8Array(await readArrayBuffer(f.snReturn)), { type: "array" });
+      const r2 = XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]], { header: 1, raw: true, defval: "" });
+      const H2 = ucHeader(r2, ["sn"]);
+      if (H2) {
+        let n = 0, found = 0;
+        for (let i = H2.row + 1; i < r2.length; i++) {
+          const sn = ucSN(r2[i][H2.col.sn]);
+          if (!sn) continue;
+          n++; if (csvSN.has(sn)) found++;
+        }
+        ret = { n, found };
+      }
+    } catch (e) { ret = null; }
+  }
+
+  const rate = compared ? matched / compared : 0;
+  const retRate = ret && ret.n ? ret.found / ret.n : null;
+  // ไฟล์ชุดเดียวกันควรตรงกันเกือบ 100% — ต่างวันแค่ 1 วันก็หลุดไปราว 10%
+  let level = rate >= 0.99 ? "ok" : rate >= 0.97 ? "warn" : "bad";
+  if (retRate !== null && retRate < 0.9 && level === "ok") level = "warn";
+  const off = (a, b) => Math.abs(a - b) / Math.max(a, b, 1) > 0.02;
+  if (level === "ok" && ((hasAging && off(tot.file.aging, tot.csv.aging)) || (hasNF && off(tot.file.nf, tot.csv.nf)))) level = "warn";
+  bad.sort((x, y) => (y.core ? 1 : 0) - (x.core ? 1 : 0));
+  const summary = `Code ตรงกัน ${matched.toLocaleString()} / ${compared.toLocaleString()} (${(rate * 100).toFixed(1)}%)`;
+  const statuses = Object.entries(statusCount).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  return { level, rate, matched, compared, bad, tot, ret, retRate, hasAging, hasNF, snRows, csvCodes, fileDate, summary, statuses };
+}
+
+function ucRender(box, r){
+  const icon = { ok: "✅", warn: "⚠️", bad: "❌" }[r.level];
+  const head = { ok: "ไฟล์ตรงกัน พร้อมอัปโหลด",
+                 warn: "ไฟล์ตรงกันเกือบทั้งหมด — ตรวจ Code ที่ไม่ตรงก่อนอัปโหลด",
+                 bad: "fifo_sn.csv ไม่ตรงกับ fifo_by_day.xlsx — อาจเลือกไฟล์ผิดวัน" }[r.level];
+  const fmt = n => Math.round(n).toLocaleString();
+  const row = (lbl, a, b, skip) => skip ? "" :
+    `<tr><td>${lbl}</td><td>${fmt(a)}</td><td>${fmt(b)}</td><td class="st">${a === b ? "✅" : (Math.abs(a - b) / Math.max(a, b, 1) <= 0.02 ? "⚠️" : "❌")}</td></tr>`;
+  let html = `<div class="uc-head">${icon} ${head}</div>
+    <table><thead><tr><th>${r.fileDate ? "📅 " + ucEsc(r.fileDate) : "รายการ"}</th><th>fifo_by_day</th><th>นับจาก fifo_sn</th><th></th></tr></thead><tbody>
+      ${row("Instock", r.tot.file.instock, r.tot.csv.instock)}
+      ${row("Sale", r.tot.file.sale, r.tot.csv.sale)}
+      ${row("Instock Aging (≥30 วัน)", r.tot.file.aging, r.tot.csv.aging, !r.hasAging)}
+      ${row("Not FIFO", r.tot.file.nf, r.tot.csv.nf, !r.hasNF)}
+      <tr><td><b>Code ที่ Instock + Sale ตรงกัน</b></td><td colspan="2"><b>${fmt(r.matched)} / ${fmt(r.compared)} (${(r.rate * 100).toFixed(1)}%)</b></td>
+          <td class="st">${r.level === "ok" ? "✅" : r.level === "warn" ? "⚠️" : "❌"}</td></tr>
+      ${r.ret ? `<tr><td>SN Return ที่พบใน fifo_sn</td><td colspan="2">${fmt(r.ret.found)} / ${fmt(r.ret.n)}${r.retRate !== null ? ` (${(r.retRate * 100).toFixed(1)}%)` : ""}</td>
+          <td class="st">${r.retRate === null || r.retRate >= 0.9 ? "✅" : "⚠️"}</td></tr>` : ""}
+    </tbody></table>`;
+  if (r.bad.length) {
+    html += `<details><summary>Code ที่ไม่ตรง ${fmt(r.bad.length)} รายการ (แสดง 15 แรก)</summary>
+      <table><thead><tr><th>Code</th><th>Instock</th><th>Sale</th><th>Aging</th><th>NotFIFO</th></tr></thead><tbody>`
+      + r.bad.slice(0, 15).map(x => `<tr><td>${ucEsc(x.c)}</td>`
+          + ["instock", "sale", "aging", "nf"].map(k => `<td>${x.a[k] === x.b[k] ? x.a[k] : `<b>${x.a[k]} → ${x.b[k]}</b>`}</td>`).join("") + `</tr>`).join("")
+      + `</tbody></table><div class="uc-note">ตัวเลข: fifo_by_day → นับจาก fifo_sn · แสดง Code ที่ Instock/Sale ไม่ตรงก่อน</div></details>`;
+  }
+  html += `<div class="uc-note">สถานะ (module_) ใน fifo_sn: ${r.statuses.map(([k, n]) => `${ucEsc(k)} ${fmt(n)}`).join(" · ")}</div>`;
+  html += `<div class="uc-note">เทียบเฉพาะ ${fmt(r.compared)} Code ที่มีใน fifo_by_day (Code ที่ขายวันนั้น) · fifo_sn มี ${fmt(r.snRows)} SN จาก ${fmt(r.csvCodes)} Code — นับด้วยกติกาเดียวกับระบบ</div>`;
+  box.className = "u-check " + r.level;
+  box.innerHTML = html;
 }
 
 </script>
