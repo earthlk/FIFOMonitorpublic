@@ -815,6 +815,30 @@ button, input, select, textarea{ font-family:inherit; }
 .sn-chip.deleted .sn-copy{ text-decoration:none; }
 @media (hover:hover){ .sn-chip .sn-copy{ opacity:.35; } .sn-chip:hover .sn-copy{ opacity:.8; } .sn-chip .sn-copy:hover{ opacity:1; } }
 
+
+/* ---------- ↩️ ยกเลิกการลบ SN ---------- */
+.sn-chip.deleted.can-restore{ cursor:pointer; }
+.sn-chip.deleted.can-restore:hover{ border-color:var(--v-accent); }
+.sn-chip.deleted.rsel{ background:var(--v-accent) !important; border-color:var(--v-accent) !important; color:#fff !important; text-decoration:none; opacity:1; }
+.sn-chip.restored{ text-decoration:none !important; opacity:.75; border-style:dashed; }
+.sn-chip .rs-tag{ font-style:normal; font-size:10px; font-weight:700; color:var(--v-ok); }
+.restore-bar{
+  display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+  background:var(--v-accentSoft); border:1px solid var(--v-accent); border-radius:12px;
+  padding:10px 14px; margin-bottom:12px; font-size:14px; font-weight:700; color:var(--v-text);
+}
+.restore-hint{ color:var(--v-muted); font-size:13px; margin:-4px 0 10px; }
+.restore-warn{
+  background:var(--v-accentSoft); border:1px solid var(--v-accent); border-radius:12px;
+  padding:10px 14px; margin-bottom:14px; font-size:14px; color:var(--v-text);
+}
+.restore-warn span{ font-weight:400; font-size:13px; color:var(--v-text2); }
+.hist-sn.restore{ background:var(--v-ok); }
+.hist-item.is-restore{ border-left-color:var(--v-ok); }
+.res-restore-note{ background:var(--v-warnSoft); border:1px solid var(--v-warnLine); color:var(--v-warn);
+  border-radius:10px; padding:8px 12px; font-size:13px; margin-bottom:10px; }
+
+.side-checked{ background:var(--v-ok); color:#fff; border-radius:6px; padding:1px 7px; font-size:12px; font-weight:700; }
 @media (prefers-reduced-motion: reduce){ *{ transition:none !important; animation:none !important; } }
 </style>
 </head>
@@ -915,6 +939,11 @@ button, input, select, textarea{ font-family:inherit; }
           ⚠️ การอนุมัติจะ <b>ลบ SN ออกจากระบบถาวร</b><br>
           <span>ลบจาก SN Lite / SN File / SN Return แล้วคำนวณ FIFO ใหม่ ย้อนกลับไม่ได้
           (มีบันทึกไว้ในชีต SN_Deleted)</span>
+        </div>
+
+        <div id="restoreWarn" class="restore-warn" style="display:none;">
+          ↩️ จะใส่ SN กลับเข้า <b>SN Lite / SN File / SN Return</b> แล้วคำนวณ FIFO ใหม่<br>
+          <span>รายงานที่เคยอนุมัติไว้จะกลับเป็น "รอตรวจ" · ถ้าต้องการลบอีกครั้งก็อนุมัติใหม่ได้</span>
         </div>
 
         <label class="fw-bold mb-1" style="font-size:15px;">ความเห็น Admin</label>
@@ -1457,7 +1486,22 @@ function renderGlobalExtraBar(){
   const bar = document.getElementById("globalExtraBar");
   if (!bar) return;
 
-  if (!extraSelection.size){ bar.style.display = "none"; return; }
+  const ck = checkedPending();
+  if (!extraSelection.size && !ck.length){ bar.style.display = "none"; return; }
+  if (!extraSelection.size){
+    const byCode = {};
+    ck.forEach(r => { byCode[r.code] = (byCode[r.code] || 0) + 1; });
+    const list = Object.entries(byCode);
+    const names = list.slice(0, 4).map(([c, n]) => `${c} (${n})`).join(" · ") + (list.length > 4 ? ` · +${list.length - 4} Code` : ``);
+    bar.style.display = "flex";
+    bar.innerHTML = `
+      <span>☑️ เลือกรายงานไว้ ${ck.length} รายการ จาก ${list.length} Code</span>
+      <span class="ge-codes">${escapeHtml(names)}</span>
+      <button class="btn btn-sm btn-light fw-bold ms-auto" onclick="clearChecked()">ล้าง</button>
+      <button class="btn btn-sm btn-danger fw-bold" onclick="askBulk('Rejected')">❌ ปฏิเสธที่เลือก</button>
+      <button class="btn btn-sm btn-success fw-bold" onclick="askBulk('Approved')">✅ อนุมัติที่เลือก</button>`;
+    return;
+  }
 
   const gx = groupExtras();
   const codes = gx.slice(0, 4).map(x => `${x.code} (${x.sns.length})`).join(" · ")
@@ -1473,7 +1517,7 @@ function renderGlobalExtraBar(){
     <button class="btn btn-sm btn-danger fw-bold" onclick="askExtraDelete()">ลบทั้งหมดทีเดียว</button>`;
 }
 
-function renderAll(){
+function renderAll(skipDetail){
   renderDateBar();
   updateStats();
 
@@ -1542,6 +1586,8 @@ function renderAll(){
           <div class="side-top">
             <span class="code">${escapeHtml(g.code)}</span>${rcHint}
             <span class="zone-tag">${escapeHtml(g.zone)}</span>
+            ${(() => { const n = g.items.filter(r => checkedRows.has(r.rowIndex)).length;
+                       return n ? `<span class="side-checked">☑ ${n}</span>` : ``; })()}
           </div>
           ${g.name ? `<div class="side-name">${escapeHtml(g.name)}</div>` : ``}
         </div>
@@ -1552,6 +1598,7 @@ function renderAll(){
       </div>`;
   });
   listEl.innerHTML = html;
+  if (skipDetail === true) return;
 
   // ----- Detail -----
   const g = groups.find(x => x.key === selectedKey);
@@ -1587,8 +1634,8 @@ function buildDetail(g){
         เลือกทั้งหมดที่รอตรวจ (${pendingItems.length})
       </label>
       ${codeLevelPending.length ? `<span class="code-level-warn">⚠️ มีรายงานระดับ Code ${codeLevelPending.length} รายการ ที่อนุมัติไม่ได้</span>` : ``}
-      ${checkedHere ? `
-        <span class="ms-auto">เลือกไว้ ${checkedHere}</span>
+      ${checkedRows.size ? `
+        <span class="ms-auto">เลือกไว้ Code นี้ ${checkedHere} · รวมทุก Code ${checkedRows.size}</span>
         <button class="btn btn-success btn-sm" onclick="askBulk('Approved')">✅ อนุมัติที่เลือก</button>
         <button class="btn btn-danger btn-sm"  onclick="askBulk('Rejected')">❌ ปฏิเสธที่เลือก</button>
       ` : ``}
@@ -2037,7 +2084,7 @@ function buildRow(r){
 // ==========================================================
 function selectCode(key){
   selectedKey = key;
-  checkedRows.clear();
+  // ไม่ล้าง checkedRows — ติ๊กรายงานข้าม Code ในวันเดียวกันแล้วอนุมัติทีเดียวได้
 
   if (mqDesktop.matches){
     renderAll();
@@ -2058,7 +2105,22 @@ function refreshDetail(){
 
 function toggleRow(rowIndex, on){
   if (on) checkedRows.add(rowIndex); else checkedRows.delete(rowIndex);
+  afterCheckChange();
+}
+
+function afterCheckChange(){
   refreshDetail();
+  renderAll(true);      // วาดรายการ Code + แถบรวมใหม่ ไม่วาด detail ซ้ำ
+}
+
+function clearChecked(){
+  checkedRows.clear();
+  afterCheckChange();
+}
+
+/** รายงานที่ติ๊กไว้ ยังรอตรวจอยู่ (กันสถานะเปลี่ยนไปแล้ว) */
+function checkedPending(){
+  return allReports.filter(r => checkedRows.has(r.rowIndex) && isApprovable(r));
 }
 
 function toggleAll(on){
@@ -2066,7 +2128,7 @@ function toggleAll(on){
   if (!g) return;
   g.items.filter(isApprovable)
          .forEach(r => on ? checkedRows.add(r.rowIndex) : checkedRows.delete(r.rowIndex));
-  refreshDetail();
+  afterCheckChange();
 }
 
 // ==========================================================
@@ -2089,6 +2151,8 @@ function openConfirm(rowIndexes, status, label, extras, manual){
 
   const warn = document.getElementById("approveWarn");
   if (warn) warn.style.display = isApprove ? "block" : "none";
+  const rw = document.getElementById("restoreWarn");
+  if (rw) rw.style.display = "none";
 
   const btn = document.getElementById("confirmBtn");
   btn.className = "btn flex-fill fw-bold " + (isApprove ? "btn-success" : "btn-danger");
@@ -2102,9 +2166,11 @@ function openConfirm(rowIndexes, status, label, extras, manual){
 function askSingle(rowIndex, status, sn){ openConfirm([rowIndex], status, "SN: " + sn); }
 
 function askBulk(status){
-  const ids = [...checkedRows];
-  if (!ids.length) return;
-  openConfirm(ids, status, `${ids.length} SN ที่เลือกไว้ — ใช้ comment เดียวกันทุกรายการ`);
+  const rows = checkedPending();
+  if (!rows.length) return;
+  const codes = new Set(rows.map(r => cleanCode(r.code)));
+  openConfirm(rows.map(r => r.rowIndex), status,
+    `${rows.length} รายการจาก ${codes.size} Code — ใช้ comment เดียวกันทุกรายการ`);
 }
 
 async function submitDecision(){
@@ -2115,8 +2181,9 @@ async function submitDecision(){
   const btn = document.getElementById("confirmBtn");
   btn.disabled = true;
 
-  if (status === "Approved") await runApprove(rowIndexes, comment, btn, extras || [], manual || []);
-  else                       await runReject(rowIndexes, comment, btn);
+  if (status === "Restore")       await runRestore(pendingDecision.date, pendingDecision.sns, comment, btn);
+  else if (status === "Approved") await runApprove(rowIndexes, comment, btn, extras || [], manual || []);
+  else                            await runReject(rowIndexes, comment, btn);
 
   pendingDecision = null;
 }
@@ -2304,16 +2371,17 @@ function renderHistoryList(){
   if (cur){
     html += `<div class="hist-month">
         <span>🗓️ ${monthLabel(cur.month)}</span>
-        <span class="hist-month-sum">${cur.count} ครั้ง · ลบ ${cur.deletedSN} SN</span>
+        <span class="hist-month-sum">${cur.count} ครั้ง · ลบ ${cur.deletedSN} SN${cur.restoredSN ? ` · คืน ${cur.restoredSN} SN` : ``}</span>
       </div>`;
   }
 
   html += historyCache.length
     ? historyCache.map((b, i) => `
-        <div class="hist-item" onclick="showHistoryReport(${i})">
+        <div class="hist-item ${b.deletedSN < 0 ? "is-restore" : ""}" onclick="showHistoryReport(${i})">
           <div class="hist-top">
             <span>📅 ${escapeHtml(b.date)}</span>
-            <span class="hist-sn">ลบ ${b.deletedSN} SN</span>
+            ${b.deletedSN < 0 ? `<span class="hist-sn restore">↩️ คืน ${-b.deletedSN} SN</span>`
+                              : `<span class="hist-sn">ลบ ${b.deletedSN} SN</span>`}
             ${b.zones ? `<span class="zone-tag">${escapeHtml(b.zones)}</span>` : ``}
           </div>
           ${pctBadge(b.report)}
@@ -2355,36 +2423,44 @@ async function showHistoryReport(i){
   const b = historyCache[i];
   if (!b) return;
 
+  const isRestore = b.deletedSN < 0;
   showApproveResult({
-    approved: b.deletedSN,
+    mode: isRestore ? "restore" : "",
+    approved: Math.abs(b.deletedSN),
     byDate: b.report ? [{
       date: b.date,
-      deletedSN: b.deletedSN,
+      deletedSN: Math.abs(b.deletedSN),
       codes: b.codes ? b.codes.split(/,\s*/) : [],
       fifoFileRows: 0,
       report: b.report
     }] : [],
     skipped: []
-  }, `📜 รายงานการลบ · ${b.deletedAt}`);
+  }, isRestore ? `↩️ รายงานการยกเลิกการลบ · ${b.deletedAt}` : `📜 รายงานการลบ · ${b.deletedAt}`);
 
   // ต่อท้ายด้วยรายการ SN ที่ลบครั้งนั้น — พับไว้ทีละ Code
   const box = document.getElementById("resultBody");
   const holder = document.createElement("div");
-  holder.innerHTML = `<div class="res-section">🗑️ SN ที่ลบครั้งนี้</div>
+  const secTitle = isRestore ? "↩️ SN ที่คืนครั้งนี้" : "🗑️ SN ที่ลบครั้งนี้";
+  holder.innerHTML = `<div class="res-section">${secTitle}</div>
     <div class="text-muted" style="font-size:13px;">⏳ กำลังโหลด...</div>`;
   box.appendChild(holder);
 
   let rows = [];
   try {
-    rows = await callGAS("getDeletedSNs", { batchId: b.batchId, date: b.date }) || [];
+    rows = await callGAS("getDeletedSNs", isRestore ? { restoreBatchId: b.batchId } : { batchId: b.batchId, date: b.date }) || [];
   } catch (err){
-    holder.innerHTML = `<div class="res-section">🗑️ SN ที่ลบครั้งนี้</div>
+    holder.innerHTML = `<div class="res-section">${secTitle}</div>
       <div class="res-skip">โหลดไม่สำเร็จ — ${escapeHtml(err.message)}</div>`;
     return;
   }
 
-  const mine = rows.filter(r => !r.batchId || !b.batchId || r.batchId === b.batchId);
-  holder.innerHTML = `<div class="res-section">🗑️ SN ที่ลบครั้งนี้ (${mine.length} SN)</div>`
+  const mine = isRestore ? rows : rows.filter(r => !r.batchId || !b.batchId || r.batchId === b.batchId);
+  const left = isRestore ? [] : mine.filter(r => !r.restoredAt);
+  historyRestoreCtx = { date: b.date, sns: left.map(r => String(r.sn)) };
+  holder.innerHTML = `<div class="res-section">${secTitle} (${mine.length} SN)</div>`
+                   + (left.length ? `<button class="btn btn-primary w-100 fw-bold mb-2" onclick="askRestoreHistory()">
+                        ↩️ ยกเลิกการลบครั้งนี้ (${left.length} SN)</button>` : ``)
+                   + (!isRestore && mine.length && !left.length ? `<div class="res-line text-muted mb-2">SN ของครั้งนี้ถูกคืนครบแล้ว</div>` : ``)
                    + buildBatchCodeBlocks(mine);
 }
 
@@ -2424,9 +2500,9 @@ function buildBatchCodeBlocks(list){
               </div>
               <div class="sn-chips">${sub.map(d => `
                 <span class="sn-chip deleted ${
-                  String(d.status || "").trim().toUpperCase() === "SALE" ? "was-sale" : ""}"
-                  title="${escapeHtml(d.reason || "-")}">
-                  ${escapeHtml(d.sn)}
+                  String(d.status || "").trim().toUpperCase() === "SALE" ? "was-sale" : ""} ${d.restoredAt ? "restored" : ""}"
+                  title="${escapeHtml((d.reason || "-") + (d.restoredAt ? " · คืนแล้วเมื่อ " + d.restoredAt : ""))}">
+                  ${escapeHtml(d.sn)}${d.restoredAt ? ` <i class="rs-tag">คืนแล้ว</i>` : ``}
                   <i class="sn-chip-meta">${escapeHtml(d.status || "")}</i>
                   ${copyBtn(d.sn)}
                 </span>`).join("")}</div>
@@ -2495,10 +2571,22 @@ function renderDeletedSN(list){
   const ordered = [...groups.entries()].sort((a, b) =>
     (Number(b[1][0].age) || 0) - (Number(a[1][0].age) || 0));
 
+  const g = currentGroup();
+  const rkey = g ? g.date + "|" + cleanCode(g.code) : "";
+  if (restoreSel.key !== rkey) { restoreSel.key = rkey; restoreSel.date = g ? g.date : ""; restoreSel.sns.clear(); }
+  lastDeletedList = list;
+
   let html = `<div class="del-head">
       <span>🗑️ SN ที่ถูกลบไปแล้ว</span>
       <span class="del-sum">${list.length} SN · ${ordered.length} RC</span>
     </div>`;
+  html += restoreSel.sns.size
+    ? `<div class="restore-bar">
+        <span>↩️ เลือกไว้ ${restoreSel.sns.size} SN</span>
+        <button class="btn btn-sm btn-outline-secondary ms-auto" onclick="clearRestoreSel()">ล้าง</button>
+        <button class="btn btn-sm btn-primary fw-bold" onclick="askRestoreSelected()">↩️ ยกเลิกการลบ</button>
+      </div>`
+    : `<div class="restore-hint">แตะ SN เพื่อเลือก แล้วกด "ยกเลิกการลบ" เพื่อคืน SN กลับเข้าระบบ</div>`;
 
   ordered.forEach(([rc, items]) => {
     const saleCount = items.filter(d =>
@@ -2510,11 +2598,14 @@ function renderDeletedSN(list){
           <span class="rc-age">อายุ ${escapeHtml(items[0].age)} วัน · ${items.length} SN${
             saleCount ? ` · SALE ${saleCount}` : ``}</span>
           <span class="rc-flag del">ลบแล้ว</span>
+          <button class="rc-pick ${items.every(d => restoreSel.sns.has(String(d.sn))) ? "on" : ""}"
+                  onclick="toggleRestoreRC('${escapeAttr(rc)}')">เลือกทั้ง RC</button>
         </div>
         <div class="sn-chips">${items.map(d => {
           const sale = String(d.status || "").trim().toUpperCase() === "SALE";
-          return `<span class="sn-chip deleted ${sale ? "was-sale" : ""}"
-              title="${escapeHtml((d.reason || "-") + " · ลบเมื่อ " + (d.deletedAt || ""))}">
+          return `<span class="sn-chip deleted can-restore ${sale ? "was-sale" : ""} ${restoreSel.sns.has(String(d.sn)) ? "rsel" : ""}"
+              title="${escapeHtml((d.reason || "-") + " · ลบเมื่อ " + (d.deletedAt || "") + " · แตะเพื่อเลือกคืน")}"
+              onclick="toggleRestore('${escapeAttr(d.sn)}')">
               ${escapeHtml(d.sn)}
               <i class="sn-chip-meta">${escapeHtml(d.status || "")}</i>
               ${copyBtn(d.sn)}
@@ -2535,18 +2626,25 @@ function showApproveResult(res, customTitle){
   const skipped = res.skipped || [];
   const totalSN = days.reduce((a, d) => a + (d.deletedSN || 0), 0);
 
+  const isRestore = res.mode === "restore";
+  const verb = isRestore ? "คืน" : "ลบ";
   const titleEl = document.getElementById("resultTitle");
   if (titleEl) titleEl.innerText = customTitle || "✅ ผลการอนุมัติ";
 
   let html = `<div class="res-head">
       <div class="res-big">${totalSN}</div>
-      <div>SN ที่ถูกลบ${customTitle ? `` : ` · อนุมัติ <b>${res.approved || 0}</b> รายการ`}</div>
+      <div>${isRestore ? "SN ที่คืนกลับเข้าระบบ" : "SN ที่ถูกลบ"}${customTitle ? `` : ` · อนุมัติ <b>${res.approved || 0}</b> รายการ`}${
+        isRestore && res.pendingRows && res.pendingRows.length ? ` · รายงานกลับเป็นรอตรวจ <b>${res.pendingRows.length}</b> รายการ` : ``}</div>
     </div>`;
+  if (isRestore && res.legacy) {
+    html += `<div class="res-restore-note">⚠️ ${res.legacy} SN ถูกลบก่อนมีระบบสำรองแถว — คืนเข้า SN Lite / SN File จากข้อมูลในประวัติ
+      แต่ข้อมูลใน SN Return (ถ้าเคยมี) กู้คืนไม่ได้</div>`;
+  }
 
   days.forEach(d => {
     html += `<div class="res-section">📅 ${escapeHtml(d.date)}</div>`;
     html += `<div class="res-line text-muted mb-2">
-        ลบ SN <b>${d.deletedSN || 0}</b> ตัว ·
+        ${verb} SN <b>${d.deletedSN || 0}</b> ตัว ·
         คำนวณใหม่ <b>${(d.codes || []).length}</b> Code ·
         อัปเดต FIFO File ${d.fifoFileRows === -1 ? "— ข้าม (เป็นสูตร)" : (d.fifoFileRows || 0) + " แถว"}
       </div>`;
@@ -2589,7 +2687,7 @@ function showApproveResult(res, customTitle){
   if (skipped.length){
     html += `<div class="res-section text-danger">ข้ามไป ${skipped.length} รายการ</div>`;
     skipped.forEach(x => {
-      html += `<div class="res-skip">แถว ${x.rowIndex} — ${escapeHtml(x.why || "")}</div>`;
+      html += `<div class="res-skip">${x.sn ? "SN " + escapeHtml(x.sn) : "แถว " + x.rowIndex} — ${escapeHtml(x.why || "")}</div>`;
     });
   }
 
@@ -2701,6 +2799,90 @@ async function copySNs(list, btn){
 }
 function copySelectedSNs(btn){
   copySNs([...extraSelection.values()].map(v => v.sn), btn);
+}
+
+/* ==========================================================
+   ↩️ ยกเลิกการลบ SN
+   ========================================================== */
+const restoreSel = { key: "", date: "", sns: new Set() };   // เลือกได้ทีละ Code / วัน
+let lastDeletedList = [];
+let historyRestoreCtx = null;
+
+function toggleRestore(sn){
+  sn = String(sn);
+  restoreSel.sns.has(sn) ? restoreSel.sns.delete(sn) : restoreSel.sns.add(sn);
+  renderDeletedSN(lastDeletedList);
+}
+function toggleRestoreRC(rc){
+  const items = lastDeletedList.filter(d => (d.rc || "ไม่ระบุ RC") === rc).map(d => String(d.sn));
+  const all = items.length && items.every(sn => restoreSel.sns.has(sn));
+  items.forEach(sn => all ? restoreSel.sns.delete(sn) : restoreSel.sns.add(sn));
+  renderDeletedSN(lastDeletedList);
+}
+function clearRestoreSel(){
+  restoreSel.sns.clear();
+  renderDeletedSN(lastDeletedList);
+}
+function askRestoreSelected(){
+  if (!restoreSel.sns.size || !restoreSel.date) return;
+  const g = currentGroup();
+  openRestoreConfirm(restoreSel.date, [...restoreSel.sns], `${g ? g.code + " · " : ""}${restoreSel.date}`);
+}
+function askRestoreHistory(){
+  if (!historyRestoreCtx || !historyRestoreCtx.sns.length) return;
+  if (resultModal) resultModal.hide();          // หน้าต่างผลอยู่ชั้นบนกว่าหน้าต่างยืนยัน
+  if (historyModal) historyModal.hide();
+  openRestoreConfirm(historyRestoreCtx.date, historyRestoreCtx.sns, `ทั้งครั้ง · ${historyRestoreCtx.date}`);
+}
+function openRestoreConfirm(date, sns, label){
+  pendingDecision = { status: "Restore", date: date, sns: sns, rowIndexes: [], extras: [], manual: [] };
+  document.getElementById("confirmTitle").innerText = `ยกเลิกการลบ ${sns.length} SN?`;
+  document.getElementById("confirmSN").innerText = label + " — " + sns.slice(0, 8).join(", ") + (sns.length > 8 ? ` +${sns.length - 8}` : "");
+  document.getElementById("adminComment").value = "";
+  const warn = document.getElementById("approveWarn"); if (warn) warn.style.display = "none";
+  const rw = document.getElementById("restoreWarn");   if (rw) rw.style.display = "block";
+  const btn = document.getElementById("confirmBtn");
+  btn.className = "btn btn-primary flex-fill fw-bold";
+  btn.innerText = "ยืนยันยกเลิกการลบ";
+  btn.disabled = false;
+  confirmModal = confirmModal || new bootstrap.Modal(document.getElementById("confirmModal"));
+  confirmModal.show();
+}
+async function runRestore(date, sns, comment, btn){
+  btn.innerText = "กำลังประมวลผล...";
+  confirmModal.hide();
+  showBusy("กำลังคืน SN และคำนวณใหม่", [
+    "กำลังหา SN ในประวัติการลบ...",
+    "กำลังใส่ SN กลับเข้า SN Lite / SN File / SN Return...",
+    "กำลังคำนวณ FIFO ใหม่...",
+    "กำลังอัปเดต DAILY_SUMMARY และ SN_Summary...",
+    "ใกล้เสร็จแล้ว รออีกสักครู่..."
+  ]);
+  try {
+    const res = await callGAS("restoreDeletedSNs", { date: date, sns: sns, adminComment: comment }) || {};
+    hideBusy();
+    if (!res.success) {
+      showToast(res.message || "ยกเลิกการลบไม่สำเร็จ", "warn");
+      if (res.skipped && res.skipped.length) showApproveResult({ mode: "restore", byDate: [], skipped: res.skipped }, "↩️ ยกเลิกการลบไม่สำเร็จ");
+      return;
+    }
+    (res.pendingRows || []).forEach(rowIndex => {
+      const t = allReports.find(r => r.rowIndex === rowIndex);
+      if (t) { t.status = "PENDING"; t.adminComment = "↩️ ยกเลิกการลบ" + (comment ? " · " + comment : ""); t.approvedAt = ""; }
+    });
+    Object.keys(zoneSNCache).forEach(k => delete zoneSNCache[k]);
+    Object.keys(deletedCache).forEach(k => delete deletedCache[k]);
+    invalidateIndexCache([date]);
+    restoreSel.sns.clear();
+    updateStats();
+    renderAll();
+    showApproveResult(res, "↩️ ผลการยกเลิกการลบ");
+  } catch (err) {
+    hideBusy();
+    btn.disabled = false;
+    btn.innerText = "ยืนยันยกเลิกการลบ";
+    showToast("ยกเลิกการลบไม่สำเร็จ: " + err.message, "warn");
+  }
 }
 </script>
 
